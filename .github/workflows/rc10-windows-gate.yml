@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: asantepdf-development-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   windows-build:
     if: github.head_ref == 'development/master-upgrade-v2'
@@ -68,11 +72,15 @@ jobs:
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src
+
+          git add -A -- src tests .gitignore
+          git reset -- ':(glob)**/bin/**' ':(glob)**/obj/**' 2>$null
           git rm -r dev-patches
+
           if (git diff --cached --quiet) {
             Write-Host 'Patch scripts produced no repository changes.' -ForegroundColor Cyan
             exit 0
           }
+
           git commit -m 'Apply Windows-validated AsantePDF development patch'
           git push origin HEAD:development/master-upgrade-v2
