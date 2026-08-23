@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "zls9N+MAxCg=",
+  "success": true,
+  "projectFilePath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.App\\PdfRescue.App.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\runneradmin\\.nuget\\packages\\bblanchon.pdfium.linux\\153.0.7999\\bblanchon.pdfium.linux.153.0.7999.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\bblanchon.pdfium.macos\\153.0.7999\\bblanchon.pdfium.macos.153.0.7999.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\bblanchon.pdfium.win32\\153.0.7999\\bblanchon.pdfium.win32.153.0.7999.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.3\\microsoft.extensions.logging.abstractions.8.0.3.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\pdfiumcore\\153.0.7999\\pdfiumcore.153.0.7999.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\pdfsharp-wpf\\6.2.4\\pdfsharp-wpf.6.2.4.nupkg.sha512",
+    "C:\\Users\\runneradmin\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
+  ],
+  "logs": []
+}

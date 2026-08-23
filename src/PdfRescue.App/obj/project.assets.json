@@ -1,0 +1,1025 @@
+{
+  "version": 3,
+  "targets": {
+    "net10.0-windows10.0.19041": {
+      "bblanchon.PDFium.Linux/153.0.7999": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-arm/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-arm"
+          },
+          "runtimes/linux-arm64/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-arm64"
+          },
+          "runtimes/linux-musl-arm64/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-musl-arm64"
+          },
+          "runtimes/linux-musl-x64/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-musl-x64"
+          },
+          "runtimes/linux-musl-x86/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-musl-x86"
+          },
+          "runtimes/linux-x64/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x86/native/libpdfium.so": {
+            "assetType": "native",
+            "rid": "linux-x86"
+          }
+        }
+      },
+      "bblanchon.PDFium.macOS/153.0.7999": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/osx-arm64/native/libpdfium.dylib": {
+            "assetType": "native",
+            "rid": "osx-arm64"
+          },
+          "runtimes/osx-x64/native/libpdfium.dylib": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          }
+        }
+      },
+      "bblanchon.PDFium.Win32/153.0.7999": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/pdfium.dll": {
+            "assetType": "native",
+            "rid": "win-arm64"
+          },
+          "runtimes/win-x64/native/pdfium.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/native/pdfium.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/8.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.2"
+        },
+        "compile": {
+          "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/Microsoft.Extensions.Logging.Abstractions.targets": {}
+        }
+      },
+      "PDFiumCore/153.0.7999": {
+        "type": "package",
+        "dependencies": {
+          "bblanchon.PDFium.Linux": "153.0.7999",
+          "bblanchon.PDFium.Win32": "153.0.7999",
+          "bblanchon.PDFium.macOS": "153.0.7999"
+        },
+        "compile": {
+          "lib/net8.0/PDFiumCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/PDFiumCore.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "PDFsharp-WPF/6.2.4": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3"
+        },
+        "compile": {
+          "lib/net10.0-windows7.0/PdfSharp-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.BarCodes-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Charting-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Cryptography.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Quality-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Shared.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Snippets-wpf.dll": {
+            "related": ".pdb"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.System.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.WPFonts.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0-windows7.0/PdfSharp-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.BarCodes-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Charting-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Cryptography.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Quality-wpf.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Shared.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.Snippets-wpf.dll": {
+            "related": ".pdb"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.System.dll": {
+            "related": ".pdb;.xml"
+          },
+          "lib/net10.0-windows7.0/PdfSharp.WPFonts.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.WindowsDesktop.App.WPF"
+        ]
+      },
+      "PdfRescue.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/PdfRescue.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/PdfRescue.Core.dll": {}
+        }
+      },
+      "PdfRescue.Infrastructure/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "PdfRescue.Core": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/PdfRescue.Infrastructure.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/PdfRescue.Infrastructure.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "bblanchon.PDFium.Linux/153.0.7999": {
+      "sha512": "He1njGDo6BxJ0zv/64lmwrEOv6gvupG63ofQwlBxN7VR6d/uUWRgVVHhJ3RioD/F73DZZWxjV5arsWBJU/MUjg==",
+      "type": "package",
+      "path": "bblanchon.pdfium.linux/153.0.7999",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "bblanchon.pdfium.linux.153.0.7999.nupkg.sha512",
+        "bblanchon.pdfium.linux.nuspec",
+        "build/native/bblanchon.PDFium.Linux.targets",
+        "build/native/include/pdfium/cpp/fpdf_deleters.h",
+        "build/native/include/pdfium/cpp/fpdf_scopers.h",
+        "build/native/include/pdfium/fpdf_annot.h",
+        "build/native/include/pdfium/fpdf_attachment.h",
+        "build/native/include/pdfium/fpdf_catalog.h",
+        "build/native/include/pdfium/fpdf_dataavail.h",
+        "build/native/include/pdfium/fpdf_doc.h",
+        "build/native/include/pdfium/fpdf_edit.h",
+        "build/native/include/pdfium/fpdf_ext.h",
+        "build/native/include/pdfium/fpdf_flatten.h",
+        "build/native/include/pdfium/fpdf_formfill.h",
+        "build/native/include/pdfium/fpdf_fwlevent.h",
+        "build/native/include/pdfium/fpdf_javascript.h",
+        "build/native/include/pdfium/fpdf_ppo.h",
+        "build/native/include/pdfium/fpdf_progressive.h",
+        "build/native/include/pdfium/fpdf_save.h",
+        "build/native/include/pdfium/fpdf_searchex.h",
+        "build/native/include/pdfium/fpdf_signature.h",
+        "build/native/include/pdfium/fpdf_structtree.h",
+        "build/native/include/pdfium/fpdf_sysfontinfo.h",
+        "build/native/include/pdfium/fpdf_text.h",
+        "build/native/include/pdfium/fpdf_thumbnail.h",
+        "build/native/include/pdfium/fpdf_transformpage.h",
+        "build/native/include/pdfium/fpdfview.h",
+        "build/net461/bblanchon.PDFium.Linux.targets",
+        "buildTransitive/net461/bblanchon.PDFium.Linux.targets",
+        "icon.png",
+        "lib/native/_._",
+        "lib/netstandard1.0/_._",
+        "runtimes/linux-arm/native/libpdfium.so",
+        "runtimes/linux-arm64/native/libpdfium.so",
+        "runtimes/linux-musl-arm64/native/libpdfium.so",
+        "runtimes/linux-musl-x64/native/libpdfium.so",
+        "runtimes/linux-musl-x86/native/libpdfium.so",
+        "runtimes/linux-x64/native/libpdfium.so",
+        "runtimes/linux-x86/native/libpdfium.so"
+      ]
+    },
+    "bblanchon.PDFium.macOS/153.0.7999": {
+      "sha512": "YHmLuaaj1ePoOtUqh9An6FJAF/PEpxIBcCaJcbhh8DvPY4SuN2B166w1UoTYQ411o3r7O14EvmEtuzryA0ZxsQ==",
+      "type": "package",
+      "path": "bblanchon.pdfium.macos/153.0.7999",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "bblanchon.pdfium.macos.153.0.7999.nupkg.sha512",
+        "bblanchon.pdfium.macos.nuspec",
+        "build/native/bblanchon.PDFium.macOS.targets",
+        "build/native/include/pdfium/cpp/fpdf_deleters.h",
+        "build/native/include/pdfium/cpp/fpdf_scopers.h",
+        "build/native/include/pdfium/fpdf_annot.h",
+        "build/native/include/pdfium/fpdf_attachment.h",
+        "build/native/include/pdfium/fpdf_catalog.h",
+        "build/native/include/pdfium/fpdf_dataavail.h",
+        "build/native/include/pdfium/fpdf_doc.h",
+        "build/native/include/pdfium/fpdf_edit.h",
+        "build/native/include/pdfium/fpdf_ext.h",
+        "build/native/include/pdfium/fpdf_flatten.h",
+        "build/native/include/pdfium/fpdf_formfill.h",
+        "build/native/include/pdfium/fpdf_fwlevent.h",
+        "build/native/include/pdfium/fpdf_javascript.h",
+        "build/native/include/pdfium/fpdf_ppo.h",
+        "build/native/include/pdfium/fpdf_progressive.h",
+        "build/native/include/pdfium/fpdf_save.h",
+        "build/native/include/pdfium/fpdf_searchex.h",
+        "build/native/include/pdfium/fpdf_signature.h",
+        "build/native/include/pdfium/fpdf_structtree.h",
+        "build/native/include/pdfium/fpdf_sysfontinfo.h",
+        "build/native/include/pdfium/fpdf_text.h",
+        "build/native/include/pdfium/fpdf_thumbnail.h",
+        "build/native/include/pdfium/fpdf_transformpage.h",
+        "build/native/include/pdfium/fpdfview.h",
+        "build/net461/bblanchon.PDFium.macOS.targets",
+        "buildTransitive/net461/bblanchon.PDFium.macOS.targets",
+        "icon.png",
+        "lib/Xamarin.Mac2.0/_._",
+        "lib/native/_._",
+        "lib/net6.0-macos10.15/_._",
+        "lib/netstandard1.0/_._",
+        "runtimes/osx-arm64/native/libpdfium.dylib",
+        "runtimes/osx-x64/native/libpdfium.dylib"
+      ]
+    },
+    "bblanchon.PDFium.Win32/153.0.7999": {
+      "sha512": "UA+k9T6A1k5dqjFJEDkhmN4F/X/Z0IYLUhV05mmIMAxpxB5KNikGrb27j3RSzpVDJviraJLF4YRFBmeRcnx6wg==",
+      "type": "package",
+      "path": "bblanchon.pdfium.win32/153.0.7999",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "bblanchon.pdfium.win32.153.0.7999.nupkg.sha512",
+        "bblanchon.pdfium.win32.nuspec",
+        "build/native/bblanchon.PDFium.Win32.targets",
+        "build/native/include/pdfium/cpp/fpdf_deleters.h",
+        "build/native/include/pdfium/cpp/fpdf_scopers.h",
+        "build/native/include/pdfium/fpdf_annot.h",
+        "build/native/include/pdfium/fpdf_attachment.h",
+        "build/native/include/pdfium/fpdf_catalog.h",
+        "build/native/include/pdfium/fpdf_dataavail.h",
+        "build/native/include/pdfium/fpdf_doc.h",
+        "build/native/include/pdfium/fpdf_edit.h",
+        "build/native/include/pdfium/fpdf_ext.h",
+        "build/native/include/pdfium/fpdf_flatten.h",
+        "build/native/include/pdfium/fpdf_formfill.h",
+        "build/native/include/pdfium/fpdf_fwlevent.h",
+        "build/native/include/pdfium/fpdf_javascript.h",
+        "build/native/include/pdfium/fpdf_ppo.h",
+        "build/native/include/pdfium/fpdf_progressive.h",
+        "build/native/include/pdfium/fpdf_save.h",
+        "build/native/include/pdfium/fpdf_searchex.h",
+        "build/native/include/pdfium/fpdf_signature.h",
+        "build/native/include/pdfium/fpdf_structtree.h",
+        "build/native/include/pdfium/fpdf_sysfontinfo.h",
+        "build/native/include/pdfium/fpdf_text.h",
+        "build/native/include/pdfium/fpdf_thumbnail.h",
+        "build/native/include/pdfium/fpdf_transformpage.h",
+        "build/native/include/pdfium/fpdfview.h",
+        "build/native/lib/win-arm64/pdfium.dll.lib",
+        "build/native/lib/win-x64/pdfium.dll.lib",
+        "build/native/lib/win-x86/pdfium.dll.lib",
+        "build/net461/bblanchon.PDFium.Win32.targets",
+        "buildTransitive/net461/bblanchon.PDFium.Win32.targets",
+        "icon.png",
+        "lib/native/_._",
+        "lib/netstandard2.0/_._",
+        "runtimes/win-arm64/native/pdfium.dll",
+        "runtimes/win-x64/native/pdfium.dll",
+        "runtimes/win-x86/native/pdfium.dll"
+      ]
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2": {
+      "sha512": "3iE7UF7MQkCv1cxzCahz+Y/guQbTqieyxyaWKhrRO91itI9cOKO76OHeQDahqG4MmW5umr3CcCvGmK92lWNlbg==",
+      "type": "package",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/8.0.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/Microsoft.Extensions.DependencyInjection.Abstractions.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
+        "buildTransitive/netcoreapp2.0/Microsoft.Extensions.DependencyInjection.Abstractions.targets",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net462/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net6.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net6.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net7.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net7.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "lib/netstandard2.1/Microsoft.Extensions.DependencyInjection.Abstractions.xml",
+        "microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+        "microsoft.extensions.dependencyinjection.abstractions.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "Microsoft.Extensions.Logging.Abstractions/8.0.3": {
+      "sha512": "dL0QGToTxggRLMYY4ZYX5AMwBb+byQBd/5dMiZE07Nv73o6I5Are3C7eQTh7K2+A4ct0PVISSr7TZANbiNb2yQ==",
+      "type": "package",
+      "path": "microsoft.extensions.logging.abstractions/8.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "analyzers/dotnet/roslyn3.11/cs/Microsoft.Extensions.Logging.Generators.dll",
+        "analyzers/dotnet/roslyn3.11/cs/cs/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/de/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/es/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/fr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/it/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/ja/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/ko/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/pl/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/pt-BR/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/ru/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/tr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/zh-Hans/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn3.11/cs/zh-Hant/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/Microsoft.Extensions.Logging.Generators.dll",
+        "analyzers/dotnet/roslyn4.0/cs/cs/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/de/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/es/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/fr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/it/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/ja/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/ko/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/pl/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/pt-BR/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/ru/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/tr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/zh-Hans/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.0/cs/zh-Hant/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/Microsoft.Extensions.Logging.Generators.dll",
+        "analyzers/dotnet/roslyn4.4/cs/cs/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/de/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/es/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/fr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/it/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/ja/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/ko/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/pl/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/pt-BR/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/ru/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/tr/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/zh-Hans/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "analyzers/dotnet/roslyn4.4/cs/zh-Hant/Microsoft.Extensions.Logging.Generators.resources.dll",
+        "buildTransitive/net461/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/net462/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/net6.0/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/netcoreapp2.0/Microsoft.Extensions.Logging.Abstractions.targets",
+        "buildTransitive/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.targets",
+        "lib/net462/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net462/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/net6.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net6.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/net7.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net7.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.dll",
+        "lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.xml",
+        "microsoft.extensions.logging.abstractions.8.0.3.nupkg.sha512",
+        "microsoft.extensions.logging.abstractions.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "PDFiumCore/153.0.7999": {
+      "sha512": "bm16fxh0SUiH45PT62Qj12seDsDyiXwO55oojLRxCOlVbDCh6TwGnN2qSptpOGn0ctFjalhWKtWi60s5qiGfBQ==",
+      "type": "package",
+      "path": "pdfiumcore/153.0.7999",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "icon.png",
+        "lib/net5.0/PDFiumCore.dll",
+        "lib/net5.0/PDFiumCore.xml",
+        "lib/net6.0/PDFiumCore.dll",
+        "lib/net6.0/PDFiumCore.xml",
+        "lib/net8.0/PDFiumCore.dll",
+        "lib/net8.0/PDFiumCore.xml",
+        "lib/netstandard2.1/PDFiumCore.dll",
+        "lib/netstandard2.1/PDFiumCore.xml",
+        "pdfiumcore.153.0.7999.nupkg.sha512",
+        "pdfiumcore.nuspec"
+      ]
+    },
+    "PDFsharp-WPF/6.2.4": {
+      "sha512": "wD2byoUNGc/IDmSSSPLGGCNMXf4TybnjKlcYa40nuWIYLVA4DSvnCvWr7HbsBEwFvAYRP6DceQ4MN35COD/pdw==",
+      "type": "package",
+      "path": "pdfsharp-wpf/6.2.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "images/PDFsharp-128x128.png",
+        "lib/net10.0-windows7.0/PdfSharp-wpf.dll",
+        "lib/net10.0-windows7.0/PdfSharp-wpf.pdb",
+        "lib/net10.0-windows7.0/PdfSharp-wpf.xml",
+        "lib/net10.0-windows7.0/PdfSharp.BarCodes-wpf.dll",
+        "lib/net10.0-windows7.0/PdfSharp.BarCodes-wpf.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.BarCodes-wpf.xml",
+        "lib/net10.0-windows7.0/PdfSharp.Charting-wpf.dll",
+        "lib/net10.0-windows7.0/PdfSharp.Charting-wpf.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.Charting-wpf.xml",
+        "lib/net10.0-windows7.0/PdfSharp.Cryptography.dll",
+        "lib/net10.0-windows7.0/PdfSharp.Cryptography.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.Cryptography.xml",
+        "lib/net10.0-windows7.0/PdfSharp.Quality-wpf.dll",
+        "lib/net10.0-windows7.0/PdfSharp.Quality-wpf.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.Quality-wpf.xml",
+        "lib/net10.0-windows7.0/PdfSharp.Shared.dll",
+        "lib/net10.0-windows7.0/PdfSharp.Shared.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.Shared.xml",
+        "lib/net10.0-windows7.0/PdfSharp.Snippets-wpf.dll",
+        "lib/net10.0-windows7.0/PdfSharp.Snippets-wpf.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.System.dll",
+        "lib/net10.0-windows7.0/PdfSharp.System.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.System.xml",
+        "lib/net10.0-windows7.0/PdfSharp.WPFonts.dll",
+        "lib/net10.0-windows7.0/PdfSharp.WPFonts.pdb",
+        "lib/net10.0-windows7.0/PdfSharp.WPFonts.xml",
+        "lib/net462/PdfSharp-wpf.dll",
+        "lib/net462/PdfSharp-wpf.pdb",
+        "lib/net462/PdfSharp-wpf.xml",
+        "lib/net462/PdfSharp.BarCodes-wpf.dll",
+        "lib/net462/PdfSharp.BarCodes-wpf.pdb",
+        "lib/net462/PdfSharp.BarCodes-wpf.xml",
+        "lib/net462/PdfSharp.Charting-wpf.dll",
+        "lib/net462/PdfSharp.Charting-wpf.pdb",
+        "lib/net462/PdfSharp.Charting-wpf.xml",
+        "lib/net462/PdfSharp.Cryptography.dll",
+        "lib/net462/PdfSharp.Cryptography.pdb",
+        "lib/net462/PdfSharp.Cryptography.xml",
+        "lib/net462/PdfSharp.Quality-wpf.dll",
+        "lib/net462/PdfSharp.Quality-wpf.pdb",
+        "lib/net462/PdfSharp.Quality-wpf.xml",
+        "lib/net462/PdfSharp.Shared.dll",
+        "lib/net462/PdfSharp.Shared.pdb",
+        "lib/net462/PdfSharp.Shared.xml",
+        "lib/net462/PdfSharp.Snippets-wpf.dll",
+        "lib/net462/PdfSharp.Snippets-wpf.pdb",
+        "lib/net462/PdfSharp.System.dll",
+        "lib/net462/PdfSharp.System.pdb",
+        "lib/net462/PdfSharp.System.xml",
+        "lib/net462/PdfSharp.WPFonts.dll",
+        "lib/net462/PdfSharp.WPFonts.pdb",
+        "lib/net462/PdfSharp.WPFonts.xml",
+        "lib/net8.0-windows7.0/PdfSharp-wpf.dll",
+        "lib/net8.0-windows7.0/PdfSharp-wpf.pdb",
+        "lib/net8.0-windows7.0/PdfSharp-wpf.xml",
+        "lib/net8.0-windows7.0/PdfSharp.BarCodes-wpf.dll",
+        "lib/net8.0-windows7.0/PdfSharp.BarCodes-wpf.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.BarCodes-wpf.xml",
+        "lib/net8.0-windows7.0/PdfSharp.Charting-wpf.dll",
+        "lib/net8.0-windows7.0/PdfSharp.Charting-wpf.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.Charting-wpf.xml",
+        "lib/net8.0-windows7.0/PdfSharp.Cryptography.dll",
+        "lib/net8.0-windows7.0/PdfSharp.Cryptography.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.Cryptography.xml",
+        "lib/net8.0-windows7.0/PdfSharp.Quality-wpf.dll",
+        "lib/net8.0-windows7.0/PdfSharp.Quality-wpf.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.Quality-wpf.xml",
+        "lib/net8.0-windows7.0/PdfSharp.Shared.dll",
+        "lib/net8.0-windows7.0/PdfSharp.Shared.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.Shared.xml",
+        "lib/net8.0-windows7.0/PdfSharp.Snippets-wpf.dll",
+        "lib/net8.0-windows7.0/PdfSharp.Snippets-wpf.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.System.dll",
+        "lib/net8.0-windows7.0/PdfSharp.System.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.System.xml",
+        "lib/net8.0-windows7.0/PdfSharp.WPFonts.dll",
+        "lib/net8.0-windows7.0/PdfSharp.WPFonts.pdb",
+        "lib/net8.0-windows7.0/PdfSharp.WPFonts.xml",
+        "lib/net9.0-windows7.0/PdfSharp-wpf.dll",
+        "lib/net9.0-windows7.0/PdfSharp-wpf.pdb",
+        "lib/net9.0-windows7.0/PdfSharp-wpf.xml",
+        "lib/net9.0-windows7.0/PdfSharp.BarCodes-wpf.dll",
+        "lib/net9.0-windows7.0/PdfSharp.BarCodes-wpf.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.BarCodes-wpf.xml",
+        "lib/net9.0-windows7.0/PdfSharp.Charting-wpf.dll",
+        "lib/net9.0-windows7.0/PdfSharp.Charting-wpf.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.Charting-wpf.xml",
+        "lib/net9.0-windows7.0/PdfSharp.Cryptography.dll",
+        "lib/net9.0-windows7.0/PdfSharp.Cryptography.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.Cryptography.xml",
+        "lib/net9.0-windows7.0/PdfSharp.Quality-wpf.dll",
+        "lib/net9.0-windows7.0/PdfSharp.Quality-wpf.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.Quality-wpf.xml",
+        "lib/net9.0-windows7.0/PdfSharp.Shared.dll",
+        "lib/net9.0-windows7.0/PdfSharp.Shared.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.Shared.xml",
+        "lib/net9.0-windows7.0/PdfSharp.Snippets-wpf.dll",
+        "lib/net9.0-windows7.0/PdfSharp.Snippets-wpf.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.System.dll",
+        "lib/net9.0-windows7.0/PdfSharp.System.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.System.xml",
+        "lib/net9.0-windows7.0/PdfSharp.WPFonts.dll",
+        "lib/net9.0-windows7.0/PdfSharp.WPFonts.pdb",
+        "lib/net9.0-windows7.0/PdfSharp.WPFonts.xml",
+        "pdfsharp-wpf.6.2.4.nupkg.sha512",
+        "pdfsharp-wpf.nuspec"
+      ]
+    },
+    "PdfRescue.Core/1.0.0": {
+      "type": "project",
+      "path": "../PdfRescue.Core/PdfRescue.Core.csproj",
+      "msbuildProject": "../PdfRescue.Core/PdfRescue.Core.csproj"
+    },
+    "PdfRescue.Infrastructure/1.0.0": {
+      "type": "project",
+      "path": "../PdfRescue.Infrastructure/PdfRescue.Infrastructure.csproj",
+      "msbuildProject": "../PdfRescue.Infrastructure/PdfRescue.Infrastructure.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net10.0-windows10.0.19041": [
+      "PDFiumCore >= 153.0.7999",
+      "PDFsharp-WPF >= 6.2.4",
+      "PdfRescue.Core >= 1.0.0",
+      "PdfRescue.Infrastructure >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\runneradmin\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.App\\PdfRescue.App.csproj",
+      "projectName": "AsantePDF",
+      "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.App\\PdfRescue.App.csproj",
+      "packagesPath": "C:\\Users\\runneradmin\\.nuget\\packages\\",
+      "outputPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.App\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\runneradmin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net10.0-windows10.0.19041.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net10.0-windows10.0.19041": {
+          "targetAlias": "net10.0-windows10.0.19041.0",
+          "projectReferences": {
+            "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
+              "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj"
+            },
+            "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj": {
+              "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "all"
+      },
+      "SdkAnalysisLevel": "10.0.200"
+    },
+    "frameworks": {
+      "net10.0-windows10.0.19041": {
+        "targetAlias": "net10.0-windows10.0.19041.0",
+        "dependencies": {
+          "PDFiumCore": {
+            "target": "Package",
+            "version": "[153.0.7999, )"
+          },
+          "PDFsharp-WPF": {
+            "target": "Package",
+            "version": "[6.2.4, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.Windows.SDK.NET.Ref",
+            "version": "[10.0.19041.57, 10.0.19041.57]"
+          }
+        ],
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.Windows.SDK.NET.Ref.Windows": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WPF": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json",
+        "packagesToPrune": {
+          "Microsoft.CSharp": "(,4.7.32767]",
+          "Microsoft.VisualBasic": "(,10.4.32767]",
+          "Microsoft.Win32.Primitives": "(,4.3.32767]",
+          "Microsoft.Win32.Registry": "(,5.0.32767]",
+          "Microsoft.Win32.Registry.AccessControl": "(,10.0.32767]",
+          "Microsoft.Win32.SystemEvents": "(,10.0.32767]",
+          "runtime.any.System.Collections": "(,4.3.32767]",
+          "runtime.any.System.Diagnostics.Tools": "(,4.3.32767]",
+          "runtime.any.System.Diagnostics.Tracing": "(,4.3.32767]",
+          "runtime.any.System.Globalization": "(,4.3.32767]",
+          "runtime.any.System.Globalization.Calendars": "(,4.3.32767]",
+          "runtime.any.System.IO": "(,4.3.32767]",
+          "runtime.any.System.Reflection": "(,4.3.32767]",
+          "runtime.any.System.Reflection.Extensions": "(,4.3.32767]",
+          "runtime.any.System.Reflection.Primitives": "(,4.3.32767]",
+          "runtime.any.System.Resources.ResourceManager": "(,4.3.32767]",
+          "runtime.any.System.Runtime": "(,4.3.32767]",
+          "runtime.any.System.Runtime.Handles": "(,4.3.32767]",
+          "runtime.any.System.Runtime.InteropServices": "(,4.3.32767]",
+          "runtime.any.System.Text.Encoding": "(,4.3.32767]",
+          "runtime.any.System.Text.Encoding.Extensions": "(,4.3.32767]",
+          "runtime.any.System.Threading.Tasks": "(,4.3.32767]",
+          "runtime.any.System.Threading.Timer": "(,4.3.32767]",
+          "runtime.aot.System.Collections": "(,4.3.32767]",
+          "runtime.aot.System.Diagnostics.Tools": "(,4.3.32767]",
+          "runtime.aot.System.Diagnostics.Tracing": "(,4.3.32767]",
+          "runtime.aot.System.Globalization": "(,4.3.32767]",
+          "runtime.aot.System.Globalization.Calendars": "(,4.3.32767]",
+          "runtime.aot.System.IO": "(,4.3.32767]",
+          "runtime.aot.System.Reflection": "(,4.3.32767]",
+          "runtime.aot.System.Reflection.Extensions": "(,4.3.32767]",
+          "runtime.aot.System.Reflection.Primitives": "(,4.3.32767]",
+          "runtime.aot.System.Resources.ResourceManager": "(,4.3.32767]",
+          "runtime.aot.System.Runtime": "(,4.3.32767]",
+          "runtime.aot.System.Runtime.Handles": "(,4.3.32767]",
+          "runtime.aot.System.Runtime.InteropServices": "(,4.3.32767]",
+          "runtime.aot.System.Text.Encoding": "(,4.3.32767]",
+          "runtime.aot.System.Text.Encoding.Extensions": "(,4.3.32767]",
+          "runtime.aot.System.Threading.Tasks": "(,4.3.32767]",
+          "runtime.aot.System.Threading.Timer": "(,4.3.32767]",
+          "runtime.debian.8-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.debian.8-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.debian.8-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.debian.8-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.debian.8-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.debian.9-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.debian.9-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.debian.9-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.debian.9-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.fedora.23-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.fedora.23-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.fedora.23-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.fedora.23-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.fedora.24-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.fedora.24-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.fedora.24-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.fedora.24-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.fedora.27-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.fedora.27-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.fedora.27-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.fedora.27-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.fedora.28-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.fedora.28-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.fedora.28-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.fedora.28-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.opensuse.13.2-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.opensuse.13.2-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.opensuse.13.2-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.opensuse.13.2-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.opensuse.42.1-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.opensuse.42.1-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.opensuse.42.1-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.opensuse.42.1-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.opensuse.42.3-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.opensuse.42.3-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.opensuse.42.3-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.opensuse.42.3-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple": "(,4.3.32767]",
+          "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.rhel.7-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.rhel.7-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.rhel.7-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.rhel.7-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.ubuntu.14.04-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.ubuntu.14.04-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.ubuntu.14.04-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.ubuntu.14.04-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.ubuntu.16.04-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.ubuntu.16.04-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.ubuntu.16.04-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.ubuntu.16.04-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.ubuntu.16.10-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.ubuntu.16.10-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.ubuntu.16.10-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.ubuntu.16.10-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography": "(,4.3.32767]",
+          "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl": "(,4.3.32767]",
+          "runtime.ubuntu.18.04-x64.runtime.native.System": "(,4.3.32767]",
+          "runtime.ubuntu.18.04-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.ubuntu.18.04-x64.runtime.native.System.Net.Http": "(,4.3.32767]",
+          "runtime.ubuntu.18.04-x64.runtime.native.System.Net.Security": "(,4.3.32767]",
+          "runtime.unix.Microsoft.Win32.Primitives": "(,4.3.32767]",
+          "runtime.unix.System.Console": "(,4.3.32767]",
+          "runtime.unix.System.Diagnostics.Debug": "(,4.3.32767]",
+          "runtime.unix.System.IO.FileSystem": "(,4.3.32767]",
+          "runtime.unix.System.Net.Primitives": "(,4.3.32767]",
+          "runtime.unix.System.Net.Sockets": "(,4.3.32767]",
+          "runtime.unix.System.Private.Uri": "(,4.3.32767]",
+          "runtime.unix.System.Runtime.Extensions": "(,4.3.32767]",
+          "runtime.win.Microsoft.Win32.Primitives": "(,4.3.32767]",
+          "runtime.win.System.Console": "(,4.3.32767]",
+          "runtime.win.System.Diagnostics.Debug": "(,4.3.32767]",
+          "runtime.win.System.IO.FileSystem": "(,4.3.32767]",
+          "runtime.win.System.Net.Primitives": "(,4.3.32767]",
+          "runtime.win.System.Net.Sockets": "(,4.3.32767]",
+          "runtime.win.System.Runtime.Extensions": "(,4.3.32767]",
+          "runtime.win10-arm-aot.runtime.native.System.IO.Compression": "(,4.0.32767]",
+          "runtime.win10-arm64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.win10-x64-aot.runtime.native.System.IO.Compression": "(,4.0.32767]",
+          "runtime.win10-x86-aot.runtime.native.System.IO.Compression": "(,4.0.32767]",
+          "runtime.win7-x64.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.win7-x86.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "runtime.win7.System.Private.Uri": "(,4.3.32767]",
+          "runtime.win8-arm.runtime.native.System.IO.Compression": "(,4.3.32767]",
+          "System.AppContext": "(,4.3.32767]",
+          "System.Buffers": "(,5.0.32767]",
+          "System.CodeDom": "(,10.0.32767]",
+          "System.Collections": "(,4.3.32767]",
+          "System.Collections.Concurrent": "(,4.3.32767]",
+          "System.Collections.Immutable": "(,10.0.32767]",
+          "System.Collections.NonGeneric": "(,4.3.32767]",
+          "System.Collections.Specialized": "(,4.3.32767]",
+          "System.ComponentModel": "(,4.3.32767]",
+          "System.ComponentModel.Annotations": "(,4.3.32767]",
+          "System.ComponentModel.EventBasedAsync": "(,4.3.32767]",
+          "System.ComponentModel.Primitives": "(,4.3.32767]",
+          "System.ComponentModel.TypeConverter": "(,4.3.32767]",
+          "System.Configuration.ConfigurationManager": "(,10.0.32767]",
+          "System.Console": "(,4.3.32767]",
+          "System.Data.Common": "(,4.3.32767]",
+          "System.Data.DataSetExtensions": "(,4.4.32767]",
+          "System.Diagnostics.Contracts": "(,4.3.32767]",
+          "System.Diagnostics.Debug": "(,4.3.32767]",
+          "System.Diagnostics.DiagnosticSource": "(,10.0.32767]",
+          "System.Diagnostics.EventLog": "(,10.0.32767]",
+          "System.Diagnostics.FileVersionInfo": "(,4.3.32767]",
+          "System.Diagnostics.PerformanceCounter": "(,10.0.32767]",
+          "System.Diagnostics.Process": "(,4.3.32767]",
+          "System.Diagnostics.StackTrace": "(,4.3.32767]",
+          "System.Diagnostics.TextWriterTraceListener": "(,4.3.32767]",
+          "System.Diagnostics.Tools": "(,4.3.32767]",
+          "System.Diagnostics.TraceSource": "(,4.3.32767]",
+          "System.Diagnostics.Tracing": "(,4.3.32767]",
+          "System.DirectoryServices": "(,10.0.32767]",
+          "System.Drawing.Common": "(,10.0.32767]",
+          "System.Drawing.Primitives": "(,4.3.32767]",
+          "System.Dynamic.Runtime": "(,4.3.32767]",
+          "System.Formats.Asn1": "(,10.0.32767]",
+          "System.Formats.Nrbf": "(,10.0.32767]",
+          "System.Formats.Tar": "(,10.0.32767]",
+          "System.Globalization": "(,4.3.32767]",
+          "System.Globalization.Calendars": "(,4.3.32767]",
+          "System.Globalization.Extensions": "(,4.3.32767]",
+          "System.IO": "(,4.3.32767]",
+          "System.IO.Compression": "(,4.3.32767]",
+          "System.IO.Compression.ZipFile": "(,4.3.32767]",
+          "System.IO.FileSystem": "(,4.3.32767]",
+          "System.IO.FileSystem.AccessControl": "(,4.4.32767]",
+          "System.IO.FileSystem.DriveInfo": "(,4.3.32767]",
+          "System.IO.FileSystem.Primitives": "(,4.3.32767]",
+          "System.IO.FileSystem.Watcher": "(,4.3.32767]",
+          "System.IO.IsolatedStorage": "(,4.3.32767]",
+          "System.IO.MemoryMappedFiles": "(,4.3.32767]",
+          "System.IO.Packaging": "(,10.0.32767]",
+          "System.IO.Pipelines": "(,10.0.32767]",
+          "System.IO.Pipes": "(,4.3.32767]",
+          "System.IO.Pipes.AccessControl": "(,5.0.32767]",
+          "System.IO.UnmanagedMemoryStream": "(,4.3.32767]",
+          "System.Linq": "(,4.3.32767]",
+          "System.Linq.AsyncEnumerable": "(,10.0.32767]",
+          "System.Linq.Expressions": "(,4.3.32767]",
+          "System.Linq.Parallel": "(,4.3.32767]",
+          "System.Linq.Queryable": "(,4.3.32767]",
+          "System.Memory": "(,5.0.32767]",
+          "System.Net.Http": "(,4.3.32767]",
+          "System.Net.Http.Json": "(,10.0.32767]",
+          "System.Net.NameResolution": "(,4.3.32767]",
+          "System.Net.NetworkInformation": "(,4.3.32767]",
+          "System.Net.Ping": "(,4.3.32767]",
+          "System.Net.Primitives": "(,4.3.32767]",
+          "System.Net.Requests": "(,4.3.32767]",
+          "System.Net.Security": "(,4.3.32767]",
+          "System.Net.ServerSentEvents": "(,10.0.32767]",
+          "System.Net.Sockets": "(,4.3.32767]",
+          "System.Net.WebHeaderCollection": "(,4.3.32767]",
+          "System.Net.WebSockets": "(,4.3.32767]",
+          "System.Net.WebSockets.Client": "(,4.3.32767]",
+          "System.Numerics.Vectors": "(,5.0.32767]",
+          "System.ObjectModel": "(,4.3.32767]",
+          "System.Private.DataContractSerialization": "(,4.3.32767]",
+          "System.Private.Uri": "(,4.3.32767]",
+          "System.Reflection": "(,4.3.32767]",
+          "System.Reflection.DispatchProxy": "(,6.0.32767]",
+          "System.Reflection.Emit": "(,4.7.32767]",
+          "System.Reflection.Emit.ILGeneration": "(,4.7.32767]",
+          "System.Reflection.Emit.Lightweight": "(,4.7.32767]",
+          "System.Reflection.Extensions": "(,4.3.32767]",
+          "System.Reflection.Metadata": "(,10.0.32767]",
+          "System.Reflection.Primitives": "(,4.3.32767]",
+          "System.Reflection.TypeExtensions": "(,4.3.32767]",
+          "System.Resources.Extensions": "(,10.0.32767]",
+          "System.Resources.Reader": "(,4.3.32767]",
+          "System.Resources.ResourceManager": "(,4.3.32767]",
+          "System.Resources.Writer": "(,4.3.32767]",
+          "System.Runtime": "(,4.3.32767]",
+          "System.Runtime.CompilerServices.Unsafe": "(,7.0.32767]",
+          "System.Runtime.CompilerServices.VisualC": "(,4.3.32767]",
+          "System.Runtime.Extensions": "(,4.3.32767]",
+          "System.Runtime.Handles": "(,4.3.32767]",
+          "System.Runtime.InteropServices": "(,4.3.32767]",
+          "System.Runtime.InteropServices.RuntimeInformation": "(,4.3.32767]",
+          "System.Runtime.Loader": "(,4.3.32767]",
+          "System.Runtime.Numerics": "(,4.3.32767]",
+          "System.Runtime.Serialization.Formatters": "(,4.3.32767]",
+          "System.Runtime.Serialization.Json": "(,4.3.32767]",
+          "System.Runtime.Serialization.Primitives": "(,4.3.32767]",
+          "System.Runtime.Serialization.Xml": "(,4.3.32767]",
+          "System.Security.AccessControl": "(,6.0.32767]",
+          "System.Security.Claims": "(,4.3.32767]",
+          "System.Security.Cryptography.Algorithms": "(,4.3.32767]",
+          "System.Security.Cryptography.Cng": "(,5.0.32767]",
+          "System.Security.Cryptography.Csp": "(,4.3.32767]",
+          "System.Security.Cryptography.Encoding": "(,4.3.32767]",
+          "System.Security.Cryptography.OpenSsl": "(,5.0.32767]",
+          "System.Security.Cryptography.Pkcs": "(,10.0.32767]",
+          "System.Security.Cryptography.Primitives": "(,4.3.32767]",
+          "System.Security.Cryptography.ProtectedData": "(,10.0.32767]",
+          "System.Security.Cryptography.X509Certificates": "(,4.3.32767]",
+          "System.Security.Cryptography.Xml": "(,10.0.32767]",
+          "System.Security.Permissions": "(,10.0.32767]",
+          "System.Security.Principal": "(,4.3.32767]",
+          "System.Security.Principal.Windows": "(,5.0.32767]",
+          "System.Security.SecureString": "(,4.3.32767]",
+          "System.Text.Encoding": "(,4.3.32767]",
+          "System.Text.Encoding.CodePages": "(,10.0.32767]",
+          "System.Text.Encoding.Extensions": "(,4.3.32767]",
+          "System.Text.Encodings.Web": "(,10.0.32767]",
+          "System.Text.Json": "(,10.0.32767]",
+          "System.Text.RegularExpressions": "(,4.3.32767]",
+          "System.Threading": "(,4.3.32767]",
+          "System.Threading.AccessControl": "(,10.0.32767]",
+          "System.Threading.Channels": "(,10.0.32767]",
+          "System.Threading.Overlapped": "(,4.3.32767]",
+          "System.Threading.Tasks": "(,4.3.32767]",
+          "System.Threading.Tasks.Dataflow": "(,10.0.32767]",
+          "System.Threading.Tasks.Extensions": "(,5.0.32767]",
+          "System.Threading.Tasks.Parallel": "(,4.3.32767]",
+          "System.Threading.Thread": "(,4.3.32767]",
+          "System.Threading.ThreadPool": "(,4.3.32767]",
+          "System.Threading.Timer": "(,4.3.32767]",
+          "System.ValueTuple": "(,4.5.32767]",
+          "System.Windows.Extensions": "(,10.0.32767]",
+          "System.Xml.ReaderWriter": "(,4.3.32767]",
+          "System.Xml.XDocument": "(,4.3.32767]",
+          "System.Xml.XmlDocument": "(,4.3.32767]",
+          "System.Xml.XmlSerializer": "(,4.3.32767]",
+          "System.Xml.XPath": "(,4.3.32767]",
+          "System.Xml.XPath.XDocument": "(,5.0.32767]"
+        }
+      }
+    }
+  }
+}

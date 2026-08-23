@@ -1,0 +1,15 @@
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\bin\Release\net10.0\PdfRescue.Infrastructure.deps.json
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\bin\Release\net10.0\PdfRescue.Infrastructure.dll
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\bin\Release\net10.0\PdfRescue.Infrastructure.pdb
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\bin\Release\net10.0\PdfRescue.Core.dll
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\bin\Release\net10.0\PdfRescue.Core.pdb
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.csproj.AssemblyReference.cache
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.AssemblyInfoInputs.cache
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.AssemblyInfo.cs
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.csproj.CoreCompileInputs.cache
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescu.D51B2588.Up2Date
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.dll
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\refint\PdfRescue.Infrastructure.dll
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\PdfRescue.Infrastructure.pdb
+D:\a\_temp\asantepdf-normalized\src\PdfRescue.Infrastructure\obj\Release\net10.0\ref\PdfRescue.Infrastructure.dll
