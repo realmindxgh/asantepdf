@@ -348,11 +348,13 @@ public partial class MainWindow
     {
         PagesList.Visibility = Visibility.Visible;
         NavigationPlaceholder.Visibility = Visibility.Collapsed;
+        SearchResultsPanel.Visibility = Visibility.Collapsed;
     }
 
     private void PageModePlaceholder_Click(object sender, RoutedEventArgs e)
     {
         PagesList.Visibility = Visibility.Collapsed;
+        SearchResultsPanel.Visibility = Visibility.Collapsed;
         NavigationPlaceholder.Visibility = Visibility.Visible;
     }
 }

@@ -136,6 +136,7 @@ public partial class MainWindow : Window
             token.ThrowIfCancellationRequested();
 
             _currentPdf = fullPath;
+            ResetDocumentSearchForDocumentChange();
             _documentGeneration++;
             _undo.Clear();
             _redo.Clear();
@@ -209,6 +210,7 @@ public partial class MainWindow : Window
             PreviewImage.Width = bitmap.PixelWidth;
             PageStatusText.Text = $"Page {page.Position:N0} of {Pages.Count:N0}";
             UpdateZoomText();
+            RefreshDocumentSearchHighlights(page);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -1803,6 +1805,7 @@ public partial class MainWindow : Window
         else if (ctrl && e.Key == Key.W) { if (_activeDocumentTab is not null) _ = CloseDocumentTabAsync(_activeDocumentTab); e.Handled = true; }
         else if (ctrl && shift && e.Key == Key.T) { _ = ReopenLastClosedDocumentTabAsync(); e.Handled = true; }
         else if (ctrl && e.Key == Key.O) { OpenPdf_Click(sender, new RoutedEventArgs()); e.Handled = true; }
+        else if (ctrl && e.Key == Key.F) { FocusDocumentSearch(); e.Handled = true; }
         else if (ctrl && shift && e.Key == Key.S) { SaveAs_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Z) { Undo_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Y) { Redo_Click(sender, new RoutedEventArgs()); e.Handled = true; }
