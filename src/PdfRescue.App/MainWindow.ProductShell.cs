@@ -28,6 +28,7 @@ public partial class MainWindow
 
         _homeContent = EmptyPanel.Child;
         _taskCenterView = new TaskCenterView(_taskCenterService);
+        InitializeDocumentTabs();
 
         _recentFilesView = new RecentFilesView();
         _recentFilesView.SetService(_recentDocuments);

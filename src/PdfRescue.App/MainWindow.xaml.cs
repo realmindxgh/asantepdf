@@ -123,13 +123,13 @@ public partial class MainWindow : Window
     private async Task OpenPdfAsync(string path)
     {
         if (_busy || !File.Exists(path)) return;
-        if (!await ConfirmDocumentReplacementAsync("opening another PDF")) return;
+        var fullPath = Path.GetFullPath(path);
+        if (await TryActivateExistingDocumentTabAsync(fullPath)) return;
+        if (!_productShellInitialized && !await ConfirmDocumentReplacementAsync("opening another PDF")) return;
 
         _thumbnailCts?.Cancel();
         _thumbnailCts?.Dispose();
         _thumbnailCts = null;
-
-        var fullPath = Path.GetFullPath(path);
         var opened = await RunBusyAsync("Opening PDF...", async token =>
         {
             await _renderer.OpenAsync(fullPath, token);
@@ -173,6 +173,7 @@ public partial class MainWindow : Window
 
         if (!opened || _currentPdf is null) return;
 
+        await SynchronizeDocumentTabAfterOpenAsync(_currentPdf);
         AddRecentDocument(_currentPdf);
         UpdateCommandStates();
         StartThumbnailRendering(_documentGeneration);
@@ -1320,7 +1321,7 @@ public partial class MainWindow : Window
     private async void MainWindow_Closing(object? sender, CancelEventArgs e)
     {
         if (_closeAfterConfirmation) return;
-        if (!_busy && !HasUnsavedLayoutChanges()) return;
+        if (!_busy && !HasUnsavedLayoutChanges() && !HasInactiveDirtyDocumentTabs()) return;
 
         e.Cancel = true;
         if (_closeConfirmationInProgress) return;
@@ -1352,6 +1353,7 @@ public partial class MainWindow : Window
             }
 
             if (!await ConfirmDocumentReplacementAsync("closing AsantePDF")) return;
+            if (!ConfirmDiscardInactiveDirtyTabsForExit()) return;
 
             _closeAfterConfirmation = true;
             Close();
@@ -1548,6 +1550,7 @@ public partial class MainWindow : Window
         if (_currentPdf is null) return;
         var fileName = Path.GetFileName(_currentPdf);
         DocumentTitle.Text = HasUnsavedLayoutChanges() ? fileName + " *" : fileName;
+        UpdateActiveDocumentTabDirtyState();
     }
 
     private bool HasLayoutChanges()
@@ -1726,7 +1729,10 @@ public partial class MainWindow : Window
         var ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
         var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
 
-        if (ctrl && e.Key == Key.O) { OpenPdf_Click(sender, new RoutedEventArgs()); e.Handled = true; }
+        if (ctrl && e.Key == Key.Tab) { _ = ActivateAdjacentDocumentTabAsync(shift); e.Handled = true; }
+        else if (ctrl && e.Key == Key.W) { if (_activeDocumentTab is not null) _ = CloseDocumentTabAsync(_activeDocumentTab); e.Handled = true; }
+        else if (ctrl && shift && e.Key == Key.T) { _ = ReopenLastClosedDocumentTabAsync(); e.Handled = true; }
+        else if (ctrl && e.Key == Key.O) { OpenPdf_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && shift && e.Key == Key.S) { SaveAs_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Z) { Undo_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Y) { Redo_Click(sender, new RoutedEventArgs()); e.Handled = true; }

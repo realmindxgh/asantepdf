@@ -118,17 +118,50 @@
                     <Border Grid.Row="0" Background="#0B1724" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Stretch">
-                                <Border Background="#132236" BorderBrush="#2D7DFF" BorderThickness="0,2,0,0" MinWidth="250" Padding="14,0" Margin="8,0,0,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                        <TextBlock x:Name="DocumentTitle" Text="No document open" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="1" Text="×" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" />
-                                        <TextBlock x:Name="DocumentMeta" Visibility="Collapsed" />
-                                    </Grid>
-                                </Border>
-                                <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
-                            </StackPanel>
+                            <ListBox x:Name="DocumentTabsList" Grid.Column="0" SelectionMode="Single"
+                                     SelectionChanged="DocumentTabsList_SelectionChanged"
+                                     PreviewMouseLeftButtonDown="DocumentTabsList_PreviewMouseLeftButtonDown"
+                                     PreviewMouseMove="DocumentTabsList_PreviewMouseMove"
+                                     PreviewMouseDown="DocumentTabsList_PreviewMouseDown"
+                                     AllowDrop="True" DragOver="DocumentTabsList_DragOver" Drop="DocumentTabsList_Drop"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     Margin="8,0,0,0">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0,2,0,0" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Margin" Value="0" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#132236" />
+                                                <Setter Property="BorderBrush" Value="#2D7DFF" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid MinWidth="190" MaxWidth="280" Height="40" Margin="4,0">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding DisplayTitle}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis" Margin="10,0,4,0" ToolTip="{Binding Path}" />
+                                            <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Content="×"
+                                                    Click="DocumentTabClose_Click" Width="30" Height="28" Padding="0" Margin="2,0,4,0"
+                                                    ToolTip="Close tab (Ctrl+W)" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
+                            <TextBlock x:Name="DocumentTitle" Text="No document open" Visibility="Collapsed" />
+                            <TextBlock x:Name="DocumentMeta" Visibility="Collapsed" />
                         </Grid>
                     </Border>
 
