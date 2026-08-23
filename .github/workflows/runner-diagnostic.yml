@@ -14,14 +14,14 @@ jobs:
         run: echo "Hosted Ubuntu runner reached its first step."
 
   normalize-asantepdf-development:
-    if: github.head_ref == 'development/master-upgrade'
+    if: github.head_ref == 'development/master-upgrade-v2'
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
       - name: Check out development branch
         uses: actions/checkout@v4
         with:
-          ref: development/master-upgrade
+          ref: development/master-upgrade-v2
           fetch-depth: 0
 
       - name: Check whether normalization is needed
@@ -124,4 +124,4 @@ The product target remains `ASANTEPDF_MASTER_UPGRADE_SPEC.md`, `IMPLEMENTATION_M
           git add src tests assets installer scripts AsantePDF.sln Directory.Build.props global.json VERSION .gitignore THIRD-PARTY-NOTICES.md RELEASE-ASANTEPDF.ps1 RC10-BUILD-PAYLOAD-SHA256.txt NORMALIZED_SOURCE.md docs/rc10-history
           if (git diff --cached --quiet) { throw 'Normalization produced no repository changes.' }
           git commit -m 'Promote verified RC10 source to normal development tree'
-          git push origin HEAD:development/master-upgrade
+          git push origin HEAD:development/master-upgrade-v2
