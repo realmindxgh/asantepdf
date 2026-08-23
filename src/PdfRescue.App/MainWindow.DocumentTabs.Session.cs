@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows;
 using PdfRescue.App.Services;
 
 namespace PdfRescue.App;
@@ -86,7 +87,7 @@ public partial class MainWindow
         if (PagesList.SelectedItem is PdfPageItem page)
             await RenderPreviewAsync(page);
 
-        Dispatcher.BeginInvoke(() =>
+        _ = Dispatcher.BeginInvoke(() =>
         {
             PreviewScroll.ScrollToHorizontalOffset(tab.HorizontalOffset);
             PreviewScroll.ScrollToVerticalOffset(tab.VerticalOffset);
