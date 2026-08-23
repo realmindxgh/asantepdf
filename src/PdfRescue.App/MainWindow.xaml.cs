@@ -137,6 +137,7 @@ public partial class MainWindow : Window
 
             _currentPdf = fullPath;
             ResetDocumentSearchForDocumentChange();
+            ResetDocumentOutlineForDocumentChange();
             _documentGeneration++;
             _undo.Clear();
             _redo.Clear();

@@ -326,6 +326,7 @@ public partial class MainWindow
         _savedLayoutBaseline = null;
         PreviewImage.Source = null;
         ResetDocumentSearchForDocumentChange();
+        ResetDocumentOutlineForDocumentChange();
         DocumentTitle.Text = "No document open";
         DocumentMeta.Text = string.Empty;
         InspectorFile.Text = "—";

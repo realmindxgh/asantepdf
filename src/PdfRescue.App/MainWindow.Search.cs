@@ -84,7 +84,7 @@ public partial class MainWindow
     private void ShowSearchSidebar()
     {
         PagesList.Visibility = Visibility.Collapsed;
-        NavigationPlaceholder.Visibility = Visibility.Collapsed;
+        BookmarksPanel.Visibility = Visibility.Collapsed;
         SearchResultsPanel.Visibility = Visibility.Visible;
         UpdateSearchEmptyState();
     }
@@ -295,6 +295,6 @@ public partial class MainWindow
         ClearDocumentSearch(clearText: true);
         PagesList.Visibility = Visibility.Visible;
         SearchResultsPanel.Visibility = Visibility.Collapsed;
-        NavigationPlaceholder.Visibility = Visibility.Collapsed;
+        BookmarksPanel.Visibility = Visibility.Collapsed;
     }
 }

@@ -292,7 +292,7 @@
                                 <Grid Grid.Row="0" Margin="8,6">
                                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                     <Button Grid.Column="0" Style="{StaticResource FlatButtonStyle}" Click="PageModePages_Click" Content="Pages" Padding="7,5" />
-                                    <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Click="PageModePlaceholder_Click" Content="Bookmarks" Padding="7,5" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" />
+                                    <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Click="PageModeBookmarks_Click" Content="Bookmarks" Padding="7,5" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" />
                                     <Button Grid.Column="2" Style="{StaticResource FlatButtonStyle}" Click="PageModeSearch_Click" Content="Search" Padding="7,5" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" />
                                 </Grid>
                                 <ListBox x:Name="PagesList" Grid.Row="1" SelectionMode="Extended" SelectionChanged="PagesList_SelectionChanged"
@@ -311,10 +311,33 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-                                <StackPanel x:Name="NavigationPlaceholder" Grid.Row="1" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="18">
-                                    <TextBlock Text="Bookmarks" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                                    <TextBlock Text="PDF outline and bookmark navigation are still being built." TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,6,0,0" />
-                                </StackPanel>
+                                <Grid x:Name="BookmarksPanel" Grid.Row="1" Visibility="Collapsed">
+                                    <TreeView x:Name="OutlineTree" Background="Transparent" BorderThickness="0" Margin="6"
+                                              SelectedItemChanged="OutlineTree_SelectedItemChanged"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <TreeView.ItemContainerStyle>
+                                            <Style TargetType="TreeViewItem">
+                                                <Setter Property="IsExpanded" Value="{Binding IsInitiallyExpanded}" />
+                                                <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                                                <Setter Property="Padding" Value="2" />
+                                            </Style>
+                                        </TreeView.ItemContainerStyle>
+                                        <TreeView.ItemTemplate>
+                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                <Grid Margin="2,3,4,3">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Title}" TextWrapping="Wrap" FontSize="12" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding PageLabel}" Foreground="{StaticResource MutedTextBrush}"
+                                                               FontSize="10" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </HierarchicalDataTemplate>
+                                        </TreeView.ItemTemplate>
+                                    </TreeView>
+                                    <TextBlock x:Name="BookmarksEmptyText" Text="Open Bookmarks to load this PDF's outline."
+                                               Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" TextAlignment="Center"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="190" Margin="18"
+                                               IsHitTestVisible="False" />
+                                </Grid>
                                 <Grid x:Name="SearchResultsPanel" Grid.Row="1" Visibility="Collapsed">
                                     <ListBox x:Name="SearchResultsList" Background="Transparent" BorderThickness="0" Margin="6"
                                              SelectionChanged="SearchResultsList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled">

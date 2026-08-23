@@ -32,6 +32,7 @@ public partial class MainWindow
         _taskCenterView = new TaskCenterView(_taskCenterService);
         _taskCenterView.OpenOutputRequested += OpenTaskOutputAsync;
         InitializeDocumentTabs();
+        InitializeDocumentOutline();
 
         _recentFilesView = new RecentFilesView();
         _recentFilesView.SetService(_recentDocuments);
@@ -347,14 +348,7 @@ public partial class MainWindow
     private void PageModePages_Click(object sender, RoutedEventArgs e)
     {
         PagesList.Visibility = Visibility.Visible;
-        NavigationPlaceholder.Visibility = Visibility.Collapsed;
+        BookmarksPanel.Visibility = Visibility.Collapsed;
         SearchResultsPanel.Visibility = Visibility.Collapsed;
-    }
-
-    private void PageModePlaceholder_Click(object sender, RoutedEventArgs e)
-    {
-        PagesList.Visibility = Visibility.Collapsed;
-        SearchResultsPanel.Visibility = Visibility.Collapsed;
-        NavigationPlaceholder.Visibility = Visibility.Visible;
     }
 }
