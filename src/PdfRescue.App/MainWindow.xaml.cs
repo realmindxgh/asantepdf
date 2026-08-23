@@ -1389,8 +1389,40 @@ public partial class MainWindow : Window
         ZoomButton.Content = $"{percent}%";
     }
 
+    private double _lastPagesSidebarWidth = 245;
+
     private void TogglePages_Click(object sender, RoutedEventArgs e) =>
-        PagesColumn.Width = PagesColumn.Width.Value == 0 ? new GridLength(230) : new GridLength(0);
+        SetPagesSidebarCollapsed(PagesColumn.Width.Value > 0);
+
+    private void CollapsePagesSidebar_Click(object sender, RoutedEventArgs e) =>
+        SetPagesSidebarCollapsed(true);
+
+    private void ExpandPagesSidebar_Click(object sender, RoutedEventArgs e) =>
+        SetPagesSidebarCollapsed(false);
+
+    private void SetPagesSidebarCollapsed(bool collapsed)
+    {
+        if (collapsed)
+        {
+            var currentWidth = PagesColumn.ActualWidth > 0 ? PagesColumn.ActualWidth : PagesColumn.Width.Value;
+            if (currentWidth >= 180) _lastPagesSidebarWidth = Math.Clamp(currentWidth, 180, 460);
+            PagesColumn.MinWidth = 0;
+            PagesColumn.Width = new GridLength(0);
+            PagesSplitterColumn.Width = new GridLength(0);
+            PagesNavigationBorder.Visibility = Visibility.Collapsed;
+            PagesSplitter.Visibility = Visibility.Collapsed;
+            ExpandPagesSidebarButton.Visibility = Visibility.Visible;
+            return;
+        }
+
+        PagesColumn.MinWidth = 180;
+        PagesColumn.MaxWidth = 460;
+        PagesColumn.Width = new GridLength(Math.Clamp(_lastPagesSidebarWidth, 180, 460));
+        PagesSplitterColumn.Width = new GridLength(5);
+        PagesNavigationBorder.Visibility = Visibility.Visible;
+        PagesSplitter.Visibility = Visibility.Visible;
+        ExpandPagesSidebarButton.Visibility = Visibility.Collapsed;
+    }
 
     private void ToggleInspector_Click(object sender, RoutedEventArgs e) =>
         InspectorColumn.Width = InspectorColumn.Width.Value == 0 ? new GridLength(300) : new GridLength(0);
