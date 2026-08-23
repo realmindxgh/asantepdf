@@ -1,0 +1,3 @@
+AsantePDF RC10 Windows release gate attempt 1
+Compact build payload SHA256: 5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486
+Triggered: 2026-08-23
