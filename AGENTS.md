@@ -7,9 +7,10 @@ This repository is the persistent source of truth for the AsantePDF project.
 1. Read `ASANTEPDF_MASTER_UPGRADE_SPEC.md` in full.
 2. Read `IMPLEMENTATION_MATRIX.md`.
 3. Review both visual targets:
-   - `docs/design/target-home.jpg`
-   - `docs/design/target-document-workspace.jpg`
-4. Read the current release workflow and any current continuation/state notes before modifying release engineering.
+   - `docs/design/target-home.svg`
+   - `docs/design/target-document-workspace.svg`
+4. Read `docs/PROJECT_STATE.md`.
+5. Read the current release workflow and any current continuation/state notes before modifying release engineering.
 
 ## Non-negotiable product rule
 
@@ -71,6 +72,6 @@ Keep the release-quality standard:
 
 ## Continuation rule for future chats/agents
 
-When asked to "continue AsantePDF", do not start by inventing a new roadmap. Read these repository files, inspect the implementation matrix, continue from the first incomplete/highest-priority accepted batch, and keep the matrix and continuation notes current.
+When asked to "continue AsantePDF", do not start by inventing a new roadmap. Read these repository files, inspect the implementation matrix, continue from the first incomplete/highest-priority batch, and keep the matrix and continuation notes current.
 
 Do not declare AsantePDF 1.0 final while material master-spec items remain unaccepted.
