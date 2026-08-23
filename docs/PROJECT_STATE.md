@@ -1,10 +1,10 @@
 # AsantePDF Project State
 
-Updated after the background Task Center queue expanded to six Windows-validated production workflows.
+Updated after renderer-isolated OCR and PDF export workflows reached a green Windows development gate.
 
 ## Engineering baseline
 
-RC10 remains the proven release-engineering baseline, not the finished product design. The full RC10 Windows release pipeline reached green on GitHub Actions run `32636807149`, including exact SDK selection, Windows x64 compilation, smoke tests, self-contained publish, bundled qpdf/Tesseract/LibreOffice validation, final-candidate tests, Inno Setup compilation, silent installation and installed-copy verification.
+RC10 remains the proven release-engineering baseline, not the finished product design. Full RC10 Windows release run `32636807149` proved x64 compilation, smoke tests, self-contained publish, qpdf/Tesseract/LibreOffice staging, final-candidate tests, Inno Setup compilation, silent installation and installed-copy verification.
 
 RC10 installer SHA256:
 
@@ -16,32 +16,27 @@ Branch: `development/master-upgrade-v2`
 
 Draft PR: `#3` — **AsantePDF master upgrade implementation**
 
-Development uses the normalized ordinary `src/`, `tests/`, `assets/`, `installer/` and `scripts/` tree.
+The normalized ordinary source tree is the working codebase.
 
 ## Current product architecture
 
 ### Home / Launcher
 
-Home is a genuine mode with Open PDF, standalone tool entry points, Recent/Starred navigation, asynchronous cached first-page thumbnails, Grid/List/Compact layouts, sorting, search, pinning, moved-file handling, context actions and Resume Last Session.
+Real Home mode with Open PDF, standalone tools, Recent/Starred, cached PDF thumbnails, Grid/List/Compact layouts, sorting, search, pinning, moved-file handling, context actions and Resume Last Session.
 
 ### Multi-document Document Workspace
 
-The workspace has real simultaneous tabs with independent page layout, saved baseline, selection, zoom, scroll and Undo/Redo. Tabs support active/dirty state, close buttons, drag reordering, middle-click close, scrollable overflow, Ctrl+Tab, Ctrl+W and Ctrl+Shift+T reopen. The proven PDFium renderer is transactionally reused on tab activation.
+Real tabs preserve independent page layout, baseline, selected page, zoom, scroll and Undo/Redo. Tabs support active/dirty state, close, drag reorder, middle-click close, overflow, Ctrl+Tab, Ctrl+W and Ctrl+Shift+T. The proven PDFium renderer is transactionally reused when the active tab changes.
 
 ### Session persistence
 
-`workspace-state.json` stores open tabs, active-tab index, page, zoom/render width, scroll position, Recent history and pin state. Resume Last Session restores all available saved tabs and returns to the saved active tab. Crash recovery and unsaved working-layout recovery remain.
+`workspace-state.json` stores the open tab set, active tab, page, zoom, scroll, Recent history and pin state. Resume restores all available tabs and the saved active tab. Crash recovery and unsaved working-layout recovery remain.
 
 ### Task System / Task Center
 
-Two execution paths now share the same Task Center:
+Foreground `RunBusyAsync` work and a real background queue feed the same Task Center. The queue is backed by the core `PdfJobQueue`, is single-worker, and is smoke-tested for pre-queued jobs, serialization and cancellation while queued.
 
-1. foreground operations tracked through `RunBusyAsync`
-2. independent queued jobs backed by the core `PdfJobQueue`
-
-Task Center currently supports Running, Queued, Completed, Failed and Cancelled states, progress/stage updates, elapsed time, Cancel, Open Result, clear-finished history and single-use Retry for retry-safe jobs.
-
-The core queue is single-worker and smoke-tested for genuine serialization, pre-queued jobs and queued cancellation. Users can continue working in other tabs while supported background jobs execute.
+Task Center supports Running, Queued, Completed, Failed and Cancelled states, progress/stage updates, elapsed time, Cancel, Open Result, clear-finished history and single-use Retry for retry-safe jobs.
 
 Current background-capable production workflows:
 
@@ -51,16 +46,28 @@ Current background-capable production workflows:
 - Unlock / Remove Password
 - Merge PDFs
 - Office → PDF
+- PDF → Word
+- PDF → Excel
+- PDF → PowerPoint
+- searchable OCR PDF
+- OCR text extraction
 
-Active-document jobs capture immutable page order/rotation state at queue time. Dirty layouts are materialized into isolated temporary PDFs and cleaned afterward, so later tab edits cannot change queued input. Unlock remains deliberately non-retryable because retaining its password for Retry would extend credential lifetime in memory.
+### Renderer-isolated OCR / conversion
 
-Merge and Office → PDF use captured input file paths and are independent of the active document renderer.
+Renderer-dependent queued work captures the active document path and page layout at queue time. Dirty layouts are first materialized into an isolated temporary PDF. The job then creates its **own PDFium renderer**, so later tab changes and the live preview renderer cannot alter the queued input.
+
+Word and Excel exports run local OCR page by page. Searchable OCR PDF and OCR text extraction do the same. PowerPoint uses isolated page rendering. Installed builds prefer bundled Tesseract for background OCR when available, with the existing local Windows OCR path retained as fallback.
+
+Page-level progress is reported in Task Center, including stages such as `Recognising page 18 of 64`.
 
 ### Result routing
 
-A shared completion workflow distinguishes original and result and supports Open in New Tab, safe Use Result Here, Open Folder, Save a Copy, Run Another and Close for the initial foreground set. Background outputs remain non-modal and reopen through Task Center.
+Task outputs are type-aware:
 
-Task Center output handling currently works naturally for PDF outputs. Before PDF-to-Word/Excel/PowerPoint are migrated to background execution, output opening must be generalized so non-PDF results launch in their associated Windows application rather than being sent to `OpenPdfAsync`.
+- `.pdf` opens as an AsantePDF tab
+- `.docx`, `.xlsx`, `.pptx`, `.txt` and other non-PDF files are launched through their associated Windows application
+
+The existing foreground completion dialog remains for the initial PDF transformations. Background results are deliberately non-modal and remain available from Task Center.
 
 ## Windows validation
 
@@ -69,27 +76,27 @@ Important green development gates include:
 - Architecture Batch 1: `32647383215`
 - Recent/session foundation: `32648130725`
 - Starred/Resume: `32648422410`
-- rolling architecture gate: `32649073796`
+- rolling architecture run: `32649073796`
 - multi-tab session job: `97221651603`
 - result-completion job: `97222420243`
-- first background queue job: `97232413507`
-- Merge/Office queue expansion job: `97232877751`
+- background queue job: `97232413507`
+- Merge/Office queue expansion: `97232877751`
+- renderer-isolated OCR/export: `97233635107`
 
-Job `97232877751` passed staged integration, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
+Job `97233635107` passed staged integration, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
 
-These are development gates, not the final installer/installed-copy acceptance gate.
+These are development gates, not the final installer acceptance gate.
 
 ## Immediate next work
 
-1. generalize Task Center output opening for non-PDF results
-2. build renderer-isolated background OCR with real `Recognising page X of N` progress
-3. migrate PDF → Word/Excel/PowerPoint onto that isolated OCR pipeline
-4. expand completion/result routing to split and remaining PDF-producing operations
-5. continue the full context-aware command audit
-6. implement real document search and bookmarks
-7. enrich Inspector and PDF Doctor states
-8. implement Light / Follow Windows themes and Settings
-9. visually inspect the running Windows UI against the canonical target screens
+1. implement real document search instead of the current disabled placeholder
+2. implement Bookmarks navigation
+3. expand split/multi-output completion workflows
+4. continue the context-aware command audit
+5. enrich Inspector and PDF Doctor states
+6. implement Light / Follow Windows themes and a real Settings experience
+7. add first-launch/privacy/recovery polish
+8. visually inspect the running Windows app against the canonical Home and Document target screens
 
 ## Product source of truth
 
@@ -118,4 +125,4 @@ For every coherent batch:
 
 ## Final-release rule
 
-Do not promote RC10 directly to AsantePDF 1.0 final. A future final release requires the material master-spec items to be accepted and the redesigned installed application to survive the full Windows release gate again.
+Do not promote RC10 directly to AsantePDF 1.0 final. A future final release requires material master-spec items to be accepted and the redesigned installed application to survive the full Windows release gate again.
