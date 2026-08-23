@@ -1247,6 +1247,8 @@ public partial class MainWindow : Window
         Progress.Maximum = Math.Max(1, total);
         Progress.Value = Math.Clamp(completed, 0, Math.Max(1, total));
         StatusText.Text = status;
+        if (_activeTaskCenterItem is not null)
+            _taskCenterService.ReportProgress(_activeTaskCenterItem, completed / (double)Math.Max(1, total), status);
     }
 
     private async void Doctor_Click(object sender, RoutedEventArgs e)
@@ -1409,6 +1411,7 @@ public partial class MainWindow : Window
         if (_busy) return false;
         _busy = true;
         _activeOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+        _activeTaskCenterItem = _taskCenterService.Start(status, () => _activeOperationCts?.Cancel());
         StatusText.Text = status;
         Progress.Visibility = Visibility.Visible;
         Progress.IsIndeterminate = true;
@@ -1418,15 +1421,18 @@ public partial class MainWindow : Window
         try
         {
             await operation(_activeOperationCts.Token);
+            _taskCenterService.Complete(_activeTaskCenterItem);
             return true;
         }
         catch (OperationCanceledException)
         {
+            _taskCenterService.Cancel(_activeTaskCenterItem);
             StatusText.Text = "Operation cancelled.";
             return false;
         }
         catch (Exception ex)
         {
+            _taskCenterService.Fail(_activeTaskCenterItem, ex);
             App.Log($"Operation failed [{status}]: {ex}");
             StatusText.Text = "Operation failed.";
             MessageBox.Show(this, ex.Message, "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -1439,6 +1445,7 @@ public partial class MainWindow : Window
             CancelButton.Visibility = Visibility.Collapsed;
             _activeOperationCts.Dispose();
             _activeOperationCts = null;
+            _activeTaskCenterItem = null;
             _busy = false;
             UpdateCommandStates();
         }

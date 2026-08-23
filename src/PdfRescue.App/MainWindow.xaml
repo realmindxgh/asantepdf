@@ -85,7 +85,7 @@
                         <Button Style="{StaticResource NavButtonStyle}" Click="DocumentNav_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Return to the active document">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Active Document"/></StackPanel>
                         </Button>
-                        <Button Style="{StaticResource NavButtonStyle}" IsEnabled="False" ToolTip="Task Center foundation is part of the master-upgrade branch">
+                        <Button Style="{StaticResource NavButtonStyle}" Click="TaskCenterNav_Click" ToolTip="View running and completed PDF tasks">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Task Center"/></StackPanel>
                         </Button>
                         <Separator Margin="16,14" Background="{StaticResource BorderBrushSoft}" />
