@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after renderer-isolated OCR and PDF export workflows reached a green Windows development gate.
+Updated after native active-document search reached a green Windows development gate.
 
 ## Engineering baseline
 
@@ -54,11 +54,31 @@ Current background-capable production workflows:
 
 ### Renderer-isolated OCR / conversion
 
-Renderer-dependent queued work captures the active document path and page layout at queue time. Dirty layouts are first materialized into an isolated temporary PDF. The job then creates its **own PDFium renderer**, so later tab changes and the live preview renderer cannot alter the queued input.
+Renderer-dependent queued work captures the active document path and page layout at queue time. Dirty layouts are first materialized into an isolated temporary PDF. The job then creates its own PDFium renderer, so later tab changes and the live preview renderer cannot alter queued input.
 
 Word and Excel exports run local OCR page by page. Searchable OCR PDF and OCR text extraction do the same. PowerPoint uses isolated page rendering. Installed builds prefer bundled Tesseract for background OCR when available, with the existing local Windows OCR path retained as fallback.
 
 Page-level progress is reported in Task Center, including stages such as `Recognising page 18 of 64`.
+
+### Native document search
+
+`DocumentSearchService` now builds a cached PDFium text index directly from the active PDF text layer. It extracts Unicode plus normalized character geometry, then returns page/snippet/highlight data.
+
+The document workspace now provides:
+
+- Ctrl+F
+- live search box in the document navigation strip
+- Enter / Shift+Enter and explicit previous/next match controls
+- current-result / total-result count
+- Search Results left-sidebar mode with snippets
+- result selection that navigates to the corresponding working-layout page
+- translucent on-page highlights for all current-page matches
+- stronger emphasis for the active match
+- clear-search without moving the document position
+
+Search results are mapped through the current unsaved working layout rather than assuming original page order. Deleted pages are excluded; duplicated source pages duplicate their matching results. OCR-generated searchable PDFs participate naturally because they contain a real PDF text layer.
+
+The search index cache is invalidated by file length/modification identity. Search resets when the active document context changes.
 
 ### Result routing
 
@@ -82,20 +102,21 @@ Important green development gates include:
 - background queue job: `97232413507`
 - Merge/Office queue expansion: `97232877751`
 - renderer-isolated OCR/export: `97233635107`
+- native document search: `97236130041`
 
-Job `97233635107` passed staged integration, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
+Job `97236130041` passed staged integration, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
 
-These are development gates, not the final installer acceptance gate.
+These are development gates, not the final installer acceptance gate. Native search remains `IMPLEMENTED, NOT ACCEPTED` until hands-on visual/runtime verification is completed.
 
 ## Immediate next work
 
-1. implement real document search instead of the current disabled placeholder
-2. implement Bookmarks navigation
-3. expand split/multi-output completion workflows
-4. continue the context-aware command audit
-5. enrich Inspector and PDF Doctor states
-6. implement Light / Follow Windows themes and a real Settings experience
-7. add first-launch/privacy/recovery polish
+1. implement real Bookmarks / PDF Outline navigation
+2. expand split/multi-output completion workflows
+3. continue the context-aware command audit
+4. enrich Inspector and PDF Doctor states
+5. implement Light / Follow Windows themes and a real Settings experience
+6. add first-launch/privacy/recovery polish
+7. implement remaining viewing modes and split-view comparison
 8. visually inspect the running Windows app against the canonical Home and Document target screens
 
 ## Product source of truth
