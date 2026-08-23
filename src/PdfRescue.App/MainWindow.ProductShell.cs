@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using PdfRescue.App.Services;
 
@@ -12,6 +13,7 @@ public partial class MainWindow
 {
     private readonly RecentDocumentService _recentDocuments = new();
     private RecentFilesView? _recentFilesView;
+    private DispatcherTimer? _sessionPersistTimer;
     private string? _lastRecentRecordedPath;
     private bool _productShellInitialized;
 
@@ -27,11 +29,22 @@ public partial class MainWindow
         HomeRecentSection.Children.Clear();
         HomeRecentSection.Children.Add(_recentFilesView);
 
+        _sessionPersistTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(450)
+        };
+        _sessionPersistTimer.Tick += (_, _) =>
+        {
+            _sessionPersistTimer.Stop();
+            WriteWorkspacePosition();
+        };
+
         PagesList.SelectionChanged += ProductShell_PagesSelectionChanged;
         PreviewImage.SizeChanged += ProductShell_PreviewSizeChanged;
         Closing += ProductShell_Closing;
 
         LoadHomeRecents();
+        RefreshResumeCommandState();
         RefreshProductShellMode();
     }
 
@@ -63,9 +76,32 @@ public partial class MainWindow
 
     private void HomeNav_Click(object sender, RoutedEventArgs e)
     {
-        PersistWorkspacePosition();
+        PersistWorkspacePosition(immediate: true);
         EmptyPanel.Visibility = Visibility.Visible;
+        _recentFilesView?.SetPinnedOnly(false);
         LoadHomeRecents();
+    }
+
+    private void HomeRecentNav_Click(object sender, RoutedEventArgs e)
+    {
+        EmptyPanel.Visibility = Visibility.Visible;
+        _recentFilesView?.SetPinnedOnly(false);
+        LoadHomeRecents();
+        HomeRecentSection.BringIntoView();
+    }
+
+    private void HomeStarredNav_Click(object sender, RoutedEventArgs e)
+    {
+        EmptyPanel.Visibility = Visibility.Visible;
+        _recentFilesView?.SetPinnedOnly(true);
+        LoadHomeRecents();
+        HomeRecentSection.BringIntoView();
+    }
+
+    private async void ResumeLastSession_Click(object sender, RoutedEventArgs e)
+    {
+        var session = _recentDocuments.GetLastSession();
+        if (session is not null) await ResumeWorkspaceSessionAsync(session);
     }
 
     private void DocumentNav_Click(object sender, RoutedEventArgs e)
@@ -135,18 +171,12 @@ public partial class MainWindow
     {
         if (_recentFilesView is not null)
             _ = _recentFilesView.RefreshAsync();
+        RefreshResumeCommandState();
     }
 
     private void HomeSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         _recentFilesView?.SetSearch(HomeSearchBox.Text);
-    }
-
-    private void HomeRecentNav_Click(object sender, RoutedEventArgs e)
-    {
-        EmptyPanel.Visibility = Visibility.Visible;
-        LoadHomeRecents();
-        HomeRecentSection.BringIntoView();
     }
 
     private void ProductShell_PagesSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -160,9 +190,13 @@ public partial class MainWindow
 
     private void ProductShell_PreviewSizeChanged(object sender, SizeChangedEventArgs e) => PersistWorkspacePosition();
 
-    private void ProductShell_Closing(object? sender, CancelEventArgs e) => PersistWorkspacePosition();
+    private void ProductShell_Closing(object? sender, CancelEventArgs e)
+    {
+        _sessionPersistTimer?.Stop();
+        PersistWorkspacePosition(immediate: true);
+    }
 
-    private void PersistWorkspacePosition()
+    private void PersistWorkspacePosition(bool immediate = false)
     {
         if (_currentPdf is null || Pages.Count == 0) return;
         var page = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 1;
@@ -172,13 +206,33 @@ public partial class MainWindow
             _recentDocuments.RecordOpened(_currentPdf, page, _previewWidth);
             _lastRecentRecordedPath = _currentPdf;
             if (_recentFilesView is not null) _ = _recentFilesView.RefreshAsync();
-        }
-        else
-        {
-            _recentDocuments.UpdatePosition(_currentPdf, page, _previewWidth);
+            RefreshResumeCommandState();
         }
 
+        if (immediate || _sessionPersistTimer is null)
+        {
+            WriteWorkspacePosition();
+            return;
+        }
+
+        _sessionPersistTimer.Stop();
+        _sessionPersistTimer.Start();
+    }
+
+    private void WriteWorkspacePosition()
+    {
+        if (_currentPdf is null || Pages.Count == 0) return;
+        var page = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 1;
+        _recentDocuments.UpdatePosition(_currentPdf, page, _previewWidth);
         _recentDocuments.SaveLastSession(_currentPdf, page, _previewWidth);
+        RefreshResumeCommandState();
+    }
+
+    private void RefreshResumeCommandState()
+    {
+        if (ResumeSessionButton is null) return;
+        var session = _recentDocuments.GetLastSession();
+        ResumeSessionButton.IsEnabled = session is not null && session.Documents.Any(document => File.Exists(document.Path));
     }
 
     private async Task OpenRecentFromLibraryAsync(string path)
@@ -198,6 +252,7 @@ public partial class MainWindow
             if (PagesList.SelectedItem is PdfPageItem page)
                 await RenderPreviewAsync(page);
         }
+        PersistWorkspacePosition(immediate: true);
     }
 
     private async Task ResumeWorkspaceSessionAsync(WorkspaceSessionState session)
@@ -226,6 +281,7 @@ public partial class MainWindow
         PagesList.ScrollIntoView(PagesList.SelectedItem);
         if (PagesList.SelectedItem is PdfPageItem page)
             await RenderPreviewAsync(page);
+        PersistWorkspacePosition(immediate: true);
     }
 
     private void PreviousPage_Click(object sender, RoutedEventArgs e)
