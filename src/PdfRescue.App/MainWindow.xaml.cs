@@ -490,51 +490,58 @@ public partial class MainWindow : Window
     private async void Compress_Click(object sender, RoutedEventArgs e)
     {
         if (_currentPdf is null) return;
+        var source = _currentPdf;
         var profile = PromptCompressionProfile();
         if (profile is null) return;
-        var output = AskSavePath("Save compressed PDF", SuggestName(_currentPdf, "compressed"));
+        var output = AskSavePath("Save compressed PDF", SuggestName(source, "compressed"));
         if (output is null) return;
 
         long before = 0;
-        var success = await RunBusyAsync("Compressing PDF...", async token =>
+        long after = 0;
+        string summary = "Compression completed.";
+        var success = await RunPdfOutputOperationAsync("Compressing PDF...", "Compression completed.", output, async token =>
         {
             await RunAgainstWorkingLayoutAsync(async (working, ct) =>
             {
                 before = new FileInfo(working).Length;
                 await _operations.CompressAsync(working, profile.Value, output, ct);
             }, token);
-            var after = new FileInfo(output).Length;
+            after = new FileInfo(output).Length;
             var delta = before - after;
-            StatusText.Text = delta > 0
-                ? $"Compression completed. Saved {FormatBytes(delta)} ({(double)delta / before:P0})."
-                : "Compression completed. This PDF was already efficiently encoded, so the output is not smaller.";
+            summary = delta > 0
+                ? $"Saved {FormatBytes(delta)} ({(double)delta / Math.Max(1, before):P0}). Original {FormatBytes(before)}, result {FormatBytes(after)}."
+                : $"The source was already efficiently encoded. Original {FormatBytes(before)}, result {FormatBytes(after)}.";
         });
 
         if (success)
-        {
-            var after = new FileInfo(output).Length;
-            MessageBox.Show(this,
-                $"Original: {FormatBytes(before)}\nOutput: {FormatBytes(after)}",
-                "Compression complete", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+            await ShowPdfResultWorkflowAsync("Compression complete", summary, source, output,
+                () => Compress_Click(this, new RoutedEventArgs()));
     }
 
     private async void Repair_Click(object sender, RoutedEventArgs e)
     {
         if (_currentPdf is null) return;
-        var output = AskSavePath("Save repaired PDF", SuggestName(_currentPdf, "repaired"));
+        var source = _currentPdf;
+        var output = AskSavePath("Save repaired PDF", SuggestName(source, "repaired"));
         if (output is null) return;
-        await RunPdfOperationAsync("Repairing PDF structure...", "Repaired PDF structure.", token =>
+        var success = await RunPdfOutputOperationAsync("Repairing PDF structure...", "Repaired PDF structure.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _operations.RepairAsync(working, output, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Repair complete", "A repaired copy was created. The original PDF was not overwritten.", source, output,
+                () => Repair_Click(this, new RoutedEventArgs()));
     }
 
     private async void Linearize_Click(object sender, RoutedEventArgs e)
     {
         if (_currentPdf is null) return;
-        var output = AskSavePath("Save web-optimized PDF", SuggestName(_currentPdf, "web"));
+        var source = _currentPdf;
+        var output = AskSavePath("Save web-optimized PDF", SuggestName(source, "web"));
         if (output is null) return;
-        await RunPdfOperationAsync("Optimizing PDF for web viewing...", "Created web-optimized PDF.", token =>
+        var success = await RunPdfOutputOperationAsync("Optimizing PDF for web viewing...", "Created web-optimized PDF.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _operations.LinearizeAsync(working, output, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Web optimization complete", "A fast-web-view copy was created without replacing the original.", source, output,
+                () => Linearize_Click(this, new RoutedEventArgs()));
     }
 
     private async void Protect_Click(object sender, RoutedEventArgs e)
@@ -565,8 +572,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save unlocked PDF", SuggestName(dialog.FileName, "unlocked"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Removing PDF password...", "Created unlocked PDF.", token =>
+        var success = await RunPdfOutputOperationAsync("Removing PDF password...", "Created unlocked PDF.", output, token =>
             _operations.DecryptAsync(dialog.FileName, password, output, token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Unlock complete", "An unlocked copy was created. The protected source was left unchanged.", dialog.FileName, output,
+                () => Unlock_Click(this, new RoutedEventArgs()));
     }
 
     private async void OfficeToPdf_Click(object sender, RoutedEventArgs e)

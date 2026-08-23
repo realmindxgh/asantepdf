@@ -14,6 +14,8 @@ public partial class TaskCenterView : UserControl
     private readonly ICollectionView _view;
     private readonly DispatcherTimer _elapsedTimer;
 
+    public event Func<string, Task>? OpenOutputRequested;
+
     public TaskCenterView(TaskCenterService service)
     {
         InitializeComponent();
@@ -81,6 +83,16 @@ public partial class TaskCenterView : UserControl
     }
 
     private void ClearFinished_Click(object sender, RoutedEventArgs e) => _service.ClearFinished();
+
+    private async void OpenOutput_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: TaskCenterItem item } ||
+            !item.CanOpenOutput || string.IsNullOrWhiteSpace(item.OutputPath))
+            return;
+
+        var handler = OpenOutputRequested;
+        if (handler is not null) await handler(item.OutputPath);
+    }
 
     private void CancelTask_Click(object sender, RoutedEventArgs e)
     {
