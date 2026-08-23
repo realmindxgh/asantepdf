@@ -16,6 +16,9 @@ Run("Job happy path", TestJobHappyPath);
 Run("Job rejects invalid transition", TestJobRejectsInvalidTransition);
 Run("Progress clamps", TestProgressClamps);
 await RunAsync("Queue executes one job", TestQueueAsync);
+await RunAsync("Queue accepts pre-queued job", TestPreQueuedJobAsync);
+await RunAsync("Queue serializes multiple jobs", TestQueueSerializesAsync);
+await RunAsync("Queued job can be cancelled", TestQueuedCancellationAsync);
 await RunAsync("Qpdf inspector maps warnings", TestInspectorAsync);
 await RunAsync("Doctor scores structural warning", TestDoctorAsync);
 await RunAsync("Page layout preserves order and rotations", TestPageLayoutAsync);
@@ -89,6 +92,82 @@ async Task TestQueueAsync()
     });
     Assert(result == 42, "Queue should return operation result.");
     Assert(job.State == PdfJobState.Completed, "Queue should complete the job.");
+}
+
+async Task TestPreQueuedJobAsync()
+{
+    await using var queue = new PdfJobQueue();
+    var job = new PdfJob(PdfJobType.Compress, "Pre-queued test");
+    job.TransitionTo(PdfJobState.Queued, "Queued by UI");
+    var result = await queue.RunAsync(job, (_, _) => Task.FromResult(7));
+    Assert(result == 7, "Pre-queued job should return its result.");
+    Assert(job.State == PdfJobState.Completed, "Pre-queued job should complete normally.");
+}
+
+async Task TestQueueSerializesAsync()
+{
+    await using var queue = new PdfJobQueue();
+    var firstJob = new PdfJob(PdfJobType.Compress, "First");
+    var secondJob = new PdfJob(PdfJobType.Repair, "Second");
+    var firstStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseFirst = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var order = new List<string>();
+
+    var first = queue.RunAsync(firstJob, async (_, token) =>
+    {
+        lock (order) order.Add("first-start");
+        firstStarted.TrySetResult(true);
+        await releaseFirst.Task.WaitAsync(token);
+        lock (order) order.Add("first-end");
+        return 1;
+    });
+
+    await firstStarted.Task;
+    var second = queue.RunAsync(secondJob, (_, _) =>
+    {
+        lock (order) order.Add("second-start");
+        return Task.FromResult(2);
+    });
+
+    Assert(secondJob.State == PdfJobState.Queued, "Second job should remain queued while the first worker is occupied.");
+    releaseFirst.TrySetResult(true);
+    await Task.WhenAll(first, second);
+
+    string[] sequence;
+    lock (order) sequence = order.ToArray();
+    Assert(Array.IndexOf(sequence, "first-end") < Array.IndexOf(sequence, "second-start"),
+        "Second job must not start before the first job releases the single worker.");
+}
+
+async Task TestQueuedCancellationAsync()
+{
+    await using var queue = new PdfJobQueue();
+    var firstJob = new PdfJob(PdfJobType.Compress, "Blocking first");
+    var secondJob = new PdfJob(PdfJobType.Repair, "Cancel queued");
+    var firstStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseFirst = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    var first = queue.RunAsync(firstJob, async (_, token) =>
+    {
+        firstStarted.TrySetResult(true);
+        await releaseFirst.Task.WaitAsync(token);
+        return 1;
+    });
+    await firstStarted.Task;
+
+    using var secondCts = new CancellationTokenSource();
+    var second = queue.RunAsync(secondJob, (_, _) => Task.FromResult(2), secondCts.Token);
+    Assert(secondJob.State == PdfJobState.Queued, "Second job should be queued before cancellation.");
+    secondCts.Cancel();
+
+    var cancelled = false;
+    try { await second; }
+    catch (OperationCanceledException) { cancelled = true; }
+    Assert(cancelled, "Cancelling a queued job should surface cancellation.");
+    Assert(secondJob.State == PdfJobState.Cancelled, "Cancelling while queued should move the job to Cancelled.");
+
+    releaseFirst.TrySetResult(true);
+    await first;
 }
 
 async Task TestInspectorAsync()

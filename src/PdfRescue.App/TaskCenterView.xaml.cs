@@ -94,6 +94,12 @@ public partial class TaskCenterView : UserControl
         if (handler is not null) await handler(item.OutputPath);
     }
 
+    private async void RetryTask_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: TaskCenterItem item })
+            await item.RequestRetryAsync();
+    }
+
     private void CancelTask_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: TaskCenterItem item })

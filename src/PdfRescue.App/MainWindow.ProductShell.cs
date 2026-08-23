@@ -13,6 +13,7 @@ public partial class MainWindow
 {
     private readonly RecentDocumentService _recentDocuments = new();
     private readonly TaskCenterService _taskCenterService = new();
+    private BackgroundTaskQueueService? _backgroundTasks;
     private RecentFilesView? _recentFilesView;
     private TaskCenterView? _taskCenterView;
     private UIElement? _homeContent;
@@ -27,6 +28,7 @@ public partial class MainWindow
         _productShellInitialized = true;
 
         _homeContent = EmptyPanel.Child;
+        _backgroundTasks = new BackgroundTaskQueueService(_taskCenterService);
         _taskCenterView = new TaskCenterView(_taskCenterService);
         _taskCenterView.OpenOutputRequested += OpenTaskOutputAsync;
         InitializeDocumentTabs();
@@ -51,6 +53,11 @@ public partial class MainWindow
         PagesList.SelectionChanged += ProductShell_PagesSelectionChanged;
         PreviewImage.SizeChanged += ProductShell_PreviewSizeChanged;
         Closing += ProductShell_Closing;
+        Closed += async (_, _) =>
+        {
+            if (_backgroundTasks is not null)
+                await _backgroundTasks.DisposeAsync();
+        };
 
         LoadHomeRecents();
         RefreshResumeCommandState();

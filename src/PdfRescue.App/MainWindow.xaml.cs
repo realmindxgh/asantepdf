@@ -495,6 +495,11 @@ public partial class MainWindow : Window
         if (profile is null) return;
         var output = AskSavePath("Save compressed PDF", SuggestName(source, "compressed"));
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueCompressionBackground(source, profile.Value, output);
+            return;
+        }
 
         long before = 0;
         long after = 0;
@@ -524,6 +529,11 @@ public partial class MainWindow : Window
         var source = _currentPdf;
         var output = AskSavePath("Save repaired PDF", SuggestName(source, "repaired"));
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueRepairBackground(source, output);
+            return;
+        }
         var success = await RunPdfOutputOperationAsync("Repairing PDF structure...", "Repaired PDF structure.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _operations.RepairAsync(working, output, ct), token));
         if (success)
@@ -537,6 +547,11 @@ public partial class MainWindow : Window
         var source = _currentPdf;
         var output = AskSavePath("Save web-optimized PDF", SuggestName(source, "web"));
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueLinearizeBackground(source, output);
+            return;
+        }
         var success = await RunPdfOutputOperationAsync("Optimizing PDF for web viewing...", "Created web-optimized PDF.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _operations.LinearizeAsync(working, output, ct), token));
         if (success)
@@ -571,6 +586,11 @@ public partial class MainWindow : Window
         if (password is null) return;
         var output = AskSavePath("Save unlocked PDF", SuggestName(dialog.FileName, "unlocked"));
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueUnlockBackground(dialog.FileName, password, output);
+            return;
+        }
 
         var success = await RunPdfOutputOperationAsync("Removing PDF password...", "Created unlocked PDF.", output, token =>
             _operations.DecryptAsync(dialog.FileName, password, output, token));
