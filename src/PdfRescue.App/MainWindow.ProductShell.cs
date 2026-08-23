@@ -247,7 +247,8 @@ public partial class MainWindow
         if (_currentPdf is null || Pages.Count == 0) return;
         var page = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 1;
         _recentDocuments.UpdatePosition(_currentPdf, page, _previewWidth);
-        _recentDocuments.SaveLastSession(_currentPdf, page, _previewWidth);
+        CaptureActiveDocumentTabState();
+        _recentDocuments.SaveLastSession(BuildWorkspaceSessionDocuments(), GetActiveDocumentTabIndex());
         RefreshResumeCommandState();
     }
 
@@ -261,6 +262,13 @@ public partial class MainWindow
     private async Task OpenRecentFromLibraryAsync(string path)
     {
         if (!File.Exists(path)) return;
+        var openTab = FindOpenDocumentTab(path);
+        if (openTab is not null)
+        {
+            await ActivateDocumentTabAsync(openTab);
+            return;
+        }
+
         var resume = _recentDocuments.GetResumeState(path);
         if (resume is not null) _previewWidth = resume.RenderWidth;
 
@@ -280,31 +288,7 @@ public partial class MainWindow
 
     private async Task ResumeWorkspaceSessionAsync(WorkspaceSessionState session)
     {
-        if (session.Documents.Count == 0) return;
-        var preferredIndex = Math.Clamp(session.ActiveDocumentIndex, 0, session.Documents.Count - 1);
-        var candidates = session.Documents
-            .Skip(preferredIndex)
-            .Concat(session.Documents.Take(preferredIndex))
-            .Where(document => File.Exists(document.Path))
-            .ToArray();
-        if (candidates.Length == 0)
-        {
-            MessageBox.Show(this, "The PDFs from the last session are no longer available at their saved locations.",
-                "Resume Last Session", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        var document = candidates[0];
-        _previewWidth = document.RenderWidth;
-        await OpenPdfAsync(document.Path);
-        if (_currentPdf is null || Pages.Count == 0) return;
-
-        var target = Math.Clamp(document.PageNumber, 1, Pages.Count) - 1;
-        PagesList.SelectedIndex = target;
-        PagesList.ScrollIntoView(PagesList.SelectedItem);
-        if (PagesList.SelectedItem is PdfPageItem page)
-            await RenderPreviewAsync(page);
-        PersistWorkspacePosition(immediate: true);
+        await RestoreWorkspaceTabsFromSessionAsync(session);
     }
 
     private void PreviousPage_Click(object sender, RoutedEventArgs e)

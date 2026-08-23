@@ -23,7 +23,7 @@ public enum RecentSortMode
     Modified
 }
 
-public sealed record DocumentResumeState(string Path, int PageNumber, uint RenderWidth);
+public sealed record DocumentResumeState(string Path, int PageNumber, uint RenderWidth, double HorizontalOffset = 0, double VerticalOffset = 0);
 
 public sealed record WorkspaceSessionState(
     IReadOnlyList<DocumentResumeState> Documents,
@@ -219,7 +219,9 @@ public sealed class RecentDocumentService
                     .Select(document => new DocumentResumeState(
                         document.Path,
                         Math.Max(1, document.PageNumber),
-                        Math.Clamp(document.RenderWidth, 320u, 4000u)))
+                        Math.Clamp(document.RenderWidth, 320u, 4000u),
+                        Math.Max(0, document.HorizontalOffset),
+                        Math.Max(0, document.VerticalOffset)))
                     .ToArray(),
                 Math.Clamp(session.ActiveDocumentIndex, 0, Math.Max(0, session.Documents.Count - 1)),
                 session.SavedUtc);
@@ -281,6 +283,40 @@ public sealed class RecentDocumentService
                         RenderWidth = Math.Clamp(renderWidth, 320u, 4000u)
                     }
                 ]
+            };
+            SaveStateCore(state);
+        }
+    }
+
+    public void SaveLastSession(IReadOnlyList<DocumentResumeState> documents, int activeDocumentIndex)
+    {
+        lock (_sync)
+        {
+            var state = LoadStateCore();
+            var normalized = documents
+                .Where(document => !string.IsNullOrWhiteSpace(document.Path))
+                .Select(document => new PersistedSessionDocument
+                {
+                    Path = NormalizePath(document.Path),
+                    PageNumber = Math.Max(1, document.PageNumber),
+                    RenderWidth = Math.Clamp(document.RenderWidth, 320u, 4000u),
+                    HorizontalOffset = Math.Max(0, document.HorizontalOffset),
+                    VerticalOffset = Math.Max(0, document.VerticalOffset)
+                })
+                .ToList();
+
+            if (normalized.Count == 0)
+            {
+                state.LastSession = null;
+                SaveStateCore(state);
+                return;
+            }
+
+            state.LastSession = new PersistedWorkspaceSession
+            {
+                SavedUtc = DateTimeOffset.UtcNow,
+                ActiveDocumentIndex = Math.Clamp(activeDocumentIndex, 0, normalized.Count - 1),
+                Documents = normalized
             };
             SaveStateCore(state);
         }
@@ -518,5 +554,7 @@ public sealed class RecentDocumentService
         public string Path { get; set; } = string.Empty;
         public int PageNumber { get; set; } = 1;
         public uint RenderWidth { get; set; } = 1100;
+        public double HorizontalOffset { get; set; }
+        public double VerticalOffset { get; set; }
     }
 }

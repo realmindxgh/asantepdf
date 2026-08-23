@@ -28,6 +28,7 @@ public partial class MainWindow
             if (_activeDocumentTab is null || _switchingDocumentTab) return;
             _activeDocumentTab.HorizontalOffset = PreviewScroll.HorizontalOffset;
             _activeDocumentTab.VerticalOffset = PreviewScroll.VerticalOffset;
+            PersistWorkspacePosition();
         };
     }
 
@@ -219,6 +220,8 @@ public partial class MainWindow
             if (active)
             {
                 if (!await ConfirmDocumentReplacementAsync("closing this tab")) return false;
+                if (HasUnsavedLayoutChanges() && _savedLayoutBaseline is not null)
+                    RestoreLayout(_savedLayoutBaseline);
                 CaptureActiveDocumentTabState();
             }
             else
@@ -227,7 +230,12 @@ public partial class MainWindow
                     $"{tab.Name} has unsaved page-layout changes. Close the tab and discard those changes?",
                     "Unsaved AsantePDF changes", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (discard != MessageBoxResult.Yes) return false;
+                DiscardDocumentTabWorkingChanges(tab);
             }
+        }
+        else if (active)
+        {
+            CaptureActiveDocumentTabState();
         }
 
         var oldIndex = DocumentTabs.IndexOf(tab);
