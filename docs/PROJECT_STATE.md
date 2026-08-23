@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after source normalization and Architecture Batch 1 reached a green Windows development gate.
+Updated after the multi-document, Task Center and result-completion architecture reached green Windows development gates.
 
 ## Engineering baseline
 
@@ -18,66 +18,114 @@ The full RC10 Windows release pipeline reached green on GitHub Actions run `3263
 - installed Program Files copy verification
 - release receipt, checksums and evidence generation
 
-The RC10 installer produced by that gate had SHA256:
+RC10 installer SHA256:
 
 `16db141f34da837bfbe55e842c4aa7f93b2a6b1af83d6987514a07c0c2070802`
 
-## Development source is now normalized
+## Active development branch
 
-The repository is no longer only a compact release carrier. The SHA256-pinned corrected RC10 payload was reconstructed, the Windows compatibility corrections that actually passed RC10 were applied, and the resulting normal source tree was compiled on Windows before being promoted to `development/master-upgrade-v2`.
+Development branch: `development/master-upgrade-v2`
 
-Normalization run: `32646666533`
+Draft PR: `#3` — **AsantePDF master upgrade implementation**
 
-The development branch now contains ordinary `src/`, `tests/`, `assets/`, `installer/`, and `scripts/` paths plus the solution and pinned SDK files. Future product work should modify these normal source files rather than the old compact carrier.
+The source tree is normalized and ordinary. Development now happens directly in `src/`, `tests/`, `assets/`, `installer/` and `scripts/` rather than through the old compact release carrier.
 
-Draft development PR: `#3` — **AsantePDF master upgrade implementation**.
+## Product architecture implemented so far
 
-## Architecture Batch 1
+### Home / Launcher
 
-Architecture Batch 1 is the first real product-shell implementation against the master specification and canonical target screens.
+- real Home mode rather than a blank PDF canvas
+- Open PDF and standalone tool entry points
+- Recent and Starred navigation
+- real asynchronous cached PDF thumbnails
+- Grid, List and Compact Recent layouts
+- sorting, search, pinning and moved-file handling
+- right-click Recent actions
+- Resume Last Session entry point
 
-Implemented in this batch so far:
+### Multi-document Document Workspace
 
-- application-level dark design tokens and reusable WPF styles
-- a real Home mode instead of the old blank PDF canvas
-- prominent Open PDF workflow and Home Quick Tools
-- basic Recent-file loading/search with moved/missing-file detection
-- separate Document Workspace presentation
-- substantial grouped command ribbon shell
-- custom dark application/title/navigation surfaces
-- left Pages / Bookmarks / Search navigation shell
-- page Previous/Next controls and editable page number
-- Fit Page and Actual Size shell controls alongside existing zoom
-- contextual right-side Document Details / PDF Doctor shell
-- corrected PDF Doctor initial state: **Not analysed yet**, with no fake recommendations before diagnosis
-- explicit disabled states/tooltips for not-yet-supported Settings, Task Center, document search and session-resume actions rather than clickable dead controls
-- standalone Home entry points for OCR, Compress, Split, Word conversion and PDF Doctor, while preserving Merge and Images-to-PDF availability
-- reuse of the existing RC10 command-state and PDF engine code rather than rewriting stable engines for visual reasons
+- real simultaneous document tabs backed by per-document state
+- active/dirty state and close buttons
+- tab drag reordering and middle-click close
+- scrollable tab overflow
+- Ctrl+Tab, Ctrl+W and Ctrl+Shift+T reopen
+- independent page layout, saved baseline, selected page, zoom, scroll and Undo/Redo per tab
+- transactional reuse of the proven single PDFium renderer when tabs switch
+- unsaved-close protection per tab
+- successful operation outputs can open as new tabs for the initial completion-workflow set
 
-The redesigned `MainWindow.xaml`, dark `App.xaml` design system and `MainWindow.ProductShell.cs` compiled successfully on a real Windows runner and the core smoke tests passed.
+### Session persistence
 
-Architecture Batch 1 development gate: `32647383215` — **success**.
+`workspace-state.json` now stores:
 
-This is a development compile/smoke gate, not a full installer acceptance gate. No affected UI matrix row is considered `ACCEPTED` yet.
+- open tab set
+- active-tab index
+- per-document page
+- zoom/render width
+- horizontal and vertical scroll position
+- Recent history and pin state
 
-## What remains in Architecture Batch 1 / immediate follow-up
+Resume Last Session restores all available saved tabs and returns to the saved active tab. Writes are debounced. Crash recovery and unsaved working-layout recovery remain future work.
 
-The shell is intentionally not being mistaken for completion. Immediate follow-up includes:
+### Task System / Task Center
 
-- visual/runtime acceptance of the new shell against both canonical target screens
-- real cached PDF thumbnails on Home
-- Grid / List / Compact Recent layouts with persisted preference
-- Recent sorting, pinning, context actions and privacy controls
-- persisted Recent/session/settings model
-- real Resume Last Session
-- true multi-document document/session model behind the tab shell
-- light and Follow Windows themes
-- real document search rather than the currently disabled placeholder
-- real Bookmarks navigation
-- richer contextual Inspector states
-- richer PDF Doctor findings and conditional recommendations
-- real Task System / Task Center foundation
-- broader context-aware command audit as more document types/tabs are introduced
+- `TaskCenterService` wraps the central busy-operation path
+- Running, Queued, Completed, Failed and Cancelled states
+- determinate progress where page/item progress exists
+- stage/status text
+- elapsed time
+- active-task cancellation
+- finished-history clearing
+- dedicated Task Center UI and navigation
+- completed tasks can retain a PDF output path and expose Open Result
+
+True independent queued/background execution and Retry are the next Task System layer.
+
+### Result / completion workflow
+
+A shared `OperationResultDialog` / completion controller now distinguishes original and result files and supports:
+
+- Open in New Tab
+- safe Use Result Here
+- Open Folder
+- Save a Copy
+- Run Another
+- Close
+
+Initially wired and Windows-validated for:
+
+- Compress
+- Repair
+- Web Optimization
+- Unlock / Remove Password
+
+The same pattern still needs expansion across the rest of the PDF-producing tools.
+
+## Windows development validation
+
+Important green development gates include:
+
+- Architecture Batch 1: run `32647383215`
+- Recent/session foundation: run `32648130725`
+- Starred/Resume integration: run `32648422410`
+- Task Center and later architecture iterations: run `32649073796`
+- multi-tab session restoration successful job: `97221651603`
+- result-completion routing successful job: `97222420243`
+
+The result-completion job passed staged patching, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
+
+These are development gates, not the final installer acceptance gate.
+
+## Immediate next work
+
+1. true queued/background Task Center execution that does not lock the document workspace
+2. multiple queued jobs with cancellation and Retry
+3. extend result-completion routing to remaining PDF-producing workflows
+4. continue the full command/context-awareness audit
+5. implement remaining Home/Document requirements including search, bookmarks, richer Inspector and Doctor states
+6. theme/settings work including Light and Follow Windows
+7. visual/runtime acceptance against the canonical Home and Document target screens
 
 ## Product source of truth
 
@@ -90,30 +138,19 @@ Future work is governed by:
 5. `design/target-document-workspace.svg`
 6. `../AGENTS.md`
 
-The master specification contains **45 numbered requirements**. `IMPLEMENTATION_MATRIX.md` is the acceptance tracker. Do not upgrade a row to `ACCEPTED` merely because related code exists.
-
-## Target architecture
-
-AsantePDF is being developed as three connected experiences:
-
-- Home / Launcher
-- Document Workspace
-- Task System
-
-Home and Document mode must genuinely behave differently. The Task System must eventually allow long-running work without trapping the user in one modal.
+The master specification contains **45 numbered requirements**. `IMPLEMENTATION_MATRIX.md` is the acceptance ledger. Do not upgrade a row to `ACCEPTED` merely because related code exists.
 
 ## Engineering cadence
 
-After each coherent batch:
+For every coherent batch:
 
+- commit implementation to the development branch
+- Windows-compile and run core tests for risky cross-file changes
+- commit validated generated changes back to the branch
 - update `IMPLEMENTATION_MATRIX.md`
-- add or extend automated tests
-- compile on actual Windows
-- run core functionality tests
-- visually inspect relevant UI requirements
-- run the full installer/installed-copy release gate when a release candidate is reached
-
-The development Windows gate should remain lightweight for normal UI iterations. The heavyweight qpdf/Tesseract/LibreOffice staging plus installer build belongs at release-candidate checkpoints.
+- update this project-state file when the architectural handoff meaningfully changes
+- visually inspect affected UI requirements before acceptance
+- run the heavyweight installer/installed-copy gate only at release-candidate checkpoints
 
 ## Final-release rule
 
