@@ -1,0 +1,64 @@
+<Window x:Class="PdfRescue.App.PdfResultDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Operation complete" Width="680" MinHeight="430" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{StaticResource AppBackground}" Foreground="{StaticResource PrimaryTextBrush}">
+    <Grid Margin="26">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Border Width="42" Height="42" CornerRadius="10" Background="#173B2B" Margin="0,0,12,0">
+                    <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#62D58C"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="OperationTitleText" Text="PDF operation completed" FontSize="22" FontWeight="SemiBold" />
+                    <TextBlock x:Name="SummaryText" Text="Your result is ready." Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="13" Margin="0,4,0,0" TextWrapping="Wrap" MaxWidth="540" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,24,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource PanelCardStyle}" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="ORIGINAL" Foreground="#70869C" FontSize="11" FontWeight="SemiBold" />
+                    <TextBlock x:Name="OriginalNameText" FontSize="15" FontWeight="SemiBold" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="OriginalPathText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0"
+                               TextWrapping="Wrap" MaxHeight="54" />
+                </StackPanel>
+            </Border>
+            <TextBlock Grid.Column="1" Text="→" Foreground="#5F7790" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border Grid.Column="2" Style="{StaticResource PanelCardStyle}" Padding="16" BorderBrush="#315D8A">
+                <StackPanel>
+                    <TextBlock Text="RESULT" Foreground="#72AFFF" FontSize="11" FontWeight="SemiBold" />
+                    <TextBlock x:Name="ResultNameText" FontSize="15" FontWeight="SemiBold" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="ResultMetaText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0" />
+                    <TextBlock x:Name="ResultPathText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,3,0,0"
+                               TextWrapping="Wrap" MaxHeight="54" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Text="Choose what to do with the new PDF. The original remains untouched unless you explicitly replace its tab."
+                   Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,18,0,0" />
+
+        <WrapPanel Grid.Row="3" Margin="0,22,0,0" HorizontalAlignment="Right">
+            <Button x:Name="ReplaceCurrentButton" Style="{StaticResource FlatButtonStyle}" Click="ReplaceCurrent_Click"
+                    Content="Use Result Here" Padding="13,8" ToolTip="Open the result and close the original tab" />
+            <Button Style="{StaticResource PrimaryButtonStyle}" Click="OpenNewTab_Click" Content="Open in New Tab" Padding="16,8" />
+            <Button Style="{StaticResource FlatButtonStyle}" Click="OpenFolder_Click" Content="Open Folder" Padding="13,8" />
+            <Button Style="{StaticResource FlatButtonStyle}" Click="SaveCopy_Click" Content="Save a Copy" Padding="13,8" />
+            <Button x:Name="RunAgainButton" Style="{StaticResource FlatButtonStyle}" Click="RunAgain_Click" Content="Run Another" Padding="13,8" />
+            <Button Style="{StaticResource FlatButtonStyle}" Click="Close_Click" Content="Close" Padding="13,8" />
+        </WrapPanel>
+    </Grid>
+</Window>
