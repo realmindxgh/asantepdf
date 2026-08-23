@@ -462,6 +462,11 @@ public partial class MainWindow : Window
 
         var output = AskSavePath("Save merged PDF", "merged.pdf");
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueMergeBackground(inputs, output);
+            return;
+        }
         await RunPdfOperationAsync("Merging PDFs...", $"Merged {inputs.Length:N0} PDFs.", token => _operations.MergeAsync(inputs, output, token));
     }
 
@@ -616,6 +621,11 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog(this) != true) return;
         var output = AskSaveFile("Save converted PDF", Path.GetFileNameWithoutExtension(dialog.FileName) + ".pdf", "PDF files (*.pdf)|*.pdf", ".pdf");
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueOfficeToPdfBackground(dialog.FileName, output);
+            return;
+        }
         await RunPdfOperationAsync("Converting Office document to PDF...", "Office document converted to PDF.", token =>
             _office.ConvertOfficeToPdfAsync(dialog.FileName, output, token));
     }

@@ -13,6 +13,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     private readonly PdfJob _job;
     private readonly Action? _cancelAction;
     private readonly Func<Task>? _retryAction;
+    private bool _retryRequested;
     private string? _outputPath;
 
     internal TaskCenterItem(PdfJob job, Action? cancelAction, Func<Task>? retryAction = null)
@@ -33,7 +34,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     public int ProgressPercent => (int)Math.Round(Progress * 100d);
     public bool IsFinished => State is PdfJobState.Completed or PdfJobState.Failed or PdfJobState.Cancelled;
     public bool CanCancel => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
-    public bool CanRetry => _retryAction is not null && State is PdfJobState.Failed or PdfJobState.Cancelled;
+    public bool CanRetry => !_retryRequested && _retryAction is not null && State is PdfJobState.Failed or PdfJobState.Cancelled;
     public bool ShowProgress => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
     public string? OutputPath => _outputPath;
     public string OutputName => string.IsNullOrWhiteSpace(_outputPath) ? string.Empty : Path.GetFileName(_outputPath);
@@ -65,7 +66,18 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     public async Task RequestRetryAsync()
     {
         if (!CanRetry || _retryAction is null) return;
-        await _retryAction();
+        _retryRequested = true;
+        OnPropertyChanged(nameof(CanRetry));
+        try
+        {
+            await _retryAction();
+        }
+        catch
+        {
+            _retryRequested = false;
+            OnPropertyChanged(nameof(CanRetry));
+            throw;
+        }
     }
 
     internal void SetOutput(string? path)
