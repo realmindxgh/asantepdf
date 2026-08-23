@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'release-trigger*.txt'
+  pull_request:
+    paths:
+      - 'release-trigger*.txt'
 
 permissions:
   contents: read
