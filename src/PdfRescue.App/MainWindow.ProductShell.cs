@@ -1,24 +1,37 @@
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Win32;
+using PdfRescue.App.Services;
 
 namespace PdfRescue.App;
 
 public partial class MainWindow
 {
-    private sealed record HomeRecentItem(string Name, string Path, string Detail, bool Missing)
-    {
-        public bool Available => !Missing;
-    }
-
-    private HomeRecentItem[] _homeRecentItems = [];
+    private readonly RecentDocumentService _recentDocuments = new();
+    private RecentFilesView? _recentFilesView;
+    private string? _lastRecentRecordedPath;
+    private bool _productShellInitialized;
 
     private void ProductShell_Loaded(object sender, RoutedEventArgs e)
     {
-        LoadHomeRecents();
+        if (_productShellInitialized) return;
+        _productShellInitialized = true;
+
+        _recentFilesView = new RecentFilesView();
+        _recentFilesView.SetService(_recentDocuments);
+        _recentFilesView.OpenRequested += OpenRecentFromLibraryAsync;
+        _recentFilesView.ResumeRequested += ResumeWorkspaceSessionAsync;
+        HomeRecentSection.Children.Clear();
+        HomeRecentSection.Children.Add(_recentFilesView);
+
         PagesList.SelectionChanged += ProductShell_PagesSelectionChanged;
+        PreviewImage.SizeChanged += ProductShell_PreviewSizeChanged;
+        Closing += ProductShell_Closing;
+
+        LoadHomeRecents();
         RefreshProductShellMode();
     }
 
@@ -50,6 +63,7 @@ public partial class MainWindow
 
     private void HomeNav_Click(object sender, RoutedEventArgs e)
     {
+        PersistWorkspacePosition();
         EmptyPanel.Visibility = Visibility.Visible;
         LoadHomeRecents();
     }
@@ -107,50 +121,25 @@ public partial class MainWindow
 
     private async void RecentItem_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string path } && File.Exists(path))
-            await OpenPdfAsync(path);
+        if (sender is not Button { Tag: string path }) return;
+        if (!File.Exists(path))
+        {
+            MessageBox.Show(this, "This recent PDF has moved or is unavailable.",
+                "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        await OpenRecentFromLibraryAsync(path);
     }
 
     private void LoadHomeRecents()
     {
-        if (HomeRecentList is null) return;
-        string[] paths;
-        try
-        {
-            paths = File.Exists(RecentDocumentsPath)
-                ? File.ReadAllLines(RecentDocumentsPath).Where(p => !string.IsNullOrWhiteSpace(p)).Take(12).ToArray()
-                : [];
-        }
-        catch
-        {
-            paths = [];
-        }
-
-        var items = paths.Select(path =>
-        {
-            var missing = !File.Exists(path);
-            var detail = missing
-                ? "File moved or unavailable"
-                : $"{new FileInfo(path).Length / 1024d / 1024d:0.##} MB  •  {Path.GetDirectoryName(path)}";
-            return new HomeRecentItem(Path.GetFileName(path), path, detail, missing);
-        }).ToArray();
-
-        _homeRecentItems = items;
-        HomeRecentList.ItemsSource = items;
-        HomeNoRecentText.Visibility = items.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (_recentFilesView is not null)
+            _ = _recentFilesView.RefreshAsync();
     }
 
     private void HomeSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (HomeRecentList is null) return;
-        var query = HomeSearchBox.Text.Trim();
-        var filtered = string.IsNullOrWhiteSpace(query)
-            ? _homeRecentItems
-            : _homeRecentItems.Where(item =>
-                item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                item.Path.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
-        HomeRecentList.ItemsSource = filtered;
-        HomeNoRecentText.Visibility = filtered.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        _recentFilesView?.SetSearch(HomeSearchBox.Text);
     }
 
     private void HomeRecentNav_Click(object sender, RoutedEventArgs e)
@@ -166,6 +155,77 @@ public partial class MainWindow
         var current = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 0;
         PageNumberBox.Text = current == 0 ? string.Empty : current.ToString();
         PageCountText.Text = $"/ {Pages.Count:N0}";
+        PersistWorkspacePosition();
+    }
+
+    private void ProductShell_PreviewSizeChanged(object sender, SizeChangedEventArgs e) => PersistWorkspacePosition();
+
+    private void ProductShell_Closing(object? sender, CancelEventArgs e) => PersistWorkspacePosition();
+
+    private void PersistWorkspacePosition()
+    {
+        if (_currentPdf is null || Pages.Count == 0) return;
+        var page = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 1;
+
+        if (!string.Equals(_lastRecentRecordedPath, _currentPdf, StringComparison.OrdinalIgnoreCase))
+        {
+            _recentDocuments.RecordOpened(_currentPdf, page, _previewWidth);
+            _lastRecentRecordedPath = _currentPdf;
+            if (_recentFilesView is not null) _ = _recentFilesView.RefreshAsync();
+        }
+        else
+        {
+            _recentDocuments.UpdatePosition(_currentPdf, page, _previewWidth);
+        }
+
+        _recentDocuments.SaveLastSession(_currentPdf, page, _previewWidth);
+    }
+
+    private async Task OpenRecentFromLibraryAsync(string path)
+    {
+        if (!File.Exists(path)) return;
+        var resume = _recentDocuments.GetResumeState(path);
+        if (resume is not null) _previewWidth = resume.RenderWidth;
+
+        await OpenPdfAsync(path);
+        if (_currentPdf is null || !string.Equals(Path.GetFullPath(path), _currentPdf, StringComparison.OrdinalIgnoreCase)) return;
+
+        if (resume is not null && Pages.Count > 0)
+        {
+            var target = Math.Clamp(resume.PageNumber, 1, Pages.Count) - 1;
+            PagesList.SelectedIndex = target;
+            PagesList.ScrollIntoView(PagesList.SelectedItem);
+            if (PagesList.SelectedItem is PdfPageItem page)
+                await RenderPreviewAsync(page);
+        }
+    }
+
+    private async Task ResumeWorkspaceSessionAsync(WorkspaceSessionState session)
+    {
+        if (session.Documents.Count == 0) return;
+        var preferredIndex = Math.Clamp(session.ActiveDocumentIndex, 0, session.Documents.Count - 1);
+        var candidates = session.Documents
+            .Skip(preferredIndex)
+            .Concat(session.Documents.Take(preferredIndex))
+            .Where(document => File.Exists(document.Path))
+            .ToArray();
+        if (candidates.Length == 0)
+        {
+            MessageBox.Show(this, "The PDFs from the last session are no longer available at their saved locations.",
+                "Resume Last Session", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var document = candidates[0];
+        _previewWidth = document.RenderWidth;
+        await OpenPdfAsync(document.Path);
+        if (_currentPdf is null || Pages.Count == 0) return;
+
+        var target = Math.Clamp(document.PageNumber, 1, Pages.Count) - 1;
+        PagesList.SelectedIndex = target;
+        PagesList.ScrollIntoView(PagesList.SelectedItem);
+        if (PagesList.SelectedItem is PdfPageItem page)
+            await RenderPreviewAsync(page);
     }
 
     private void PreviousPage_Click(object sender, RoutedEventArgs e)
@@ -202,12 +262,14 @@ public partial class MainWindow
         if (viewportWidth <= 100 || viewportHeight <= 100) return;
         var widthByHeight = bitmap.PixelWidth * Math.Max(0.1, (viewportHeight - 64) / Math.Max(1, bitmap.PixelHeight));
         _previewWidth = (uint)Math.Clamp((int)Math.Round(Math.Min(viewportWidth - 64, widthByHeight)), 320, 2000);
+        PersistWorkspacePosition();
         _ = RerenderSelectedPageAsync();
     }
 
     private void ActualSizeShell_Click(object sender, RoutedEventArgs e)
     {
         _previewWidth = 1100;
+        PersistWorkspacePosition();
         _ = RerenderSelectedPageAsync();
     }
 
