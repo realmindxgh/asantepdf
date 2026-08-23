@@ -1,4 +1,4 @@
-name: Normalize AsantePDF Development Source
+name: AsantePDF Development Windows Gate
 
 on:
   pull_request:
@@ -8,94 +8,77 @@ permissions:
   contents: write
 
 jobs:
-  normalize-development-source:
+  windows-build:
     if: github.head_ref == 'development/master-upgrade-v2'
     runs-on: windows-latest
     timeout-minutes: 15
 
     steps:
-      - name: Check out development branch
+      - name: Check out master-upgrade branch
         uses: actions/checkout@v4
         with:
           ref: development/master-upgrade-v2
           fetch-depth: 0
 
-      - name: Reconstruct verified RC10 compact payload
+      - name: Materialize staged product-shell XAML
         shell: pwsh
         run: |
-          if (Test-Path 'src/PdfRescue.App/PdfRescue.App.csproj') {
-            Write-Host 'Normalized source already exists. Nothing to bootstrap.' -ForegroundColor Green
-            'true' | Set-Content "$env:RUNNER_TEMP\already-normalized.txt"
+          $payload = Join-Path $env:GITHUB_WORKSPACE 'ui-payload\MainWindow.xaml.gz.b64'
+          if (-not (Test-Path $payload)) {
+            Write-Host 'No staged MainWindow payload. Building branch as committed.' -ForegroundColor Cyan
             exit 0
           }
 
-          $parts = Get-ChildItem "$env:GITHUB_WORKSPACE\compact" -Filter 'part-*' -File | Sort-Object Name
-          if ($parts.Count -ne 8) { throw "Expected 8 compact payload chunks, got $($parts.Count)." }
-          $base64 = ($parts | ForEach-Object { (Get-Content $_.FullName -Raw).Trim() }) -join ''
-          $bytes = [Convert]::FromBase64String($base64)
-          $archive = Join-Path $env:RUNNER_TEMP 'AsantePDF-RC10-compact.tar.gz'
-          [IO.File]::WriteAllBytes($archive, $bytes)
-          $expected = '5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486'
-          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actual -ne $expected) { throw "RC10 payload SHA256 mismatch. Expected $expected, got $actual." }
-
-          $source = Join-Path $env:RUNNER_TEMP 'asantepdf-normalized'
-          New-Item -ItemType Directory -Force -Path $source | Out-Null
-          tar -xzf $archive -C $source
-          if ($LASTEXITCODE -ne 0) { throw "tar extraction failed with exit code $LASTEXITCODE." }
-
-          $patchRoot = Join-Path $env:GITHUB_WORKSPACE 'windows-patches'
-          Copy-Item (Join-Path $patchRoot 'PdfFormService.cs') (Join-Path $source 'src\PdfRescue.App\Services\PdfFormService.cs') -Force
-          Copy-Item (Join-Path $patchRoot 'stage-release-engines.ps1') (Join-Path $source 'scripts\stage-release-engines.ps1') -Force
-          Copy-Item (Join-Path $patchRoot 'publish-release.ps1') (Join-Path $source 'scripts\publish-release.ps1') -Force
-          Copy-Item (Join-Path $patchRoot 'AsantePDF.sln') (Join-Path $source 'AsantePDF.sln') -Force
-          & (Join-Path $patchRoot 'compile-fixes.ps1') -SourceRoot $source
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $source | Set-Content "$env:RUNNER_TEMP\normalized-source-path.txt"
+          $base64 = (Get-Content $payload -Raw).Trim()
+          $compressed = [Convert]::FromBase64String($base64)
+          $input = [IO.MemoryStream]::new($compressed)
+          $gzip = [IO.Compression.GZipStream]::new($input, [IO.Compression.CompressionMode]::Decompress)
+          $output = [IO.MemoryStream]::new()
+          try {
+            $gzip.CopyTo($output)
+          }
+          finally {
+            $gzip.Dispose()
+            $input.Dispose()
+          }
+          $target = Join-Path $env:GITHUB_WORKSPACE 'src\PdfRescue.App\MainWindow.xaml'
+          [IO.File]::WriteAllBytes($target, $output.ToArray())
+          $output.Dispose()
+          Write-Host "Materialized redesigned MainWindow.xaml ($((Get-Item $target).Length) bytes)." -ForegroundColor Green
 
       - name: Set up exact .NET SDK
-        if: hashFiles('src/PdfRescue.App/PdfRescue.App.csproj') == ''
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.202'
 
-      - name: Compile normalized source before promotion
-        if: hashFiles('src/PdfRescue.App/PdfRescue.App.csproj') == ''
+      - name: Restore and compile x64 Release
         shell: pwsh
         run: |
-          $source = Get-Content "$env:RUNNER_TEMP\normalized-source-path.txt" -Raw
-          $source = $source.Trim()
-          Push-Location $source
-          try {
-            $sdk = dotnet --version
-            if ($sdk -ne '10.0.202') { throw "Expected .NET SDK 10.0.202, got $sdk" }
-            dotnet restore ./AsantePDF.sln
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-          finally { Pop-Location }
+          $sdk = dotnet --version
+          Write-Host "Selected .NET SDK: $sdk"
+          if ($sdk -ne '10.0.202') { throw "Expected .NET SDK 10.0.202, got $sdk" }
+          dotnet restore ./AsantePDF.sln
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Promote normalized source into development branch
-        if: hashFiles('src/PdfRescue.App/PdfRescue.App.csproj') == ''
+      - name: Run core smoke tests
         shell: pwsh
         run: |
-          $source = (Get-Content "$env:RUNNER_TEMP\normalized-source-path.txt" -Raw).Trim()
-          foreach ($dir in @('src','tests','assets','installer','scripts')) {
-            $from = Join-Path $source $dir
-            if (Test-Path $from) { Copy-Item $from $env:GITHUB_WORKSPACE -Recurse -Force }
-          }
-          foreach ($file in @('AsantePDF.sln','Directory.Build.props','global.json','VERSION')) {
-            $from = Join-Path $source $file
-            if (Test-Path $from) { Copy-Item $from (Join-Path $env:GITHUB_WORKSPACE $file) -Force }
-          }
+          dotnet run --project ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release --no-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src tests assets installer scripts AsantePDF.sln Directory.Build.props global.json VERSION
-          if (git diff --cached --quiet) {
-            Write-Host 'No normalized source changes to commit.' -ForegroundColor Yellow
+      - name: Commit validated staged shell
+        shell: pwsh
+        run: |
+          $payload = 'ui-payload/MainWindow.xaml.gz.b64'
+          if (-not (Test-Path $payload)) {
+            Write-Host 'No staged shell to commit.' -ForegroundColor Cyan
             exit 0
           }
-          git commit -m 'Normalize Windows-verified RC10 source for master upgrade development'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/PdfRescue.App/MainWindow.xaml
+          git rm $payload
+          git commit -m 'Implement Architecture Batch 1 product shell'
           git push origin HEAD:development/master-upgrade-v2
