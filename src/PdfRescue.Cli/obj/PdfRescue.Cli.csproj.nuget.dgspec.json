@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj": {}
+    "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj": {}
   },
   "projects": {
-    "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj": {
+    "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj",
+        "projectUniqueName": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj",
         "projectName": "PdfRescue.Cli",
-        "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj",
+        "projectPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Cli\\PdfRescue.Cli.csproj",
         "packagesPath": "C:\\Users\\runneradmin\\.nuget\\packages\\",
-        "outputPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Cli\\obj\\",
+        "outputPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Cli\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -33,11 +33,11 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
-                "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj"
+              "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
+                "projectPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj"
               },
-              "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj": {
-                "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj"
+              "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj": {
+                "projectPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj"
               }
             }
           }
@@ -351,14 +351,14 @@
         }
       }
     },
-    "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
+    "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj",
+        "projectUniqueName": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj",
         "projectName": "PdfRescue.Core",
-        "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj",
+        "projectPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj",
         "packagesPath": "C:\\Users\\runneradmin\\.nuget\\packages\\",
-        "outputPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\obj\\",
+        "outputPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -691,14 +691,14 @@
         }
       }
     },
-    "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj": {
+    "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj",
+        "projectUniqueName": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj",
         "projectName": "PdfRescue.Infrastructure",
-        "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj",
+        "projectPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Infrastructure\\PdfRescue.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\runneradmin\\.nuget\\packages\\",
-        "outputPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Infrastructure\\obj\\",
+        "outputPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -720,8 +720,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
-                "projectPath": "D:\\a\\_temp\\asantepdf-normalized\\src\\PdfRescue.Core\\PdfRescue.Core.csproj"
+              "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj": {
+                "projectPath": "D:\\a\\asantepdf\\asantepdf\\src\\PdfRescue.Core\\PdfRescue.Core.csproj"
               }
             }
           }

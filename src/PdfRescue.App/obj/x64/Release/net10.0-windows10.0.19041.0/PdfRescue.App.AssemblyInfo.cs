@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Local-first PDF toolkit for Windows")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0-rc10")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0-rc10+4beb3229635ca0649d801c4cb9d63748c1b903b3")]
 [assembly: System.Reflection.AssemblyProductAttribute("AsantePDF")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AsantePDF")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
