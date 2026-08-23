@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using PdfRescue.Core.Jobs;
 using PdfRescue.Core.Models;
@@ -10,6 +11,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
 {
     private readonly PdfJob _job;
     private readonly Action? _cancelAction;
+    private string? _outputPath;
 
     internal TaskCenterItem(PdfJob job, Action? cancelAction)
     {
@@ -29,6 +31,9 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     public bool IsFinished => State is PdfJobState.Completed or PdfJobState.Failed or PdfJobState.Cancelled;
     public bool CanCancel => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
     public bool ShowProgress => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
+    public string? OutputPath => _outputPath;
+    public string OutputName => string.IsNullOrWhiteSpace(_outputPath) ? string.Empty : Path.GetFileName(_outputPath);
+    public bool CanOpenOutput => State == PdfJobState.Completed && !string.IsNullOrWhiteSpace(_outputPath) && File.Exists(_outputPath);
     public DateTimeOffset CreatedAt => _job.CreatedAt;
     public DateTimeOffset? StartedAt => _job.StartedAt;
     public DateTimeOffset? FinishedAt => _job.FinishedAt;
@@ -53,6 +58,14 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         _cancelAction?.Invoke();
     }
 
+    internal void SetOutput(string? path)
+    {
+        _outputPath = string.IsNullOrWhiteSpace(path) ? null : Path.GetFullPath(path);
+        OnPropertyChanged(nameof(OutputPath));
+        OnPropertyChanged(nameof(OutputName));
+        OnPropertyChanged(nameof(CanOpenOutput));
+    }
+
     internal void Refresh()
     {
         OnPropertyChanged(nameof(State));
@@ -64,6 +77,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsFinished));
         OnPropertyChanged(nameof(CanCancel));
         OnPropertyChanged(nameof(ShowProgress));
+        OnPropertyChanged(nameof(CanOpenOutput));
         OnPropertyChanged(nameof(StartedAt));
         OnPropertyChanged(nameof(FinishedAt));
         OnPropertyChanged(nameof(ElapsedLabel));
@@ -100,6 +114,13 @@ public sealed class TaskCenterService
         if (item is null || item.Job.State is not (PdfJobState.Running or PdfJobState.Paused)) return;
         item.Job.ReportProgress(progress, stage);
         item.Refresh();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void SetOutput(TaskCenterItem? item, string? outputPath)
+    {
+        if (item is null || string.IsNullOrWhiteSpace(outputPath)) return;
+        item.SetOutput(outputPath);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
