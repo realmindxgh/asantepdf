@@ -1,134 +1,95 @@
 # AsantePDF Project State
 
-Updated after the first true background-queue batch reached a green Windows development gate.
+Updated after the background Task Center queue expanded to six Windows-validated production workflows.
 
 ## Engineering baseline
 
-RC10 remains the proven release-engineering baseline, not the finished product design.
-
-The full RC10 Windows release pipeline reached green on GitHub Actions run `32636807149`. That release path demonstrated exact .NET SDK selection, Windows x64 compilation, smoke tests, self-contained publish, bundled-engine validation, final-candidate testing, production Inno Setup compilation, silent installation and installed-copy verification.
+RC10 remains the proven release-engineering baseline, not the finished product design. The full RC10 Windows release pipeline reached green on GitHub Actions run `32636807149`, including exact SDK selection, Windows x64 compilation, smoke tests, self-contained publish, bundled qpdf/Tesseract/LibreOffice validation, final-candidate tests, Inno Setup compilation, silent installation and installed-copy verification.
 
 RC10 installer SHA256:
 
 `16db141f34da837bfbe55e842c4aa7f93b2a6b1af83d6987514a07c0c2070802`
 
-## Active development branch
+## Active development
 
-Development branch: `development/master-upgrade-v2`
+Branch: `development/master-upgrade-v2`
 
 Draft PR: `#3` — **AsantePDF master upgrade implementation**
 
-The repository contains the normalized ordinary source tree. Development happens directly in `src/`, `tests/`, `assets/`, `installer/` and `scripts/`.
+Development uses the normalized ordinary `src/`, `tests/`, `assets/`, `installer/` and `scripts/` tree.
 
-## Product architecture implemented so far
+## Current product architecture
 
 ### Home / Launcher
 
-- real Home mode rather than a blank PDF canvas
-- Open PDF and standalone tool entry points
-- Recent and Starred navigation
-- asynchronous cached first-page PDF thumbnails
-- Grid, List and Compact Recent layouts
-- sorting, search, pinning and moved-file handling
-- right-click Recent actions
-- Resume Last Session
+Home is a genuine mode with Open PDF, standalone tool entry points, Recent/Starred navigation, asynchronous cached first-page thumbnails, Grid/List/Compact layouts, sorting, search, pinning, moved-file handling, context actions and Resume Last Session.
 
 ### Multi-document Document Workspace
 
-- real simultaneous document tabs with per-document state
-- active/dirty state and close buttons
-- drag reordering, middle-click close and scrollable overflow
-- Ctrl+Tab, Ctrl+W and Ctrl+Shift+T reopen
-- independent page layout, saved baseline, selected page, zoom, scroll and Undo/Redo per tab
-- transactional reuse of the proven PDFium renderer on tab activation
-- unsaved-close protection per tab
-- successful operation results can open directly as new tabs for the initial completion-workflow set
+The workspace has real simultaneous tabs with independent page layout, saved baseline, selection, zoom, scroll and Undo/Redo. Tabs support active/dirty state, close buttons, drag reordering, middle-click close, scrollable overflow, Ctrl+Tab, Ctrl+W and Ctrl+Shift+T reopen. The proven PDFium renderer is transactionally reused on tab activation.
 
 ### Session persistence
 
-`workspace-state.json` stores the open tab set, active-tab index, page, zoom/render width, scroll position, Recent history and pin state. Resume Last Session restores all available saved tabs and returns to the saved active tab. Writes are debounced.
-
-Crash recovery and unsaved working-layout recovery remain future work.
+`workspace-state.json` stores open tabs, active-tab index, page, zoom/render width, scroll position, Recent history and pin state. Resume Last Session restores all available saved tabs and returns to the saved active tab. Crash recovery and unsaved working-layout recovery remain.
 
 ### Task System / Task Center
 
-The Task System now has two connected execution paths:
+Two execution paths now share the same Task Center:
 
-1. foreground operations tracked through the central `RunBusyAsync` path
-2. a true background queue backed by the core `PdfJobQueue`
+1. foreground operations tracked through `RunBusyAsync`
+2. independent queued jobs backed by the core `PdfJobQueue`
 
-Current Task Center capabilities:
+Task Center currently supports Running, Queued, Completed, Failed and Cancelled states, progress/stage updates, elapsed time, Cancel, Open Result, clear-finished history and single-use Retry for retry-safe jobs.
 
-- Running, Queued, Completed, Failed and Cancelled states
-- determinate progress/stage updates where provided
-- elapsed time
-- graceful Cancel
-- finished-history clearing
-- Open Result for successful PDF outputs
-- Retry for retry-safe failed/cancelled background jobs
-- multiple real queued jobs through a single worker
-- queued cancellation
-- continued use of other document tabs while supported jobs run
+The core queue is single-worker and smoke-tested for genuine serialization, pre-queued jobs and queued cancellation. Users can continue working in other tabs while supported background jobs execute.
 
-The first background-capable operations are:
+Current background-capable production workflows:
 
 - Compress
 - Repair
 - Optimize for Web
 - Unlock / Remove Password
+- Merge PDFs
+- Office → PDF
 
-For active-document transformations, the job captures the source path plus current page order/rotations at queue time. Dirty layouts are materialized into isolated temporary PDFs inside the background job and cleaned afterward. The active renderer and later tab changes therefore do not mutate the queued job's input.
+Active-document jobs capture immutable page order/rotation state at queue time. Dirty layouts are materialized into isolated temporary PDFs and cleaned afterward, so later tab edits cannot change queued input. Unlock remains deliberately non-retryable because retaining its password for Retry would extend credential lifetime in memory.
 
-Unlock is intentionally non-retryable because retaining its password in a retry delegate would extend credential lifetime in memory.
+Merge and Office → PDF use captured input file paths and are independent of the active document renderer.
 
-### Result / completion workflow
+### Result routing
 
-A shared result workflow distinguishes original and result files and supports Open in New Tab, safe Use Result Here, Open Folder, Save a Copy, Run Another and Close.
+A shared completion workflow distinguishes original and result and supports Open in New Tab, safe Use Result Here, Open Folder, Save a Copy, Run Another and Close for the initial foreground set. Background outputs remain non-modal and reopen through Task Center.
 
-Initially wired and Windows-validated for Compress, Repair, Web Optimization and Unlock. Background completions do not interrupt the user with a modal; their results remain available through Task Center.
+Task Center output handling currently works naturally for PDF outputs. Before PDF-to-Word/Excel/PowerPoint are migrated to background execution, output opening must be generalized so non-PDF results launch in their associated Windows application rather than being sent to `OpenPdfAsync`.
 
-## Queue engineering validation
+## Windows validation
 
-The core queue now explicitly accepts jobs that have already been registered as `Queued`, allowing the UI to display real queued state before execution begins.
+Important green development gates include:
 
-The smoke suite now verifies:
+- Architecture Batch 1: `32647383215`
+- Recent/session foundation: `32648130725`
+- Starred/Resume: `32648422410`
+- rolling architecture gate: `32649073796`
+- multi-tab session job: `97221651603`
+- result-completion job: `97222420243`
+- first background queue job: `97232413507`
+- Merge/Office queue expansion job: `97232877751`
 
-- normal single-job execution
-- pre-queued job execution
-- serial execution of multiple jobs
-- a second job remaining Queued while the worker is occupied
-- cancellation while queued transitioning to Cancelled
+Job `97232877751` passed staged integration, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
 
-Background-queue Windows job `97232413507` passed:
-
-- staged source integration
-- exact .NET `10.0.202`
-- Windows x64 Release compilation
-- the expanded core smoke suite
-- validated generated-source commit
-
-## Other important green development gates
-
-- Architecture Batch 1: run `32647383215`
-- Recent/session foundation: run `32648130725`
-- Starred/Resume integration: run `32648422410`
-- later architecture iterations: run `32649073796`
-- multi-tab session restoration job: `97221651603`
-- result-completion routing job: `97222420243`
-- background queue job: `97232413507`
-
-These are development gates, not the final installer acceptance gate.
+These are development gates, not the final installer/installed-copy acceptance gate.
 
 ## Immediate next work
 
-1. migrate more independent operations onto the same background queue, especially Merge and Office-to-PDF
-2. extend completion/result routing to remaining PDF-producing workflows
-3. migrate OCR/conversion carefully with page/item progress reporting
-4. continue the full command/context-awareness audit
-5. implement real document search and bookmarks
-6. enrich Inspector and PDF Doctor states
-7. theme/settings work including Light and Follow Windows
-8. visual/runtime acceptance against the canonical Home and Document target screens
+1. generalize Task Center output opening for non-PDF results
+2. build renderer-isolated background OCR with real `Recognising page X of N` progress
+3. migrate PDF → Word/Excel/PowerPoint onto that isolated OCR pipeline
+4. expand completion/result routing to split and remaining PDF-producing operations
+5. continue the full context-aware command audit
+6. implement real document search and bookmarks
+7. enrich Inspector and PDF Doctor states
+8. implement Light / Follow Windows themes and Settings
+9. visually inspect the running Windows UI against the canonical target screens
 
 ## Product source of truth
 
@@ -141,7 +102,7 @@ Future work is governed by:
 5. `design/target-document-workspace.svg`
 6. `../AGENTS.md`
 
-The master specification contains **45 numbered requirements**. `IMPLEMENTATION_MATRIX.md` is the acceptance ledger. Do not upgrade a row to `ACCEPTED` merely because related code exists.
+The master specification contains 45 numbered requirements. `IMPLEMENTATION_MATRIX.md` is the acceptance ledger. Do not mark a row `ACCEPTED` merely because related code exists.
 
 ## Engineering cadence
 
@@ -151,7 +112,7 @@ For every coherent batch:
 - Windows-compile and run core tests for risky cross-file changes
 - commit validated generated changes back to the branch
 - update `IMPLEMENTATION_MATRIX.md`
-- update this project-state file when the architectural handoff meaningfully changes
+- update this project-state file when the architectural handoff materially changes
 - visually inspect affected UI requirements before acceptance
 - run the heavyweight installer/installed-copy gate only at release-candidate checkpoints
 
