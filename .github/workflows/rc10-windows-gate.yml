@@ -1,0 +1,118 @@
+name: AsantePDF RC10 Windows Gate
+
+on:
+  push:
+    paths:
+      - 'release-trigger*.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-install:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out transfer repository
+        uses: actions/checkout@v4
+
+      - name: Reconstruct verified RC10 build payload
+        shell: pwsh
+        run: |
+          $parts = Get-ChildItem "$env:GITHUB_WORKSPACE\compact" -Filter 'part-*' -File | Sort-Object Name
+          if ($parts.Count -ne 8) { throw "Expected 8 compact payload chunks, got $($parts.Count)." }
+
+          $base64 = ($parts | ForEach-Object { (Get-Content $_.FullName -Raw).Trim() }) -join ''
+          $bytes = [Convert]::FromBase64String($base64)
+          $archive = Join-Path $env:RUNNER_TEMP 'AsantePDF-RC10-compact.tar.gz'
+          [IO.File]::WriteAllBytes($archive, $bytes)
+
+          $expected = '5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486'
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "RC10 payload SHA256 mismatch. Expected $expected, got $actual." }
+
+          $source = Join-Path $env:GITHUB_WORKSPACE 'srcdrop'
+          New-Item -ItemType Directory -Force -Path $source | Out-Null
+          tar -xzf $archive -C $source
+          if ($LASTEXITCODE -ne 0) { throw "tar extraction failed with exit code $LASTEXITCODE." }
+
+          foreach ($required in @(
+            'AsantePDF.sln',
+            'VERSION',
+            'global.json',
+            'installer\AsantePDF.iss',
+            'scripts\publish-release.ps1',
+            'scripts\verify-installed-release.ps1',
+            'scripts\write-release-receipt.ps1',
+            'src\PdfRescue.App\Services\ImagePdfBuilder.cs'
+          )) {
+            if (-not (Test-Path (Join-Path $source $required))) { throw "Required RC10 source path is missing: $required" }
+          }
+
+          $version = (Get-Content (Join-Path $source 'VERSION') -Raw).Trim()
+          if ($version -ne '1.0.0-rc10') { throw "Unexpected release version: $version" }
+          "RC10 compact payload SHA256: $actual" | Set-Content (Join-Path $source 'RC10-BUILD-PAYLOAD-SHA256.txt') -Encoding ASCII
+          Write-Host "Verified RC10 compact payload: $actual" -ForegroundColor Green
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: srcdrop/global.json
+
+      - name: Install Inno Setup 6.7.1
+        shell: pwsh
+        run: |
+          choco install innosetup --version 6.7.1 -y --no-progress --limit-output
+          if ($LASTEXITCODE -notin @(0,1641,3010)) { exit $LASTEXITCODE }
+
+      - name: Build, stage engines, self-test and compile Setup.exe
+        shell: pwsh
+        working-directory: srcdrop
+        run: ./scripts/publish-release.ps1
+
+      - name: Install exact Setup.exe and verify installed copy
+        shell: pwsh
+        working-directory: srcdrop
+        run: |
+          ./scripts/verify-installed-release.ps1 `
+            -InstallerPath './dist/installer/AsantePDF Setup.exe' `
+            -SamplePdf './dist/release-sample.pdf'
+
+      - name: Write release receipt and checksums
+        shell: pwsh
+        working-directory: srcdrop
+        run: |
+          ./scripts/write-release-receipt.ps1 `
+            -InstallerPath './dist/installer/AsantePDF Setup.exe'
+
+          $receipt = Get-ChildItem './dist/release-evidence' -Filter 'AsantePDF-*-Release-Receipt.txt' -File | Select-Object -First 1
+          if (-not $receipt) { throw 'Release receipt was not produced.' }
+          Add-Content -Path $receipt.FullName -Value "`nBuild payload SHA256: 5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486"
+          Copy-Item './RC10-BUILD-PAYLOAD-SHA256.txt' './dist/release-evidence/RC10-BUILD-PAYLOAD-SHA256.txt' -Force
+
+          $zip = './dist/AsantePDF-RC10-Release-Evidence.zip'
+          Remove-Item $zip -Force -ErrorAction SilentlyContinue
+          Compress-Archive -Path './dist/release-evidence/*' -DestinationPath $zip -CompressionLevel Optimal
+
+      - name: Upload AsantePDF Setup.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-RC10-Windows-Installer
+          path: srcdrop/dist/installer/AsantePDF Setup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-RC10-Release-Evidence
+          path: |
+            srcdrop/dist/selftest-preinstall/**
+            srcdrop/dist/selftest-installed/**
+            srcdrop/dist/release-sample.pdf
+            srcdrop/dist/release-evidence/**
+            srcdrop/dist/AsantePDF-RC10-Release-Evidence.zip
+          if-no-files-found: warn
+          retention-days: 30
