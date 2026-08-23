@@ -1,2 +1,2 @@
 Normalize the SHA256-pinned corrected RC10 source into ordinary repository files.
-Trigger generation: 2
+Trigger generation: 3
