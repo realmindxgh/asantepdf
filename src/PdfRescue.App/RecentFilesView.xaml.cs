@@ -15,6 +15,7 @@ public partial class RecentFilesView : UserControl
     private RecentViewMode _viewMode = RecentViewMode.Grid;
     private RecentSortMode _sortMode = RecentSortMode.LastOpened;
     private bool _suppressPreferenceEvents;
+    private bool _pinnedOnly;
     private int _refreshGeneration;
 
     public RecentFilesView()
@@ -40,6 +41,13 @@ public partial class RecentFilesView : UserControl
             RecentSearchBox.Text = query;
         else
             RefreshVisibleItems();
+    }
+
+    public void SetPinnedOnly(bool pinnedOnly)
+    {
+        if (_pinnedOnly == pinnedOnly) return;
+        _pinnedOnly = pinnedOnly;
+        RefreshVisibleItems();
     }
 
     public async Task RefreshAsync()
@@ -108,6 +116,8 @@ public partial class RecentFilesView : UserControl
     {
         var query = RecentSearchBox.Text.Trim();
         IEnumerable<RecentDocumentItem> filtered = _allItems;
+        if (_pinnedOnly)
+            filtered = filtered.Where(item => item.IsPinned);
         if (!string.IsNullOrWhiteSpace(query))
         {
             filtered = filtered.Where(item =>
