@@ -5,6 +5,9 @@ using System.Runtime.CompilerServices;
 namespace PdfRescue.App;
 
 public sealed record DocumentTabPageState(int SourcePageNumber, int Rotation);
+public sealed record DocumentTabLayoutSnapshot(
+    IReadOnlyList<DocumentTabPageState> Pages,
+    IReadOnlyList<int> SelectedPositions);
 
 public sealed class DocumentTabSession : INotifyPropertyChanged
 {
@@ -38,6 +41,8 @@ public sealed class DocumentTabSession : INotifyPropertyChanged
     public double VerticalOffset { get; set; }
     public IReadOnlyList<DocumentTabPageState> WorkingLayout { get; set; } = [];
     public IReadOnlyList<DocumentTabPageState> SavedLayout { get; set; } = [];
+    public IReadOnlyList<DocumentTabLayoutSnapshot> UndoHistory { get; set; } = [];
+    public IReadOnlyList<DocumentTabLayoutSnapshot> RedoHistory { get; set; } = [];
     public DateTimeOffset LastActivatedUtc { get; set; } = DateTimeOffset.UtcNow;
 
     public bool IsAvailable => File.Exists(Path);
@@ -51,10 +56,15 @@ public sealed class DocumentTabSession : INotifyPropertyChanged
         VerticalOffset = VerticalOffset,
         WorkingLayout = WorkingLayout.ToArray(),
         SavedLayout = SavedLayout.ToArray(),
+        UndoHistory = UndoHistory.Select(CloneSnapshot).ToArray(),
+        RedoHistory = RedoHistory.Select(CloneSnapshot).ToArray(),
         LastActivatedUtc = LastActivatedUtc
     };
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private static DocumentTabLayoutSnapshot CloneSnapshot(DocumentTabLayoutSnapshot snapshot) =>
+        new(snapshot.Pages.ToArray(), snapshot.SelectedPositions.ToArray());
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
