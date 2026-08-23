@@ -33,6 +33,7 @@ public partial class MainWindow
         _taskCenterView.OpenOutputRequested += OpenTaskOutputAsync;
         InitializeDocumentTabs();
         InitializeDocumentOutline();
+        InitializeDocumentTextSelection();
 
         _recentFilesView = new RecentFilesView();
         _recentFilesView.SetService(_recentDocuments);

@@ -367,6 +367,16 @@
                                     <Grid>
                                         <Image x:Name="PreviewImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
                                         <Canvas x:Name="SearchHighlightCanvas" Background="Transparent" Visibility="Collapsed" IsHitTestVisible="False" />
+                                        <Canvas x:Name="TextSelectionCanvas" Background="Transparent" Visibility="Collapsed" IsHitTestVisible="False" Focusable="True" Cursor="IBeam"
+                                                MouseLeftButtonDown="TextSelectionCanvas_MouseLeftButtonDown"
+                                                MouseMove="TextSelectionCanvas_MouseMove"
+                                                MouseLeftButtonUp="TextSelectionCanvas_MouseLeftButtonUp">
+                                            <Canvas.ContextMenu>
+                                                <ContextMenu Opened="TextSelectionContextMenu_Opened">
+                                                    <MenuItem Header="Copy selected text" InputGestureText="Ctrl+C" Click="CopySelectedDocumentText_Click" />
+                                                </ContextMenu>
+                                            </Canvas.ContextMenu>
+                                        </Canvas>
                                         <Canvas x:Name="MarkupCanvas" Background="Transparent" Visibility="Collapsed" Cursor="Cross"
                                                 MouseLeftButtonDown="MarkupCanvas_MouseLeftButtonDown" MouseMove="MarkupCanvas_MouseMove" MouseLeftButtonUp="MarkupCanvas_MouseLeftButtonUp">
                                             <Rectangle x:Name="MarkupSelectionRectangle" Visibility="Collapsed" Stroke="#2D7DFF" StrokeThickness="2" StrokeDashArray="4,3" Fill="#332D7DFF" />

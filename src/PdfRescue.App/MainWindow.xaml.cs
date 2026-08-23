@@ -138,6 +138,7 @@ public partial class MainWindow : Window
             _currentPdf = fullPath;
             ResetDocumentSearchForDocumentChange();
             ResetDocumentOutlineForDocumentChange();
+            ResetDocumentTextSelectionForDocumentChange();
             _documentGeneration++;
             _undo.Clear();
             _redo.Clear();
@@ -212,6 +213,7 @@ public partial class MainWindow : Window
             PageStatusText.Text = $"Page {page.Position:N0} of {Pages.Count:N0}";
             UpdateZoomText();
             RefreshDocumentSearchHighlights(page);
+            PrepareDocumentTextSelectionForPage(page, bitmap, renderGeneration);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -1085,6 +1087,7 @@ public partial class MainWindow : Window
         MarkupSelectionRectangle.Visibility = Visibility.Collapsed;
         MarkupCanvas.Visibility = Visibility.Visible;
         MarkupCanvas.Cursor = Cursors.Cross;
+        SetDocumentTextSelectionInteractionEnabled(false);
         StatusText.Text = instruction;
     }
 
@@ -1097,6 +1100,7 @@ public partial class MainWindow : Window
         try { MarkupCanvas.ReleaseMouseCapture(); } catch { }
         MarkupSelectionRectangle.Visibility = Visibility.Collapsed;
         MarkupCanvas.Visibility = Visibility.Collapsed;
+        UpdateDocumentTextSelectionInteractionState();
         if (!string.IsNullOrWhiteSpace(status)) StatusText.Text = status;
     }
 
@@ -1807,6 +1811,7 @@ public partial class MainWindow : Window
         else if (ctrl && shift && e.Key == Key.T) { _ = ReopenLastClosedDocumentTabAsync(); e.Handled = true; }
         else if (ctrl && e.Key == Key.O) { OpenPdf_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.F) { FocusDocumentSearch(); e.Handled = true; }
+        else if (ctrl && e.Key == Key.C && TryCopySelectedDocumentTextFromKeyboard()) { e.Handled = true; }
         else if (ctrl && shift && e.Key == Key.S) { SaveAs_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Z) { Undo_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Y) { Redo_Click(sender, new RoutedEventArgs()); e.Handled = true; }

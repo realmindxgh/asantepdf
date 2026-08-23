@@ -327,6 +327,7 @@ public partial class MainWindow
         PreviewImage.Source = null;
         ResetDocumentSearchForDocumentChange();
         ResetDocumentOutlineForDocumentChange();
+        ResetDocumentTextSelectionForDocumentChange();
         DocumentTitle.Text = "No document open";
         DocumentMeta.Text = string.Empty;
         InspectorFile.Text = "—";
