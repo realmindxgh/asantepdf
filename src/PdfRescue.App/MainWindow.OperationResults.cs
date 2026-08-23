@@ -92,7 +92,27 @@ public partial class MainWindow
                 "Task Center", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        await OpenPdfAsync(path);
+
+        if (string.Equals(Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            await OpenPdfAsync(path);
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(Path.GetFullPath(path))
+            {
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            App.Log("Open task output failed: " + ex);
+            MessageBox.Show(this,
+                $"AsantePDF created the file, but Windows could not open it with its associated application.\n\n{ex.Message}",
+                "Open Task Result", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
 
     private void OpenContainingFolder(string path)
