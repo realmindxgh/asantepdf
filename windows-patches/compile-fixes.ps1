@@ -7,11 +7,13 @@ $ErrorActionPreference = 'Stop'
 $SourceRoot = [IO.Path]::GetFullPath($SourceRoot)
 
 function Replace-Exact([string]$Path, [string]$Old, [string]$New, [string]$Description) {
-    $text = Get-Content $Path -Raw
-    if (-not $text.Contains($Old)) {
+    $text = (Get-Content $Path -Raw).Replace("`r`n", "`n")
+    $oldNormalized = $Old.Replace("`r`n", "`n")
+    $newNormalized = $New.Replace("`r`n", "`n")
+    if (-not $text.Contains($oldNormalized)) {
         throw "Could not apply $Description. Expected source text was not found in $Path."
     }
-    $updated = $text.Replace($Old, $New)
+    $updated = $text.Replace($oldNormalized, $newNormalized)
     Set-Content -Path $Path -Value $updated -Encoding UTF8 -NoNewline
     Write-Host "Applied: $Description" -ForegroundColor Green
 }
