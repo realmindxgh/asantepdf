@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using PdfRescue.Core.Jobs;
 using PdfRescue.Core.Models;
 
@@ -11,12 +12,14 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
 {
     private readonly PdfJob _job;
     private readonly Action? _cancelAction;
+    private readonly Func<Task>? _retryAction;
     private string? _outputPath;
 
-    internal TaskCenterItem(PdfJob job, Action? cancelAction)
+    internal TaskCenterItem(PdfJob job, Action? cancelAction, Func<Task>? retryAction = null)
     {
         _job = job;
         _cancelAction = cancelAction;
+        _retryAction = retryAction;
     }
 
     public Guid Id => _job.Id;
@@ -30,6 +33,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     public int ProgressPercent => (int)Math.Round(Progress * 100d);
     public bool IsFinished => State is PdfJobState.Completed or PdfJobState.Failed or PdfJobState.Cancelled;
     public bool CanCancel => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
+    public bool CanRetry => _retryAction is not null && State is PdfJobState.Failed or PdfJobState.Cancelled;
     public bool ShowProgress => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
     public string? OutputPath => _outputPath;
     public string OutputName => string.IsNullOrWhiteSpace(_outputPath) ? string.Empty : Path.GetFileName(_outputPath);
@@ -58,6 +62,12 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         _cancelAction?.Invoke();
     }
 
+    public async Task RequestRetryAsync()
+    {
+        if (!CanRetry || _retryAction is null) return;
+        await _retryAction();
+    }
+
     internal void SetOutput(string? path)
     {
         _outputPath = string.IsNullOrWhiteSpace(path) ? null : Path.GetFullPath(path);
@@ -76,6 +86,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         OnPropertyChanged(nameof(ProgressPercent));
         OnPropertyChanged(nameof(IsFinished));
         OnPropertyChanged(nameof(CanCancel));
+        OnPropertyChanged(nameof(CanRetry));
         OnPropertyChanged(nameof(ShowProgress));
         OnPropertyChanged(nameof(CanOpenOutput));
         OnPropertyChanged(nameof(StartedAt));
@@ -96,68 +107,93 @@ public sealed class TaskCenterService
     public ObservableCollection<TaskCenterItem> Items { get; } = [];
     public event EventHandler? Changed;
 
+    public TaskCenterItem Track(PdfJob job, Action? cancelAction = null, Func<Task>? retryAction = null)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        TaskCenterItem? created = null;
+        RunOnUi(() =>
+        {
+            created = new TaskCenterItem(job, cancelAction, retryAction);
+            Items.Insert(0, created);
+            created.Refresh();
+            Changed?.Invoke(this, EventArgs.Empty);
+        });
+        return created!;
+    }
+
     public TaskCenterItem Start(string status, Action? cancelAction = null)
     {
         var title = CleanTitle(status);
         var job = new PdfJob(InferType(status), title);
         job.TransitionTo(PdfJobState.Queued, "Queued");
         job.TransitionTo(PdfJobState.Running, string.IsNullOrWhiteSpace(status) ? "Starting" : status.Trim());
-        var item = new TaskCenterItem(job, cancelAction);
-        Items.Insert(0, item);
-        item.Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
-        return item;
+        return Track(job, cancelAction);
+    }
+
+    public void RefreshTracked(TaskCenterItem? item)
+    {
+        if (item is null) return;
+        RunOnUi(() =>
+        {
+            item.Refresh();
+            Changed?.Invoke(this, EventArgs.Empty);
+        });
     }
 
     public void ReportProgress(TaskCenterItem? item, double progress, string stage)
     {
         if (item is null || item.Job.State is not (PdfJobState.Running or PdfJobState.Paused)) return;
         item.Job.ReportProgress(progress, stage);
-        item.Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
+        RefreshTracked(item);
     }
 
     public void SetOutput(TaskCenterItem? item, string? outputPath)
     {
         if (item is null || string.IsNullOrWhiteSpace(outputPath)) return;
-        item.SetOutput(outputPath);
-        Changed?.Invoke(this, EventArgs.Empty);
+        RunOnUi(() =>
+        {
+            item.SetOutput(outputPath);
+            Changed?.Invoke(this, EventArgs.Empty);
+        });
     }
 
     public void Complete(TaskCenterItem? item, string stage = "Completed")
     {
         if (item is null || item.Job.State is not (PdfJobState.Running or PdfJobState.Paused)) return;
         item.Job.TransitionTo(PdfJobState.Completed, stage);
-        item.Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
+        RefreshTracked(item);
     }
 
     public void Cancel(TaskCenterItem? item, string stage = "Cancelled")
     {
         if (item is null || item.Job.State is PdfJobState.Completed or PdfJobState.Failed or PdfJobState.Cancelled) return;
         item.Job.TransitionTo(PdfJobState.Cancelled, stage);
-        item.Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
+        RefreshTracked(item);
     }
 
     public void Fail(TaskCenterItem? item, Exception error)
     {
         if (item is null || item.Job.State is PdfJobState.Completed or PdfJobState.Failed or PdfJobState.Cancelled) return;
         item.Job.TransitionTo(PdfJobState.Failed, "Failed", error.Message);
-        item.Refresh();
-        Changed?.Invoke(this, EventArgs.Empty);
+        RefreshTracked(item);
     }
 
     public void ClearFinished()
     {
-        for (var i = Items.Count - 1; i >= 0; i--)
-            if (Items[i].IsFinished) Items.RemoveAt(i);
-        Changed?.Invoke(this, EventArgs.Empty);
+        RunOnUi(() =>
+        {
+            for (var i = Items.Count - 1; i >= 0; i--)
+                if (Items[i].IsFinished) Items.RemoveAt(i);
+            Changed?.Invoke(this, EventArgs.Empty);
+        });
     }
 
     public void RefreshElapsed()
     {
-        foreach (var item in Items.Where(item => !item.IsFinished)) item.RefreshElapsed();
+        RunOnUi(() =>
+        {
+            foreach (var item in Items.Where(item => !item.IsFinished)) item.RefreshElapsed();
+        });
     }
 
     public (int Running, int Queued, int Completed, int Failed, int Cancelled) GetCounts() =>
@@ -169,11 +205,19 @@ public sealed class TaskCenterService
             Items.Count(item => item.State == PdfJobState.Cancelled)
         );
 
+    private static void RunOnUi(Action action)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+            dispatcher.Invoke(action);
+        else
+            action();
+    }
+
     private static string CleanTitle(string status)
     {
         var value = string.IsNullOrWhiteSpace(status) ? "PDF operation" : status.Trim();
         value = value.TrimEnd('.');
-        if (value.EndsWith("ing", StringComparison.OrdinalIgnoreCase)) return value;
         return value;
     }
 
