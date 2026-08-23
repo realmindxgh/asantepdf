@@ -65,6 +65,7 @@ jobs:
           Copy-Item (Join-Path $patchRoot 'stage-release-engines.ps1') (Join-Path $source 'scripts\stage-release-engines.ps1') -Force
           Copy-Item (Join-Path $patchRoot 'publish-release.ps1') (Join-Path $source 'scripts\publish-release.ps1') -Force
           Copy-Item (Join-Path $patchRoot 'AsantePDF.sln') (Join-Path $source 'AsantePDF.sln') -Force
+          & (Join-Path $patchRoot 'compile-fixes.ps1') -SourceRoot $source
           Write-Host 'Applied RC10 Windows-gate corrections.' -ForegroundColor Green
 
       - name: Set up exact .NET SDK
