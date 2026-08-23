@@ -1,255 +1,436 @@
 <Window x:Class="PdfRescue.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AsantePDF" Height="900" Width="1500" MinHeight="650" MinWidth="1040" FontSize="14"
-        Background="{StaticResource AppBackground}" WindowStartupLocation="CenterScreen"
+        Title="AsantePDF" Height="940" Width="1600" MinHeight="720" MinWidth="1120" FontSize="14"
+        Background="{StaticResource AppBackground}" Foreground="{StaticResource PrimaryTextBrush}"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
         AllowDrop="True" DragOver="Window_DragOver" Drop="Window_Drop"
-        PreviewKeyDown="Window_PreviewKeyDown">
-    <DockPanel>
-        <Menu DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open PDF..." Click="OpenPdf_Click" InputGestureText="Ctrl+O" />
-                <MenuItem Header="_Recent" x:Name="RecentMenu" />
-                <MenuItem Header="_Save As..." Click="SaveAs_Click" InputGestureText="Ctrl+Shift+S" x:Name="SaveMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="_Merge PDFs..." Click="Merge_Click" />
-                <MenuItem Header="_Split current PDF..." Click="Split_Click" x:Name="SplitMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="E_xit" Click="Exit_Click" />
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo" Click="Undo_Click" InputGestureText="Ctrl+Z" x:Name="UndoMenuItem" IsEnabled="False" />
-                <MenuItem Header="_Redo" Click="Redo_Click" InputGestureText="Ctrl+Y" x:Name="RedoMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="Select _All Pages" Click="SelectAllPages_Click" InputGestureText="Ctrl+A" x:Name="SelectAllMenuItem" IsEnabled="False" />
-                <MenuItem Header="_Duplicate Selected Pages" Click="DuplicatePages_Click" InputGestureText="Ctrl+D" x:Name="DuplicateMenuItem" IsEnabled="False" />
-                <MenuItem Header="_Delete Selected Pages" Click="DeletePages_Click" InputGestureText="Delete" x:Name="DeleteMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="_Reset Page Layout" Click="ResetLayout_Click" x:Name="ResetMenuItem" IsEnabled="False" />
-            </MenuItem>
-            <MenuItem Header="_Convert">
-                <MenuItem Header="_Office Document to PDF..." Click="OfficeToPdf_Click" />
-                <Separator />
-                <MenuItem Header="PDF to _Word..." Click="PdfToWord_Click" x:Name="PdfToWordMenuItem" IsEnabled="False" />
-                <MenuItem Header="PDF to _Excel..." Click="PdfToExcel_Click" x:Name="PdfToExcelMenuItem" IsEnabled="False" />
-                <MenuItem Header="PDF to _PowerPoint..." Click="PdfToPowerPoint_Click" x:Name="PdfToPowerPointMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="_Images to PDF..." Click="ImagesToPdf_Click" />
-                <MenuItem Header="Export Pages as _Images..." Click="ExportPagesAsImages_Click" x:Name="ConvertExportImagesMenuItem" IsEnabled="False" />
-            </MenuItem>
-            <MenuItem Header="_Tools">
-                <MenuItem Header="_Compress current PDF..." Click="Compress_Click" x:Name="CompressMenuItem" IsEnabled="False" />
-                <MenuItem Header="_Repair current PDF..." Click="Repair_Click" x:Name="RepairMenuItem" IsEnabled="False" />
-                <MenuItem Header="Optimize for _Web..." Click="Linearize_Click" x:Name="LinearizeMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="_Protect with Password..." Click="Protect_Click" x:Name="ProtectMenuItem" IsEnabled="False" />
-                <MenuItem Header="_Remove Password..." Click="Unlock_Click" />
-                <Separator />
-                <MenuItem Header="_Images to PDF..." Click="ImagesToPdf_Click" />
-                <MenuItem Header="Export Pages as _Images..." Click="ExportPagesAsImages_Click" x:Name="ExportImagesMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="_OCR Scanned PDF..." Click="OcrPdf_Click" x:Name="OcrMenuItem" IsEnabled="False" />
-                <MenuItem Header="Extract Text with OC_R..." Click="ExtractOcrText_Click" x:Name="ExtractOcrTextMenuItem" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="Document _Finishing" x:Name="FinishingMenuItem" IsEnabled="False">
-                    <MenuItem Header="Add _Watermark..." Click="Watermark_Click" />
-                    <MenuItem Header="Add Page _Numbers..." Click="PageNumbers_Click" />
-                    <MenuItem Header="Add _Header / Footer..." Click="HeaderFooter_Click" />
-                    <MenuItem Header="Edit _Metadata..." Click="Metadata_Click" />
-                    <MenuItem Header="Stamp _Image / Signature..." Click="StampImage_Click" />
-                </MenuItem>
-                <MenuItem Header="_Markup &amp; Edit" x:Name="MarkupMenuItem" IsEnabled="False">
-                    <MenuItem Header="Add _Text..." Click="AddTextMarkup_Click" />
-                    <MenuItem Header="_Highlight Area" Click="HighlightMarkup_Click" />
-                    <MenuItem Header="Draw _Rectangle" Click="RectangleMarkup_Click" />
-                    <MenuItem Header="Draw _Ellipse" Click="EllipseMarkup_Click" />
-                    <MenuItem Header="_Crop Page to Area" Click="CropMarkup_Click" />
-                    <Separator />
-                    <MenuItem Header="_Permanent Redaction..." Click="RedactMarkup_Click" />
-                    <Separator />
-                    <MenuItem Header="_Cancel Markup Mode" Click="CancelMarkup_Click" />
-                </MenuItem>
-                <MenuItem Header="_Forms &amp; Signatures" x:Name="FormsMenuItem" IsEnabled="False">
-                    <MenuItem Header="_Fill Form Fields..." Click="FillForm_Click" />
-                    <MenuItem Header="Place _Visual Signature..." Click="PlaceSignature_Click" />
-                </MenuItem>
-                <MenuItem Header="_Batch Process PDFs..." Click="BatchProcess_Click" x:Name="BatchMenuItem" />
-                <Separator />
-                <MenuItem Header="PDF _Doctor" Click="Doctor_Click" x:Name="DoctorMenuItem" IsEnabled="False" />
-            </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="Toggle _Pages pane" Click="TogglePages_Click" />
-                <MenuItem Header="Toggle _Inspector" Click="ToggleInspector_Click" />
-                <Separator />
-                <MenuItem Header="Zoom _In" Click="ZoomIn_Click" InputGestureText="Ctrl++" />
-                <MenuItem Header="Zoom _Out" Click="ZoomOut_Click" InputGestureText="Ctrl+-" />
-                <MenuItem Header="_Fit Width" Click="FitWidth_Click" InputGestureText="Ctrl+0" />
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About AsantePDF" Click="About_Click" />
-            </MenuItem>
-        </Menu>
+        PreviewKeyDown="Window_PreviewKeyDown" Loaded="ProductShell_Loaded">
+    <Grid Background="{StaticResource AppBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="28" />
+        </Grid.RowDefinitions>
 
-        <Border DockPanel.Dock="Top" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="8,5">
-            <WrapPanel>
-                <Button Content="Open" Click="OpenPdf_Click" ToolTip="Open PDF (Ctrl+O)" />
-                <Button Content="Save As" Click="SaveAs_Click" x:Name="SaveButton" IsEnabled="False" />
-                <Separator Margin="7,0" />
-                <Button Content="Undo" Click="Undo_Click" x:Name="UndoButton" IsEnabled="False" />
-                <Button Content="Redo" Click="Redo_Click" x:Name="RedoButton" IsEnabled="False" />
-                <Separator Margin="7,0" />
-                <Button Content="Move Up" Click="MoveUp_Click" x:Name="MoveUpButton" IsEnabled="False" />
-                <Button Content="Move Down" Click="MoveDown_Click" x:Name="MoveDownButton" IsEnabled="False" />
-                <Button Content="Duplicate" Click="DuplicatePages_Click" x:Name="DuplicateButton" IsEnabled="False" />
-                <Button Content="Rotate Left" Click="RotateLeft_Click" x:Name="RotateLeftButton" IsEnabled="False" />
-                <Button Content="Rotate Right" Click="RotateRight_Click" x:Name="RotateRightButton" IsEnabled="False" />
-                <Button Content="Delete" Click="DeletePages_Click" x:Name="DeleteButton" IsEnabled="False" />
-                <Button Content="Extract" Click="Extract_Click" x:Name="ExtractButton" IsEnabled="False" />
-                <Separator Margin="7,0" />
-                <Button Content="Compress" Click="Compress_Click" x:Name="CompressButton" IsEnabled="False" />
-                <Button Content="OCR" Click="OcrPdf_Click" x:Name="OcrButton" IsEnabled="False" ToolTip="Create searchable PDF from a scan" />
-                <Button Content="Page Numbers" Click="PageNumbers_Click" x:Name="PageNumbersButton" IsEnabled="False" />
-                <Separator Margin="7,0" />
-                <Button Content="Add Text" Click="AddTextMarkup_Click" x:Name="AddTextButton" IsEnabled="False" ToolTip="Click a position on the page to place text" />
-                <Button Content="Highlight" Click="HighlightMarkup_Click" x:Name="HighlightButton" IsEnabled="False" ToolTip="Drag a rectangle on the page to highlight" />
-                <Button Content="Crop" Click="CropMarkup_Click" x:Name="CropButton" IsEnabled="False" ToolTip="Crop the current page to a selected area" />
-                <Button Content="Redact" Click="RedactMarkup_Click" x:Name="RedactButton" IsEnabled="False" ToolTip="Permanently remove content in a selected area" />
-                <Button Content="Doctor" Click="Doctor_Click" x:Name="DoctorButton" IsEnabled="False" />
-            </WrapPanel>
-        </Border>
-
-        <StatusBar DockPanel.Dock="Bottom" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0">
-            <StatusBarItem><TextBlock x:Name="StatusText" Text="Ready" /></StatusBarItem>
-            <Separator />
-            <StatusBarItem><TextBlock x:Name="PageStatusText" Text="No document" /></StatusBarItem>
-            <Separator />
-            <StatusBarItem><TextBlock x:Name="ZoomStatusText" Text="100%" /></StatusBarItem>
-            <Separator />
-            <StatusBarItem><TextBlock Text="Processed locally" /></StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <StackPanel Orientation="Horizontal">
-                    <ProgressBar x:Name="Progress" Width="150" Height="13" Visibility="Collapsed" Margin="0,0,6,0" />
-                    <Button x:Name="CancelButton" Content="Cancel" Padding="8,2" MinHeight="23" Visibility="Collapsed" Click="CancelOperation_Click" />
+        <!-- Custom title bar -->
+        <Border Grid.Row="0" Background="#08121E" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="WindowDrag_MouseLeftButtonDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+                    <Border Width="28" Height="28" CornerRadius="7" Background="#113661" Margin="0,0,10,0">
+                        <TextBlock Text="A" Foreground="#5EB4FF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock FontSize="17" FontWeight="SemiBold">
+                            <Run Text="Asante" /><Run Text="PDF" Foreground="#2D8CFF" />
+                        </TextBlock>
+                        <TextBlock Text="PDF Toolkit" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,-2,0,0" />
+                    </StackPanel>
                 </StackPanel>
-            </StatusBarItem>
-        </StatusBar>
-
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="PagesColumn" Width="230" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition x:Name="InspectorColumn" Width="300" />
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <Grid DockPanel.Dock="Top" Margin="12,9,9,7">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                        <TextBlock Text="Pages" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="Drag to reorder" FontSize="12" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
-                    </Grid>
-                    <ListBox x:Name="PagesList" SelectionMode="Extended" SelectionChanged="PagesList_SelectionChanged"
-                             BorderThickness="0" Background="Transparent" AllowDrop="True"
-                             PreviewMouseLeftButtonDown="PagesList_PreviewMouseLeftButtonDown"
-                             PreviewMouseMove="PagesList_PreviewMouseMove"
-                             DragOver="PagesList_DragOver" Drop="PagesList_Drop">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border Padding="8" Margin="6,3" BorderBrush="#E4E7EC" BorderThickness="1" Background="#FFFFFF">
-                                    <StackPanel>
-                                        <Image Source="{Binding Thumbnail}" Height="150" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
-                                            <Image.LayoutTransform><RotateTransform Angle="{Binding Rotation}" /></Image.LayoutTransform>
-                                        </Image>
-                                        <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" Margin="0,6,0,0" FontSize="13" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#E2E5EA" />
-
-            <Grid Grid.Column="2" Background="#ECEEF2">
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="14,8">
+                <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="520" Height="34"
+                        Background="#0D1A28" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8">
                     <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock x:Name="DocumentTitle" Text="No document open" FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock x:Name="DocumentMeta" Text="Open a PDF to begin" Foreground="{StaticResource MutedTextBrush}" Margin="0,2,0,0" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="−" Width="34" Click="ZoomOut_Click" ToolTip="Zoom out" />
-                            <Button x:Name="ZoomButton" Content="100%" MinWidth="62" Click="FitWidth_Click" ToolTip="Fit width" />
-                            <Button Content="+" Width="34" Click="ZoomIn_Click" ToolTip="Zoom in" />
-                        </StackPanel>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBox x:Name="HomeSearchBox" Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0"
+                                 TextChanged="HomeSearchBox_TextChanged" VerticalContentAlignment="Center" ToolTip="Search recent files" />
+                        <TextBlock Grid.Column="2" Text="Ctrl+K" Foreground="#6F8399" Margin="8,0,10,0" VerticalAlignment="Center" FontSize="12" />
                     </Grid>
                 </Border>
-                <Grid Grid.Row="1">
-                    <StackPanel x:Name="EmptyPanel" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="AsantePDF" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                        <TextBlock Text="PDF Toolkit" FontSize="13" FontWeight="SemiBold" Foreground="#B4232F" Margin="0,3,0,0" HorizontalAlignment="Center" />
-                        <TextBlock Text="Open a PDF or drop one here" FontSize="14" Foreground="{StaticResource MutedTextBrush}" Margin="0,6,0,0" HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Help"><TextBlock Text="?" FontSize="17" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Settings" IsEnabled="False"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MinimizeWindow_Click" ToolTip="Minimize"><TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MaximizeWindow_Click" ToolTip="Maximize"><TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="CloseWindow_Click" ToolTip="Close"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" /></Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Application navigation -->
+            <Border Grid.Column="0" Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,14,0,0">
+                        <Button Style="{StaticResource NavButtonStyle}" Click="HomeNav_Click">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Home"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource NavButtonStyle}" Click="HomeRecentNav_Click">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Recent"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource NavButtonStyle}" IsEnabled="False" ToolTip="Pinned documents will appear here in the Recent-files upgrade">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Starred"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource NavButtonStyle}" Click="HomeNav_Click">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Tools"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource NavButtonStyle}" Click="HomeDoctor_Click">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Document Doctor"/></StackPanel>
+                        </Button>
+                        <Separator Margin="16,14" Background="{StaticResource BorderBrushSoft}" />
+                        <TextBlock Text="WORKSPACE" Foreground="#6F8399" FontSize="12" FontWeight="SemiBold" Margin="20,0,0,7" />
+                        <Button Style="{StaticResource NavButtonStyle}" Click="DocumentNav_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Return to the active document">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Active Document"/></StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource NavButtonStyle}" IsEnabled="False" ToolTip="Task Center foundation is part of the master-upgrade branch">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Task Center"/></StackPanel>
+                        </Button>
+                        <Separator Margin="16,14" Background="{StaticResource BorderBrushSoft}" />
+                        <TextBlock Text="STORAGE" Foreground="#6F8399" FontSize="12" FontWeight="SemiBold" Margin="20,0,0,7" />
+                        <Button Style="{StaticResource NavButtonStyle}" Click="OpenPdf_Click">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="My Computer"/></StackPanel>
+                        </Button>
                     </StackPanel>
-                    <ScrollViewer x:Name="PreviewScroll" Visibility="Collapsed" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <Border Margin="28" Background="#FFFFFF" BorderBrush="#CCD1D8" BorderThickness="1" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <Border Grid.Row="2" Margin="12,12,12,16" Padding="14" CornerRadius="9" Background="#0E1C2B" BorderBrush="#24415F" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Local-first processing" Foreground="#80B9FF" FontWeight="SemiBold" />
+                            <TextBlock Text="Your PDFs stay on this computer while AsantePDF works." Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Right product area -->
+            <Grid Grid.Column="1">
+                <!-- Document mode remains alive underneath Home so state is preserved -->
+                <Grid x:Name="DocumentWorkspaceRoot">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="44" />
+                        <RowDefinition Height="126" />
+                        <RowDefinition Height="46" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Document tabs -->
+                    <Border Grid.Row="0" Background="#0B1724" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Stretch">
+                                <Border Background="#132236" BorderBrush="#2D7DFF" BorderThickness="0,2,0,0" MinWidth="250" Padding="14,0" Margin="8,0,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock x:Name="DocumentTitle" Text="No document open" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="×" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" />
+                                        <TextBlock x:Name="DocumentMeta" Visibility="Collapsed" />
+                                    </Grid>
+                                </Border>
+                                <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Grouped command ribbon -->
+                    <Border Grid.Row="1" Background="#0F1B29" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <StackPanel Orientation="Horizontal" Margin="10,8">
+                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
+                                    <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="OpenPdf_Click" ToolTip="Open PDF (Ctrl+O)">
+                                                <StackPanel><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Open" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+                                            </Button>
+                                            <Button x:Name="SaveButton" Style="{StaticResource RibbonButtonStyle}" Click="SaveAs_Click" IsEnabled="False" ToolTip="Save As (Ctrl+Shift+S)">
+                                                <StackPanel><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Save As" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="File" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />
+                                    </Grid>
+                                </Border>
+
+                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
+                                    <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="UndoButton" Style="{StaticResource RibbonButtonStyle}" Click="Undo_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Undo" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="RedoButton" Style="{StaticResource RibbonButtonStyle}" Click="Redo_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE7A6;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#6B7D90"/><TextBlock Text="Redo" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="History" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />
+                                    </Grid>
+                                </Border>
+
+                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
+                                    <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="DuplicateButton" Style="{StaticResource RibbonButtonStyle}" Click="DuplicatePages_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Duplicate" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="RotateRightButton" Style="{StaticResource RibbonButtonStyle}" Click="RotateRight_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Rotate" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="DeleteButton" Style="{StaticResource RibbonButtonStyle}" Click="DeletePages_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#EF5C5C"/><TextBlock Text="Delete" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="ExtractButton" Style="{StaticResource RibbonButtonStyle}" Click="Extract_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Extract" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="Pages" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />
+                                    </Grid>
+                                </Border>
+
+                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
+                                    <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="AddTextButton" Style="{StaticResource RibbonButtonStyle}" Click="AddTextMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="T" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#49D6FF"/><TextBlock Text="Edit Text" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="HighlightButton" Style="{StaticResource RibbonButtonStyle}" Click="HighlightMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#F0B93A"/><TextBlock Text="Highlight" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="CropButton" Style="{StaticResource RibbonButtonStyle}" Click="CropMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#D187FF"/><TextBlock Text="Crop" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="RedactButton" Style="{StaticResource RibbonButtonStyle}" Click="RedactMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#EF5C8B"/><TextBlock Text="Redact" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="Edit &amp; Annotate" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />
+                                    </Grid>
+                                </Border>
+
+                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
+                                    <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="PdfToWord_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="W" FontSize="20" FontWeight="Bold" Foreground="#3F8CFF" HorizontalAlignment="Center"/><TextBlock Text="To Word" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="PdfToExcel_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="X" FontSize="20" FontWeight="Bold" Foreground="#27B67A" HorizontalAlignment="Center"/><TextBlock Text="To Excel" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="PdfToPowerPoint_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="P" FontSize="20" FontWeight="Bold" Foreground="#EF7D45" HorizontalAlignment="Center"/><TextBlock Text="To PPT" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="Convert" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />
+                                    </Grid>
+                                </Border>
+
+                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
+                                    <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="CompressButton" Style="{StaticResource RibbonButtonStyle}" Click="Compress_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE90C;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#34C5C3"/><TextBlock Text="Compress" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button x:Name="OcrButton" Style="{StaticResource RibbonButtonStyle}" Click="OcrPdf_Click" IsEnabled="False"><StackPanel><TextBlock Text="OCR" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#6FD15C"/><TextBlock Text="OCR" FontSize="12" Margin="0,8,0,0"/></StackPanel></Button>
+                                            <Button x:Name="DoctorButton" Style="{StaticResource RibbonButtonStyle}" Click="Doctor_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#FF5C62"/><TextBlock Text="Doctor" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                        </StackPanel>
+                                        <TextBlock Grid.Row="1" Text="Optimize" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Page navigation and zoom -->
+                    <Border Grid.Row="2" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="12,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="PreviousPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="‹" FontSize="19"/><TextBlock Text="Previous" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel></Button>
+                                <TextBox x:Name="PageNumberBox" Width="48" Height="30" TextAlignment="Center" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" KeyDown="PageNumberBox_KeyDown" Margin="7,0,4,0" />
+                                <TextBlock x:Name="PageCountText" Text="/ 0" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="NextPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="Next" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="›" FontSize="19"/></StackPanel></Button>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="ZoomOut_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Width="34" Padding="4">−</Button>
+                                <Button x:Name="ZoomButton" Style="{StaticResource FlatButtonStyle}" Click="ActualSizeShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="100%" MinWidth="66" Padding="7,4" />
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="ZoomIn_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Width="34" Padding="4">+</Button>
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="FitWidth_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="Fit Width" Margin="12,0,2,0" Padding="10,5" />
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="FitPageShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="Fit Page" Padding="10,5" />
+                            </StackPanel>
+                            <TextBox Grid.Column="2" Width="235" IsReadOnly="True" IsEnabled="False" Text="Search in document" ToolTip="Full document search is tracked in master item 12" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Document work area -->
+                    <Grid Grid.Row="3" Background="#0A1420">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="PagesColumn" Width="245" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition x:Name="InspectorColumn" Width="310" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
                             <Grid>
-                                <Image x:Name="PreviewImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
-                                <Canvas x:Name="MarkupCanvas"
-                                        Background="Transparent"
-                                        Visibility="Collapsed"
-                                        Cursor="Cross"
-                                        MouseLeftButtonDown="MarkupCanvas_MouseLeftButtonDown"
-                                        MouseMove="MarkupCanvas_MouseMove"
-                                        MouseLeftButtonUp="MarkupCanvas_MouseLeftButtonUp">
-                                    <Rectangle x:Name="MarkupSelectionRectangle"
-                                               Visibility="Collapsed"
-                                               Stroke="#1F6FEB"
-                                               StrokeThickness="2"
-                                               StrokeDashArray="4,3"
-                                               Fill="#331F6FEB" />
-                                </Canvas>
+                                <Grid.RowDefinitions><RowDefinition Height="44"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <Grid Grid.Row="0" Margin="8,6">
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Style="{StaticResource FlatButtonStyle}" Click="PageModePages_Click" Content="Pages" Padding="7,5" />
+                                    <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Click="PageModePlaceholder_Click" Content="Bookmarks" Padding="7,5" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" />
+                                    <Button Grid.Column="2" Style="{StaticResource FlatButtonStyle}" Click="PageModePlaceholder_Click" Content="Search" Padding="7,5" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" />
+                                </Grid>
+                                <ListBox x:Name="PagesList" Grid.Row="1" SelectionMode="Extended" SelectionChanged="PagesList_SelectionChanged"
+                                         AllowDrop="True" PreviewMouseLeftButtonDown="PagesList_PreviewMouseLeftButtonDown"
+                                         PreviewMouseMove="PagesList_PreviewMouseMove" DragOver="PagesList_DragOver" Drop="PagesList_Drop">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="8" Margin="5,3" CornerRadius="5" BorderBrush="#29425B" BorderThickness="1" Background="#122131">
+                                                <StackPanel>
+                                                    <Image Source="{Binding Thumbnail}" Height="148" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
+                                                        <Image.LayoutTransform><RotateTransform Angle="{Binding Rotation}" /></Image.LayoutTransform>
+                                                    </Image>
+                                                    <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" Margin="0,6,0,0" FontSize="12" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel x:Name="NavigationPlaceholder" Grid.Row="1" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="18">
+                                    <TextBlock Text="Navigation view" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Bookmarks and full search results are being built on this navigation shell." TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,6,0,0" />
+                                </StackPanel>
                             </Grid>
                         </Border>
-                    </ScrollViewer>
+
+                        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#172738" />
+
+                        <Grid Grid.Column="2" Background="#111C28">
+                            <ScrollViewer x:Name="PreviewScroll" Visibility="Collapsed" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <Border Margin="28" Background="#FFFFFF" BorderBrush="#3A4A59" BorderThickness="1" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Top">
+                                    <Grid>
+                                        <Image x:Name="PreviewImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        <Canvas x:Name="MarkupCanvas" Background="Transparent" Visibility="Collapsed" Cursor="Cross"
+                                                MouseLeftButtonDown="MarkupCanvas_MouseLeftButtonDown" MouseMove="MarkupCanvas_MouseMove" MouseLeftButtonUp="MarkupCanvas_MouseLeftButtonUp">
+                                            <Rectangle x:Name="MarkupSelectionRectangle" Visibility="Collapsed" Stroke="#2D7DFF" StrokeThickness="2" StrokeDashArray="4,3" Fill="#332D7DFF" />
+                                        </Canvas>
+                                    </Grid>
+                                </Border>
+                            </ScrollViewer>
+                        </Grid>
+
+                        <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="#172738" />
+
+                        <Border Grid.Column="4" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1,0,0,0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="16">
+                                    <TextBlock Text="Document Details" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,14" />
+                                    <TextBlock Text="File" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                    <TextBlock x:Name="InspectorFile" Text="—" TextWrapping="Wrap" Margin="0,3,0,10" />
+                                    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                        <StackPanel><TextBlock Text="Pages" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="InspectorPages" Text="—" Margin="0,3,0,0"/></StackPanel>
+                                        <StackPanel Grid.Column="1"><TextBlock Text="Size" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="InspectorSize" Text="—" Margin="0,3,0,0"/></StackPanel>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,14"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                        <StackPanel><TextBlock Text="PDF version" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="InspectorVersion" Text="Not checked" Margin="0,3,0,0"/></StackPanel>
+                                        <StackPanel Grid.Column="1"><TextBlock Text="Security" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="InspectorSecurity" Text="Not checked" TextWrapping="Wrap" Margin="0,3,0,0"/></StackPanel>
+                                    </Grid>
+                                    <TextBlock Text="Document features" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                    <TextBlock x:Name="InspectorFeatures" Text="Run PDF Doctor to inspect" TextWrapping="Wrap" Margin="0,3,0,16" />
+                                    <Separator Background="{StaticResource BorderBrushSoft}" />
+                                    <StackPanel Margin="0,16,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="30" Height="30" CornerRadius="6" Background="#3C1B22" Margin="0,0,10,0"><TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" Foreground="#FF6268" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                                            <StackPanel><TextBlock Text="PDF Doctor" FontWeight="SemiBold"/><TextBlock Text="Document health" FontSize="12" Foreground="{StaticResource MutedTextBrush}"/></StackPanel>
+                                        </StackPanel>
+                                        <TextBlock x:Name="HealthText" Text="Not analysed yet" FontSize="19" FontWeight="SemiBold" Margin="0,14,0,4" />
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" Click="Doctor_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" HorizontalAlignment="Left" Content="Run PDF Doctor" Margin="0,8,0,10" />
+                                        <ItemsControl x:Name="FindingsList" Margin="0,4,0,10" />
+                                        <TextBlock Text="Recommendations appear only when diagnosis supports them." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
                 </Grid>
+
+                <!-- HOME MODE -->
+                <Border x:Name="EmptyPanel" Panel.ZIndex="20" Background="{StaticResource AppBackground}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="44,32,44,44">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Welcome to AsantePDF" FontSize="28" FontWeight="SemiBold" />
+                                    <TextBlock Text="Your all-in-one, local-first PDF productivity toolkit" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,5,0,0" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" IsEnabled="False" ToolTip="Session recovery is tracked in master item 4" Padding="16,9">
+                                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" Foreground="#4D9BFF"/><TextBlock Text="Resume Last Session" Margin="8,0,0,0"/></StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <Grid Margin="0,42,0,28">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="1.05*"/><ColumnDefinition Width="0.95*"/></Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="18,0,30,0">
+                                    <TextBlock Text="Get started with AsantePDF" FontSize="40" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="Open a PDF to view, search and work with your documents, or start with one of the standalone tools below." Foreground="{StaticResource MutedTextBrush}" FontSize="16" TextWrapping="Wrap" Margin="0,16,0,22" MaxWidth="560" HorizontalAlignment="Left" />
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" Click="OpenPdf_Click" Width="220" HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="17"/><TextBlock Text="Open PDF" Margin="10,0,0,0" FontSize="15"/></StackPanel>
+                                    </Button>
+                                    <TextBlock Text="You can also drag and drop a PDF anywhere on this window." Foreground="#73879D" FontSize="12" Margin="3,10,0,0" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Height="270" Margin="18,0" CornerRadius="20" Background="#0E1B29" BorderBrush="#1F3650" BorderThickness="1">
+                                    <Grid>
+                                        <Ellipse Width="250" Height="250" Fill="#102A45" Opacity="0.55" />
+                                        <Border Width="170" Height="120" Background="#17283A" BorderBrush="#35506B" BorderThickness="1" CornerRadius="12" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,60,0,0">
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="52" Foreground="#4D9BFF" HorizontalAlignment="Center" />
+                                                <TextBlock Text="PDF" Foreground="#FF6268" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Width="70" Height="70" Background="#102D4C" BorderBrush="#2E5F8B" BorderThickness="1" CornerRadius="14" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="72,0,0,0"><TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#57A7FF" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                                        <Border Width="62" Height="62" Background="#17351F" BorderBrush="#285D37" BorderThickness="1" CornerRadius="14" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,42,68,0"><TextBlock Text="T" FontSize="28" Foreground="#62D46F" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+
+                            <TextBlock Text="Quick Tools" FontSize="19" FontWeight="SemiBold" Margin="0,4,0,2" />
+                            <TextBlock Text="Choose a tool first. AsantePDF will ask for the source file when needed." Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,0,0,10" />
+                            <UniformGrid Columns="7" Margin="-6,0,-6,0">
+                                <Button Style="{StaticResource ToolCardStyle}" Click="HomeOcr_Click"><StackPanel><Border Width="44" Height="44" Background="#1D7132" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="OCR" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="OCR PDF" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Recognize text from scanned PDFs." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                                <Button Style="{StaticResource ToolCardStyle}" Click="HomeCompress_Click"><StackPanel><Border Width="44" Height="44" Background="#5639A8" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="&#xE90C;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Compress PDF" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Reduce file size while preserving the original." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                                <Button Style="{StaticResource ToolCardStyle}" Click="Merge_Click"><StackPanel><Border Width="44" Height="44" Background="#A95418" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="&#xE8B0;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Merge PDFs" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Combine multiple PDFs into one file." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                                <Button Style="{StaticResource ToolCardStyle}" Click="HomeSplit_Click"><StackPanel><Border Width="44" Height="44" Background="#13767A" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Split PDF" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Extract pages or split a PDF into parts." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                                <Button Style="{StaticResource ToolCardStyle}" Click="HomeToWord_Click"><StackPanel><Border Width="44" Height="44" Background="#155FBB" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="W" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="PDF to Word" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Convert a PDF to an editable Word document." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                                <Button Style="{StaticResource ToolCardStyle}" Click="ImagesToPdf_Click"><StackPanel><Border Width="44" Height="44" Background="#A9336B" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="&#xEB9F;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="Images to PDF" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Create a PDF from image files." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                                <Button Style="{StaticResource ToolCardStyle}" Click="HomeDoctor_Click"><StackPanel><Border Width="44" Height="44" Background="#A3282D" CornerRadius="10" HorizontalAlignment="Left"><TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><TextBlock Text="PDF Doctor" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/><TextBlock Text="Inspect document health and structural issues." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Button>
+                            </UniformGrid>
+
+                            <StackPanel x:Name="HomeRecentSection" Margin="0,34,0,0">
+                                <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <StackPanel><TextBlock Text="Recent files" FontSize="19" FontWeight="SemiBold"/><TextBlock Text="Open a recent document or search by filename and location." Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,3,0,0"/></StackPanel>
+                                    <TextBlock Grid.Column="1" Text="Grid/List/Compact + thumbnails are tracked in item 45" Foreground="#698096" FontSize="12" VerticalAlignment="Center" />
+                                </Grid>
+                                <ItemsControl x:Name="HomeRecentList">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource FlatButtonStyle}" Click="RecentItem_Click" Tag="{Binding Path}" IsEnabled="{Binding Available}" Width="300" Height="82" Margin="0,0,10,10" HorizontalContentAlignment="Stretch">
+                                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="50"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <Border Width="40" Height="50" Background="#F4F5F7" CornerRadius="4" VerticalAlignment="Center"><TextBlock Text="PDF" Foreground="#D83A42" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Detail}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock x:Name="HomeNoRecentText" Text="No recent files yet. Files you open will appear here for quick access." Foreground="{StaticResource MutedTextBrush}" FontSize="13" HorizontalAlignment="Center" Margin="0,26,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
             </Grid>
-
-            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="#E2E5EA" />
-
-            <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1,0,0,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="14">
-                        <TextBlock Text="Inspector" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12" />
-                        <TextBlock Text="File" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock x:Name="InspectorFile" Text="—" TextWrapping="Wrap" Margin="0,3,0,10" />
-                        <TextBlock Text="Pages" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock x:Name="InspectorPages" Text="—" Margin="0,3,0,10" />
-                        <TextBlock Text="Size" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock x:Name="InspectorSize" Text="—" Margin="0,3,0,10" />
-                        <TextBlock Text="PDF version" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock x:Name="InspectorVersion" Text="Not checked" Margin="0,3,0,10" />
-                        <TextBlock Text="Security" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock x:Name="InspectorSecurity" Text="Not checked" Margin="0,3,0,10" TextWrapping="Wrap" />
-                        <TextBlock Text="Document features" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" />
-                        <TextBlock x:Name="InspectorFeatures" Text="Run PDF Doctor to inspect" Margin="0,3,0,16" TextWrapping="Wrap" />
-                        <Separator />
-                        <TextBlock Text="PDF Doctor" FontWeight="SemiBold" Margin="0,14,0,6" />
-                        <TextBlock x:Name="HealthText" Text="Not checked" FontSize="20" FontWeight="SemiBold" />
-                        <ItemsControl x:Name="FindingsList" Margin="0,10,0,10" />
-                        <TextBlock Text="Recommended actions" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource MutedTextBrush}" Margin="0,8,0,6" />
-                        <WrapPanel>
-                            <Button Content="Repair Copy" Click="Repair_Click" Margin="0,0,6,6" Padding="8,4" />
-                            <Button Content="Compress Copy" Click="Compress_Click" Margin="0,0,6,6" Padding="8,4" />
-                            <Button Content="Optimize Web" Click="Linearize_Click" Margin="0,0,6,6" Padding="8,4" />
-                        </WrapPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
         </Grid>
-    </DockPanel>
+
+        <!-- Status / active task strip -->
+        <Border Grid.Row="2" Background="#08121E" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0">
+            <Grid Margin="10,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="StatusText" Text="Ready" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Text="  |  " Foreground="#41566C" />
+                    <TextBlock x:Name="PageStatusText" Text="No document" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Text="  |  " Foreground="#41566C" />
+                    <TextBlock x:Name="ZoomStatusText" Text="100%" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Text="  |  Processed locally" FontSize="12" Foreground="#6282A1" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ProgressBar x:Name="Progress" Width="150" Height="8" Visibility="Collapsed" Margin="0,0,8,0" />
+                    <Button x:Name="CancelButton" Style="{StaticResource FlatButtonStyle}" Content="Cancel" Padding="7,2" MinHeight="20" Visibility="Collapsed" Click="CancelOperation_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Hidden compatibility elements still referenced by the proven RC10 code-behind. -->
+        <Grid Visibility="Collapsed" IsHitTestVisible="False">
+            <MenuItem x:Name="RecentMenu" />
+            <MenuItem x:Name="SaveMenuItem" /><MenuItem x:Name="SplitMenuItem" /><MenuItem x:Name="UndoMenuItem" /><MenuItem x:Name="RedoMenuItem" />
+            <MenuItem x:Name="SelectAllMenuItem" /><MenuItem x:Name="DuplicateMenuItem" /><MenuItem x:Name="DeleteMenuItem" /><MenuItem x:Name="ResetMenuItem" />
+            <MenuItem x:Name="PdfToWordMenuItem" /><MenuItem x:Name="PdfToExcelMenuItem" /><MenuItem x:Name="PdfToPowerPointMenuItem" /><MenuItem x:Name="ConvertExportImagesMenuItem" />
+            <MenuItem x:Name="CompressMenuItem" /><MenuItem x:Name="RepairMenuItem" /><MenuItem x:Name="LinearizeMenuItem" /><MenuItem x:Name="ProtectMenuItem" />
+            <MenuItem x:Name="ExportImagesMenuItem" /><MenuItem x:Name="OcrMenuItem" /><MenuItem x:Name="ExtractOcrTextMenuItem" /><MenuItem x:Name="FinishingMenuItem" />
+            <MenuItem x:Name="MarkupMenuItem" /><MenuItem x:Name="FormsMenuItem" /><MenuItem x:Name="BatchMenuItem" /><MenuItem x:Name="DoctorMenuItem" />
+            <Button x:Name="MoveUpButton" /><Button x:Name="MoveDownButton" /><Button x:Name="RotateLeftButton" />
+            <Button x:Name="PageNumbersButton" />
+        </Grid>
+    </Grid>
 </Window>
