@@ -23,7 +23,10 @@ public sealed class PdfJobQueue : IAsyncDisposable
         if (!_jobs.TryAdd(job.Id, job))
             throw new InvalidOperationException($"Job {job.Id} is already queued.");
 
-        job.TransitionTo(PdfJobState.Queued, "Waiting");
+        if (job.State == PdfJobState.Created)
+            job.TransitionTo(PdfJobState.Queued, "Waiting");
+        else if (job.State != PdfJobState.Queued)
+            throw new InvalidOperationException($"Job {job.Id} must be Created or Queued before execution, but was {job.State}.");
 
         try
         {
@@ -31,7 +34,8 @@ public sealed class PdfJobQueue : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            job.TransitionTo(PdfJobState.Cancelled, "Cancelled");
+            if (job.State == PdfJobState.Queued)
+                job.TransitionTo(PdfJobState.Cancelled, "Cancelled");
             throw;
         }
 
