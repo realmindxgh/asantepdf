@@ -12,7 +12,11 @@ namespace PdfRescue.App;
 public partial class MainWindow
 {
     private readonly RecentDocumentService _recentDocuments = new();
+    private readonly TaskCenterService _taskCenterService = new();
     private RecentFilesView? _recentFilesView;
+    private TaskCenterView? _taskCenterView;
+    private UIElement? _homeContent;
+    private TaskCenterItem? _activeTaskCenterItem;
     private DispatcherTimer? _sessionPersistTimer;
     private string? _lastRecentRecordedPath;
     private bool _productShellInitialized;
@@ -21,6 +25,9 @@ public partial class MainWindow
     {
         if (_productShellInitialized) return;
         _productShellInitialized = true;
+
+        _homeContent = EmptyPanel.Child;
+        _taskCenterView = new TaskCenterView(_taskCenterService);
 
         _recentFilesView = new RecentFilesView();
         _recentFilesView.SetService(_recentDocuments);
@@ -52,9 +59,16 @@ public partial class MainWindow
     {
         if (_currentPdf is null)
         {
-            EmptyPanel.Visibility = Visibility.Visible;
+            ShowHomeContent();
             PreviewScroll.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private void ShowHomeContent()
+    {
+        if (_homeContent is not null && !ReferenceEquals(EmptyPanel.Child, _homeContent))
+            EmptyPanel.Child = _homeContent;
+        EmptyPanel.Visibility = Visibility.Visible;
     }
 
     private void WindowDrag_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -77,14 +91,14 @@ public partial class MainWindow
     private void HomeNav_Click(object sender, RoutedEventArgs e)
     {
         PersistWorkspacePosition(immediate: true);
-        EmptyPanel.Visibility = Visibility.Visible;
+        ShowHomeContent();
         _recentFilesView?.SetPinnedOnly(false);
         LoadHomeRecents();
     }
 
     private void HomeRecentNav_Click(object sender, RoutedEventArgs e)
     {
-        EmptyPanel.Visibility = Visibility.Visible;
+        ShowHomeContent();
         _recentFilesView?.SetPinnedOnly(false);
         LoadHomeRecents();
         HomeRecentSection.BringIntoView();
@@ -92,10 +106,18 @@ public partial class MainWindow
 
     private void HomeStarredNav_Click(object sender, RoutedEventArgs e)
     {
-        EmptyPanel.Visibility = Visibility.Visible;
+        ShowHomeContent();
         _recentFilesView?.SetPinnedOnly(true);
         LoadHomeRecents();
         HomeRecentSection.BringIntoView();
+    }
+
+    private void TaskCenterNav_Click(object sender, RoutedEventArgs e)
+    {
+        PersistWorkspacePosition(immediate: true);
+        if (_taskCenterView is null) return;
+        EmptyPanel.Child = _taskCenterView;
+        EmptyPanel.Visibility = Visibility.Visible;
     }
 
     private async void ResumeLastSession_Click(object sender, RoutedEventArgs e)
