@@ -1,0 +1,86 @@
+name: AsantePDF Engine Staging Diagnostic
+
+on:
+  push:
+    branches:
+      - 'release/rc10-windows-gate-001'
+    paths:
+      - '.github/workflows/engine-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  engine-diagnostic:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install qpdf 12.3.2
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          choco install qpdf --version 12.3.2 -y --no-progress --limit-output
+          if ($LASTEXITCODE -notin @(0,1641,3010)) { exit $LASTEXITCODE }
+          qpdf --version
+
+      - name: Install Tesseract 5.5.3.20260724
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          choco install tesseract --version 5.5.3.20260724 -y --no-progress --limit-output
+          if ($LASTEXITCODE -notin @(0,1641,3010)) { exit $LASTEXITCODE }
+          & "$env:ProgramFiles\Tesseract-OCR\tesseract.exe" --version
+
+      - name: Install LibreOffice Fresh 26.2.3
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          choco install libreoffice-fresh --version 26.2.3 -y --no-progress --limit-output
+          if ($LASTEXITCODE -notin @(0,1641,3010)) { exit $LASTEXITCODE }
+          & "$env:ProgramFiles\LibreOffice\program\soffice.exe" --headless --version
+
+      - name: Stage qpdf bundle
+        timeout-minutes: 3
+        shell: pwsh
+        run: |
+          $src = Get-ChildItem "$env:ChocolateyInstall\lib\qpdf\tools" -Recurse -Filter qpdf.exe -File | Where-Object { $_.FullName -match '\\bin\\qpdf\.exe$' } | Select-Object -First 1
+          if (-not $src) { throw 'qpdf.exe not found.' }
+          $dest = "$env:RUNNER_TEMP\engine-bundle\qpdf"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item (Join-Path $src.Directory.FullName '*') $dest -Recurse -Force
+          & (Join-Path $dest 'qpdf.exe') --version
+
+      - name: Stage Tesseract bundle
+        timeout-minutes: 3
+        shell: pwsh
+        run: |
+          $src = "$env:ProgramFiles\Tesseract-OCR"
+          $dest = "$env:RUNNER_TEMP\engine-bundle\tesseract"
+          Copy-Item $src $dest -Recurse -Force
+          if (-not (Test-Path "$dest\tessdata\eng.traineddata")) { throw 'English tessdata missing.' }
+          & "$dest\tesseract.exe" --version
+
+      - name: Stage LibreOffice bundle
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          $src = "$env:ProgramFiles\LibreOffice"
+          $dest = "$env:RUNNER_TEMP\engine-bundle\libreoffice"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          robocopy $src $dest /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NFL /NDL /NJH /NJS /NP
+          $code = $LASTEXITCODE
+          if ($code -ge 8) { throw "robocopy failed with exit code $code" }
+          & "$dest\program\soffice.exe" --headless --version
+
+      - name: Report bundle size
+        shell: pwsh
+        run: |
+          $root = "$env:RUNNER_TEMP\engine-bundle"
+          $files = Get-ChildItem $root -Recurse -File
+          $bytes = ($files | Measure-Object Length -Sum).Sum
+          Write-Host "Engine bundle files: $($files.Count)"
+          Write-Host "Engine bundle bytes: $bytes"
+          Write-Host 'Engine staging diagnostic passed.' -ForegroundColor Green
