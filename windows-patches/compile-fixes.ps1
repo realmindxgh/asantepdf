@@ -89,6 +89,17 @@ $newFeatureMethod = @'
 '@
 Replace-Exact $windowPath $oldFeatureMethod $newFeatureMethod 'PDF Doctor feature summary against current inspection model'
 
+$stagePath = Join-Path $SourceRoot 'scripts\stage-release-engines.ps1'
+$oldLibreProbe = @'
+$libreOfficeProbe = (& (Join-Path $libreOfficeDest 'program\soffice.exe') --headless --version 2>&1 | Out-String).Trim()
+'@
+$newLibreProbe = @'
+$libreOfficeCli = Join-Path $libreOfficeDest 'program\soffice.com'
+if (-not (Test-Path $libreOfficeCli)) { $libreOfficeCli = Join-Path $libreOfficeDest 'program\soffice.exe' }
+$libreOfficeProbe = (& $libreOfficeCli --headless --version 2>&1 | Out-String).Trim()
+'@
+Replace-Exact $stagePath $oldLibreProbe $newLibreProbe 'LibreOffice console version probe'
+
 $globalJson = @'
 {
   "sdk": {
