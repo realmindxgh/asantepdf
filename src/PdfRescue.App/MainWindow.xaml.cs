@@ -634,8 +634,14 @@ public partial class MainWindow : Window
     {
         if (_currentPdf is null || Pages.Count == 0) return;
         if (!_ocr.IsAvailable) { ShowOcrUnavailable(); return; }
-        var output = AskSaveFile("Export PDF to Word", Path.GetFileNameWithoutExtension(_currentPdf) + ".docx", "Word document (*.docx)|*.docx", ".docx");
+        var source = _currentPdf;
+        var output = AskSaveFile("Export PDF to Word", Path.GetFileNameWithoutExtension(source) + ".docx", "Word document (*.docx)|*.docx", ".docx");
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueuePdfToWordBackground(source, output);
+            return;
+        }
         await RunPdfOperationAsync("Recovering PDF text for Word...", "Word document created.", async token =>
         {
             var texts = await RecognizeWorkingPagesAsync(token);
@@ -647,8 +653,14 @@ public partial class MainWindow : Window
     {
         if (_currentPdf is null || Pages.Count == 0) return;
         if (!_ocr.IsAvailable) { ShowOcrUnavailable(); return; }
-        var output = AskSaveFile("Export PDF to Excel", Path.GetFileNameWithoutExtension(_currentPdf) + ".xlsx", "Excel workbook (*.xlsx)|*.xlsx", ".xlsx");
+        var source = _currentPdf;
+        var output = AskSaveFile("Export PDF to Excel", Path.GetFileNameWithoutExtension(source) + ".xlsx", "Excel workbook (*.xlsx)|*.xlsx", ".xlsx");
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueuePdfToExcelBackground(source, output);
+            return;
+        }
         await RunPdfOperationAsync("Recovering PDF text for Excel...", "Excel workbook created.", async token =>
         {
             var texts = await RecognizeWorkingPagesAsync(token);
@@ -659,8 +671,14 @@ public partial class MainWindow : Window
     private async void PdfToPowerPoint_Click(object sender, RoutedEventArgs e)
     {
         if (_currentPdf is null || Pages.Count == 0) return;
-        var output = AskSaveFile("Export PDF to PowerPoint", Path.GetFileNameWithoutExtension(_currentPdf) + ".pptx", "PowerPoint presentation (*.pptx)|*.pptx", ".pptx");
+        var source = _currentPdf;
+        var output = AskSaveFile("Export PDF to PowerPoint", Path.GetFileNameWithoutExtension(source) + ".pptx", "PowerPoint presentation (*.pptx)|*.pptx", ".pptx");
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueuePdfToPowerPointBackground(source, output);
+            return;
+        }
         await RunPdfOperationAsync("Rendering PDF pages for PowerPoint...", "PowerPoint presentation created.", async token =>
         {
             var slides = new List<PowerPointPage>(Pages.Count);
@@ -762,8 +780,14 @@ public partial class MainWindow : Window
             return;
         }
 
-        var output = AskSavePath("Save searchable OCR PDF", SuggestName(_currentPdf, "searchable"));
+        var source = _currentPdf;
+        var output = AskSavePath("Save searchable OCR PDF", SuggestName(source, "searchable"));
         if (output is null) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueSearchableOcrPdfBackground(source, output);
+            return;
+        }
 
         await RunPdfOperationAsync("Running local OCR...", "Searchable OCR PDF created.", async token =>
         {
@@ -790,7 +814,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var suggested = Path.GetFileNameWithoutExtension(_currentPdf) + "-ocr.txt";
+        var source = _currentPdf;
+        var suggested = Path.GetFileNameWithoutExtension(source) + "-ocr.txt";
         var dialog = new SaveFileDialog
         {
             Title = "Save OCR text",
@@ -800,6 +825,11 @@ public partial class MainWindow : Window
             DefaultExt = ".txt"
         };
         if (dialog.ShowDialog(this) != true) return;
+        if (_backgroundTasks is not null)
+        {
+            QueueOcrTextBackground(source, dialog.FileName);
+            return;
+        }
 
         await RunPdfOperationAsync("Extracting text with local OCR...", "OCR text extracted.", async token =>
         {
