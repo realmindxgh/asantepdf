@@ -62,7 +62,10 @@ public sealed class BackgroundTaskQueueService : IAsyncDisposable
         var execution = ExecuteAsync(job, item, operation, cts);
         _executions[job.Id] = execution;
         _ = execution.ContinueWith(
-            _ => _executions.TryRemove(job.Id, out _),
+            completed =>
+            {
+                _executions.TryRemove(job.Id, out var removedExecution);
+            },
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
