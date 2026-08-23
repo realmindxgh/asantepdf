@@ -1,0 +1,14 @@
+name: Hosted Runner Diagnostic
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm hosted runner starts
+        run: echo "Hosted Ubuntu runner reached its first step."
