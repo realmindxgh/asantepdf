@@ -19,8 +19,8 @@ An item may be marked `ACCEPTED` only after its complete requirement has been im
 |---:|---|---|---|
 | 1 | Rename and fully rebrand PDF Rescue as AsantePDF | REVIEW REQUIRED | RC10 carries substantial public rebranding, but the full requirement still needs an item-by-item audit after the redesign. |
 | 2 | Redesign the Windows installer | REVIEW REQUIRED | RC10 installer is proven; master installer requirements still need a dedicated audit and final-release rerun. |
-| 3 | Replace the current empty screen with a proper Home experience | IN PROGRESS | Architecture Batch 1 adds a real Home overlay with Open PDF, Quick Tools, Recent search/list, local-first messaging and explicit unavailable states. Thumbnails, richer Recent layouts and session resume remain. |
-| 4 | Add proper session persistence | REVIEW REQUIRED | Resume Last Session is visibly unavailable rather than a dead control until persistence is implemented. |
+| 3 | Replace the current empty screen with a proper Home experience | IN PROGRESS | Architecture Batch 1 adds a real Home experience with Open PDF, Quick Tools, Recent/Starred navigation, real Recent thumbnails/layouts/search and local-first messaging. First-launch and remaining Home polish still require visual acceptance. |
+| 4 | Add proper session persistence | IN PROGRESS | `workspace-state.json` now persists recent documents, per-document page and zoom width, last session state and a working Resume Last Session command with debounced writes. Restoring multiple open tabs, broader view/sidebar state, crash recovery and unsaved recovery remain. |
 | 5 | Implement a real multi-document tab system | REVIEW REQUIRED | Batch 1 establishes the tab visual shell only. A real per-document model is not implemented yet. |
 | 6 | Add split-view PDF comparison | REVIEW REQUIRED | |
 | 7 | Redesign the entire command toolbar/ribbon | IN PROGRESS | Batch 1 replaces the legacy grey-button wall with grouped dark command surfaces for File, History, Pages, Edit/Annotate, Convert and Optimize/Doctor. Full icon/command audit remains. |
@@ -43,22 +43,22 @@ An item may be marked `ACCEPTED` only after its complete requirement has been im
 | 24 | Implement proper Save behaviour | REVIEW REQUIRED | RC10 unsaved-layout protection exists, but the multi-document save contract is not yet implemented. |
 | 25 | Strengthen Undo/Redo | REVIEW REQUIRED | |
 | 26 | Add proper drag-and-drop support | REVIEW REQUIRED | Existing PDF/window/page drag-drop behavior is preserved; full master item audit remains. |
-| 27 | Add robust context menus | REVIEW REQUIRED | |
+| 27 | Add robust context menus | REVIEW REQUIRED | Recent files now have a real context menu, but the requirement covers the application more broadly and is not yet accepted. |
 | 28 | Create a coherent keyboard shortcut system | REVIEW REQUIRED | |
 | 29 | Add proper printing | REVIEW REQUIRED | |
 | 30 | Improve conversion workflows | REVIEW REQUIRED | |
 | 31 | Strengthen OCR as a proper feature | REVIEW REQUIRED | |
 | 32 | Add batch processing | REVIEW REQUIRED | |
 | 33 | Build proper PDF security workflows | REVIEW REQUIRED | |
-| 34 | Recent-files privacy controls | REVIEW REQUIRED | |
+| 34 | Recent-files privacy controls | REVIEW REQUIRED | Rich Recent history now exists; dedicated privacy/clear-history controls still need implementation. |
 | 35 | Create a real Settings experience | REVIEW REQUIRED | Settings is deliberately shown unavailable in Batch 1 rather than leading to a dead action. |
 | 36 | Professional error and recovery UX | REVIEW REQUIRED | |
-| 37 | Improve performance perception | REVIEW REQUIRED | |
+| 37 | Improve performance perception | REVIEW REQUIRED | Recent first-page thumbnails are generated asynchronously and cached by file identity, but the wider performance-perception requirement remains. |
 | 38 | Accessibility and high-DPI support | REVIEW REQUIRED | Batch 1 raises typography and adds keyboard-focus visuals, but the full scaling/accessibility matrix is not yet tested. |
 | 39 | Create a tasteful first-launch experience | REVIEW REQUIRED | |
 | 40 | Build a proper About and diagnostics section | REVIEW REQUIRED | |
 | 41 | Plan a proper application update mechanism | REVIEW REQUIRED | |
-| 42 | Establish one coherent application architecture | IN PROGRESS | Architecture Batch 1 establishes distinct Home and Document workspace modes and preserves a dedicated future Task System entry point. The underlying multi-document/task models remain. |
-| 43 | Maintain the release-quality engineering standard | IMPLEMENTED, NOT ACCEPTED | RC10 full Windows release gate passed end to end. Architecture Batch 1 also passed Windows x64 compile and core smoke tests in run 32647383215; full installer/installed-copy gate must be rerun for a release candidate. |
+| 42 | Establish one coherent application architecture | IN PROGRESS | Architecture Batch 1 establishes distinct Home and Document workspace modes and a separate Recent component/service. A dedicated Task System and true multi-document model remain. |
+| 43 | Maintain the release-quality engineering standard | IMPLEMENTED, NOT ACCEPTED | RC10 full Windows release gate passed end to end. Architecture Batch 1 passed run 32647383215. Recent/session integration passed x64 compile + smoke tests in run 32648130725, and Starred/Resume XAML integration passed the complete development gate in run 32648422410. Full installer/installed-copy gate must be rerun for a release candidate. |
 | 44 | Make the entire interface context-aware | IN PROGRESS | Home and Document modes now differ genuinely. Existing command-state logic is reused for document commands; unsupported future commands are visibly disabled with tooltips. Full command-by-command audit and future tab switching remain. |
-| 45 | Recent files must support multiple layouts with real PDF thumbnails | IN PROGRESS | Home now loads/searches recent files and identifies moved/missing entries gracefully. Real cached PDF thumbnails, Grid/List/Compact modes, persisted view preference, sorting, pinning and context actions remain. |
+| 45 | Recent files must support multiple layouts with real PDF thumbnails | IMPLEMENTED, NOT ACCEPTED | `RecentFilesView` now provides cached asynchronous first-page PDFium thumbnails, Grid/List/Compact layouts with persisted preference, Last opened/Name/Modified sorting, metadata, search, pinning + Starred navigation, graceful moved-file handling, Open/Pin/Show in Folder/Remove/Remove Missing context actions, and stored page/zoom resume. Windows compile/smoke validation passed; hands-on visual/use acceptance remains. |
