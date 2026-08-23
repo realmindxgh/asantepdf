@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after native PDF Bookmarks / Outline navigation reached a green Windows development gate and a clean promoted-source rerun.
+Updated after native PDF text selection and copy reached a green Windows development gate and a clean promoted-source rerun.
 
 ## Engineering baseline
 
@@ -98,6 +98,24 @@ It supports:
 
 Bookmark navigation is mapped through the current unsaved working page layout. If a bookmark targets a source page that was removed from the working layout, AsantePDF reports that instead of jumping to the wrong page. If the source page appears more than once because it was duplicated, navigation chooses the first visible occurrence.
 
+### Interactive PDF text
+
+`DocumentTextSelectionService` loads selectable text lazily for only the currently rendered source page rather than indexing an entire PDF during open. It caches Unicode text and character geometry by file identity.
+
+The preview now has a dedicated text-selection interaction layer that provides:
+
+- I-beam interaction over real PDF text
+- click-and-drag selection following PDFium character boxes
+- direct translucent selection highlighting
+- Ctrl+C copy
+- right-click Copy
+- protection against stealing Ctrl+C from focused text/password fields
+- reset when page/document context changes
+- compatibility with rotated previews because the selection layer follows the page transform
+- temporary hit-test suspension while annotation markup tools own the canvas
+
+Searchable PDFs work directly. Searchable PDFs produced by the local OCR workflow also become selectable because they contain a real PDF text layer.
+
 ### Result routing
 
 Task outputs are type-aware:
@@ -123,22 +141,24 @@ Important green development gates include:
 - native document search: `97236130041`
 - native Bookmarks staged-validation job: `97254983823`
 - native Bookmarks clean promoted-source rerun: `97255242296`
+- interactive PDF text staged-validation job: `97256072705`
+- interactive PDF text clean promoted-source rerun: `97256350665`
 
-Bookmark job `97254983823` passed patch application, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated generated-source promotion. Because GitHub blocks the bot-generated synchronize event before allocating a second job, the authorized job was rerun against the now-clean branch head. Job `97255242296` also passed with no development patch carrier present.
+Interactive-text job `97256072705` passed patch application, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated generated-source promotion. The authorized job was then rerun against the clean branch head with no patch carrier; job `97256350665` also passed.
 
-These are development gates, not the final installer acceptance gate. Native search and Bookmarks remain unaccepted until hands-on visual/runtime verification is completed.
+These are development gates, not the final installer acceptance gate. Search, Bookmarks and interactive text remain unaccepted until hands-on visual/runtime verification is completed.
 
 ## Immediate next work
 
-1. make PDF text genuinely interactive with real selection and copy
-2. expand the left sidebar with Comments / Annotations, Attachments where supported, and collapse/resize behavior
+1. make the left navigation sidebar collapsible and properly resizable
+2. add Comments / Annotations navigation and Attachments where the PDF supports them
 3. expand split/multi-output completion workflows
 4. continue the context-aware command audit
 5. enrich Inspector and PDF Doctor states
 6. implement Light / Follow Windows themes and a real Settings experience
 7. add first-launch/privacy/recovery polish
 8. implement remaining viewing modes and split-view comparison
-9. visually inspect the running Windows app against the canonical Home and Document target screens
+9. visually inspect the running Windows app against the canonical Home and Document target screens, including search, Bookmarks and text-selection feel
 
 ## Product source of truth
 
