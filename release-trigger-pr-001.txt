@@ -1,0 +1,3 @@
+AsantePDF RC10 tracked Windows release gate attempt 2
+Compact build payload SHA256: 5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486
+Runner diagnostic requested after pre-step Windows scheduling failure.
