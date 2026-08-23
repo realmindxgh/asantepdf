@@ -20,31 +20,21 @@ jobs:
           ref: development/master-upgrade-v2
           fetch-depth: 0
 
-      - name: Materialize staged product-shell XAML
+      - name: Apply staged development patches
         shell: pwsh
         run: |
-          $payload = Join-Path $env:GITHUB_WORKSPACE 'ui-payload\MainWindow.xaml.gz.b64'
-          if (-not (Test-Path $payload)) {
-            Write-Host 'No staged MainWindow payload. Building branch as committed.' -ForegroundColor Cyan
+          $patchRoot = Join-Path $env:GITHUB_WORKSPACE 'dev-patches'
+          if (-not (Test-Path $patchRoot)) {
+            Write-Host 'No staged development patches. Building branch as committed.' -ForegroundColor Cyan
             exit 0
           }
 
-          $base64 = (Get-Content $payload -Raw).Trim()
-          $compressed = [Convert]::FromBase64String($base64)
-          $input = [IO.MemoryStream]::new($compressed)
-          $gzip = [IO.Compression.GZipStream]::new($input, [IO.Compression.CompressionMode]::Decompress)
-          $output = [IO.MemoryStream]::new()
-          try {
-            $gzip.CopyTo($output)
+          $patches = Get-ChildItem $patchRoot -Filter '*.ps1' -File | Sort-Object Name
+          foreach ($patch in $patches) {
+            Write-Host "Applying $($patch.Name)..." -ForegroundColor Cyan
+            & $patch.FullName -SourceRoot $env:GITHUB_WORKSPACE
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          finally {
-            $gzip.Dispose()
-            $input.Dispose()
-          }
-          $target = Join-Path $env:GITHUB_WORKSPACE 'src\PdfRescue.App\MainWindow.xaml'
-          [IO.File]::WriteAllBytes($target, $output.ToArray())
-          $output.Dispose()
-          Write-Host "Materialized redesigned MainWindow.xaml ($((Get-Item $target).Length) bytes)." -ForegroundColor Green
 
       - name: Set up exact .NET SDK
         uses: actions/setup-dotnet@v4
@@ -68,17 +58,21 @@ jobs:
           dotnet run --project ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Commit validated staged shell
+      - name: Commit validated generated changes
         shell: pwsh
         run: |
-          $payload = 'ui-payload/MainWindow.xaml.gz.b64'
-          if (-not (Test-Path $payload)) {
-            Write-Host 'No staged shell to commit.' -ForegroundColor Cyan
+          if (-not (Test-Path 'dev-patches')) {
+            Write-Host 'No generated patch changes to commit.' -ForegroundColor Cyan
             exit 0
           }
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/PdfRescue.App/MainWindow.xaml
-          git rm $payload
-          git commit -m 'Implement Architecture Batch 1 product shell'
+          git add src
+          git rm -r dev-patches
+          if (git diff --cached --quiet) {
+            Write-Host 'Patch scripts produced no repository changes.' -ForegroundColor Cyan
+            exit 0
+          }
+          git commit -m 'Apply Windows-validated AsantePDF development patch'
           git push origin HEAD:development/master-upgrade-v2
