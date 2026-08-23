@@ -4,7 +4,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   ubuntu-probe:
@@ -12,3 +12,116 @@ jobs:
     steps:
       - name: Confirm hosted runner starts
         run: echo "Hosted Ubuntu runner reached its first step."
+
+  normalize-asantepdf-development:
+    if: github.head_ref == 'development/master-upgrade'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out development branch
+        uses: actions/checkout@v4
+        with:
+          ref: development/master-upgrade
+          fetch-depth: 0
+
+      - name: Check whether normalization is needed
+        id: normalization
+        shell: pwsh
+        run: |
+          if (Test-Path './NORMALIZED_SOURCE.md') {
+            "needed=false" >> $env:GITHUB_OUTPUT
+            Write-Host 'Normalized source already exists.' -ForegroundColor Green
+          } else {
+            "needed=true" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Reconstruct SHA256-pinned corrected RC10 source
+        if: steps.normalization.outputs.needed == 'true'
+        shell: pwsh
+        run: |
+          $parts = Get-ChildItem "$env:GITHUB_WORKSPACE\compact" -Filter 'part-*' -File | Sort-Object Name
+          if ($parts.Count -ne 8) { throw "Expected 8 compact payload chunks, got $($parts.Count)." }
+          $base64 = ($parts | ForEach-Object { (Get-Content $_.FullName -Raw).Trim() }) -join ''
+          $bytes = [Convert]::FromBase64String($base64)
+          $archive = Join-Path $env:RUNNER_TEMP 'AsantePDF-RC10-compact.tar.gz'
+          [IO.File]::WriteAllBytes($archive, $bytes)
+
+          $expected = '5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486'
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "RC10 payload SHA256 mismatch. Expected $expected, got $actual." }
+
+          $source = Join-Path $env:RUNNER_TEMP 'normalized-source'
+          New-Item -ItemType Directory -Force -Path $source | Out-Null
+          tar -xzf $archive -C $source
+          if ($LASTEXITCODE -ne 0) { throw "tar extraction failed with exit code $LASTEXITCODE." }
+
+          Copy-Item './windows-patches/PdfFormService.cs' (Join-Path $source 'src\PdfRescue.App\Services\PdfFormService.cs') -Force
+          Copy-Item './windows-patches/stage-release-engines.ps1' (Join-Path $source 'scripts\stage-release-engines.ps1') -Force
+          Copy-Item './windows-patches/publish-release.ps1' (Join-Path $source 'scripts\publish-release.ps1') -Force
+          Copy-Item './windows-patches/AsantePDF.sln' (Join-Path $source 'AsantePDF.sln') -Force
+          & './windows-patches/compile-fixes.ps1' -SourceRoot $source
+
+          Set-Content -Path (Join-Path $source 'RC10-BUILD-PAYLOAD-SHA256.txt') -Value "RC10 compact payload SHA256: $actual" -Encoding ASCII
+          Write-Host "Reconstructed corrected RC10 source from $actual" -ForegroundColor Green
+
+      - name: Promote corrected source into normal repository paths
+        if: steps.normalization.outputs.needed == 'true'
+        shell: pwsh
+        run: |
+          $source = Join-Path $env:RUNNER_TEMP 'normalized-source'
+          foreach ($path in @('src','tests','assets','installer','scripts')) {
+            $target = Join-Path $env:GITHUB_WORKSPACE $path
+            Remove-Item $target -Recurse -Force -ErrorAction SilentlyContinue
+            Copy-Item (Join-Path $source $path) $target -Recurse -Force
+          }
+
+          foreach ($file in @('AsantePDF.sln','Directory.Build.props','global.json','VERSION','.gitignore','THIRD-PARTY-NOTICES.md','RELEASE-ASANTEPDF.ps1','RC10-BUILD-PAYLOAD-SHA256.txt')) {
+            $from = Join-Path $source $file
+            if (Test-Path $from) { Copy-Item $from (Join-Path $env:GITHUB_WORKSPACE $file) -Force }
+          }
+
+          $history = Join-Path $env:GITHUB_WORKSPACE 'docs\rc10-history'
+          New-Item -ItemType Directory -Force -Path $history | Out-Null
+          if (Test-Path (Join-Path $source 'docs')) {
+            Copy-Item (Join-Path $source 'docs\*') $history -Recurse -Force
+          }
+
+          @'
+# Normalized Development Source
+
+This branch contains the corrected RC10 source as ordinary repository files.
+
+It was reconstructed from the SHA256-pinned RC10 compact payload and then given the exact Windows compatibility corrections that passed release run 32636807149.
+
+Development from this point forward must happen against the normal `src/`, `tests/`, `assets/`, `installer/`, and `scripts/` trees instead of adding more release-carrier patch overlays.
+
+The product target remains `ASANTEPDF_MASTER_UPGRADE_SPEC.md`, `IMPLEMENTATION_MATRIX.md`, and the canonical visual references under `docs/design/`.
+'@ | Set-Content './NORMALIZED_SOURCE.md' -Encoding UTF8
+
+      - name: Set up exact .NET SDK
+        if: steps.normalization.outputs.needed == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.202'
+
+      - name: Compile normalized source on Windows
+        if: steps.normalization.outputs.needed == 'true'
+        shell: pwsh
+        run: |
+          $sdk = dotnet --version
+          if ($sdk -ne '10.0.202') { throw "Expected .NET SDK 10.0.202, got $sdk" }
+          dotnet restore ./AsantePDF.sln
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit normalized development source
+        if: steps.normalization.outputs.needed == 'true'
+        shell: pwsh
+        run: |
+          git config user.name 'AsantePDF CI'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src tests assets installer scripts AsantePDF.sln Directory.Build.props global.json VERSION .gitignore THIRD-PARTY-NOTICES.md RELEASE-ASANTEPDF.ps1 RC10-BUILD-PAYLOAD-SHA256.txt NORMALIZED_SOURCE.md docs/rc10-history
+          if (git diff --cached --quiet) { throw 'Normalization produced no repository changes.' }
+          git commit -m 'Promote verified RC10 source to normal development tree'
+          git push origin HEAD:development/master-upgrade
