@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after native active-document search reached a green Windows development gate.
+Updated after native PDF Bookmarks / Outline navigation reached a green Windows development gate and a clean promoted-source rerun.
 
 ## Engineering baseline
 
@@ -62,9 +62,9 @@ Page-level progress is reported in Task Center, including stages such as `Recogn
 
 ### Native document search
 
-`DocumentSearchService` now builds a cached PDFium text index directly from the active PDF text layer. It extracts Unicode plus normalized character geometry, then returns page/snippet/highlight data.
+`DocumentSearchService` builds a cached PDFium text index directly from the active PDF text layer. It extracts Unicode plus normalized character geometry, then returns page/snippet/highlight data.
 
-The document workspace now provides:
+The document workspace provides:
 
 - Ctrl+F
 - live search box in the document navigation strip
@@ -79,6 +79,24 @@ The document workspace now provides:
 Search results are mapped through the current unsaved working layout rather than assuming original page order. Deleted pages are excluded; duplicated source pages duplicate their matching results. OCR-generated searchable PDFs participate naturally because they contain a real PDF text layer.
 
 The search index cache is invalidated by file length/modification identity. Search resets when the active document context changes.
+
+### Native Bookmarks / PDF Outline
+
+The Bookmarks sidebar is no longer a placeholder. `DocumentOutlineService` reads the actual hierarchical PDF outline through PDFium.
+
+It supports:
+
+- nested bookmark hierarchy
+- UTF-16 / Unicode bookmark titles
+- direct PDF destinations
+- GoTo action destinations
+- native page-index resolution
+- malformed circular-outline protection
+- depth and node-count safety limits
+- on-demand loading rather than blocking document open
+- cancellation when document context changes or the app closes
+
+Bookmark navigation is mapped through the current unsaved working page layout. If a bookmark targets a source page that was removed from the working layout, AsantePDF reports that instead of jumping to the wrong page. If the source page appears more than once because it was duplicated, navigation chooses the first visible occurrence.
 
 ### Result routing
 
@@ -103,21 +121,24 @@ Important green development gates include:
 - Merge/Office queue expansion: `97232877751`
 - renderer-isolated OCR/export: `97233635107`
 - native document search: `97236130041`
+- native Bookmarks staged-validation job: `97254983823`
+- native Bookmarks clean promoted-source rerun: `97255242296`
 
-Job `97236130041` passed staged integration, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated source commit.
+Bookmark job `97254983823` passed patch application, exact .NET `10.0.202`, Windows x64 Release compilation, core smoke tests and validated generated-source promotion. Because GitHub blocks the bot-generated synchronize event before allocating a second job, the authorized job was rerun against the now-clean branch head. Job `97255242296` also passed with no development patch carrier present.
 
-These are development gates, not the final installer acceptance gate. Native search remains `IMPLEMENTED, NOT ACCEPTED` until hands-on visual/runtime verification is completed.
+These are development gates, not the final installer acceptance gate. Native search and Bookmarks remain unaccepted until hands-on visual/runtime verification is completed.
 
 ## Immediate next work
 
-1. implement real Bookmarks / PDF Outline navigation
-2. expand split/multi-output completion workflows
-3. continue the context-aware command audit
-4. enrich Inspector and PDF Doctor states
-5. implement Light / Follow Windows themes and a real Settings experience
-6. add first-launch/privacy/recovery polish
-7. implement remaining viewing modes and split-view comparison
-8. visually inspect the running Windows app against the canonical Home and Document target screens
+1. make PDF text genuinely interactive with real selection and copy
+2. expand the left sidebar with Comments / Annotations, Attachments where supported, and collapse/resize behavior
+3. expand split/multi-output completion workflows
+4. continue the context-aware command audit
+5. enrich Inspector and PDF Doctor states
+6. implement Light / Follow Windows themes and a real Settings experience
+7. add first-launch/privacy/recovery polish
+8. implement remaining viewing modes and split-view comparison
+9. visually inspect the running Windows app against the canonical Home and Document target screens
 
 ## Product source of truth
 
