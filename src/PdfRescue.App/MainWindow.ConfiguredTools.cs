@@ -212,23 +212,97 @@ public partial class MainWindow
         var stem = Path.GetFileNameWithoutExtension(configuration.OutputBasePath);
         var extension = configuration.Format == PageImageFormat.Png ? ".png" : ".jpg";
         var workingPages = configuration.PagePositions.Select(position => Pages[position - 1]).ToArray();
+        var destinations = configuration.PagePositions
+            .Select(position => Path.Combine(directory, $"{stem}-page-{position:000}{extension}"))
+            .ToArray();
 
         await RunPdfOperationAsync("Exporting PDF pages as images...", "Page images exported.", async token =>
         {
             Directory.CreateDirectory(directory);
-            for (var i = 0; i < workingPages.Length; i++)
+            var stagingDirectory = Path.Combine(directory, $".asantepdf-page-export-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(stagingDirectory);
+            var staged = new string[workingPages.Length];
+            try
             {
+                for (var i = 0; i < workingPages.Length; i++)
+                {
+                    token.ThrowIfCancellationRequested();
+                    SetDeterminateProgress(
+                        i,
+                        workingPages.Length + 1,
+                        $"Rendering page {i + 1:N0} of {workingPages.Length:N0}...");
+                    var bitmap = await RenderWorkingPageAsync(workingPages[i], configuration.RenderWidth, token);
+                    staged[i] = Path.Combine(stagingDirectory, $"page-{i + 1:000}{extension}");
+                    SaveConfiguredBitmap(bitmap, staged[i], configuration.Format, configuration.JpegQuality);
+                }
+
                 token.ThrowIfCancellationRequested();
-                var workingPosition = configuration.PagePositions[i];
-                SetDeterminateProgress(i, workingPages.Length, $"Exporting page {i + 1:N0} of {workingPages.Length:N0}...");
-                var bitmap = await RenderWorkingPageAsync(workingPages[i], configuration.RenderWidth, token);
-                var path = Path.Combine(directory, $"{stem}-page-{workingPosition:000}{extension}");
-                SaveConfiguredBitmap(bitmap, path, configuration.Format, configuration.JpegQuality);
+                SetDeterminateProgress(
+                    workingPages.Length,
+                    workingPages.Length + 1,
+                    $"Publishing {workingPages.Length:N0} page image(s)...");
+                PublishStagedPageImages(staged, destinations, stagingDirectory);
+                SetDeterminateProgress(workingPages.Length + 1, workingPages.Length + 1, "Page image export complete.");
             }
-            SetDeterminateProgress(workingPages.Length, workingPages.Length, "Finishing page export...");
+            finally
+            {
+                try { if (Directory.Exists(stagingDirectory)) Directory.Delete(stagingDirectory, true); } catch { }
+            }
         });
     }
 
+    private static void PublishStagedPageImages(
+        IReadOnlyList<string> staged,
+        IReadOnlyList<string> destinations,
+        string stagingDirectory)
+    {
+        if (staged.Count != destinations.Count || staged.Count == 0)
+            throw new ArgumentException("The staged page-image set is invalid.");
+        if (destinations.Distinct(StringComparer.OrdinalIgnoreCase).Count() != destinations.Count)
+            throw new InvalidOperationException("Two exported pages resolved to the same output path.");
+        if (staged.Any(path => !File.Exists(path)))
+            throw new IOException("A staged page image is missing. Nothing was published.");
+
+        var backups = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var published = new List<string>(destinations.Count);
+        try
+        {
+            for (var i = 0; i < staged.Count; i++)
+            {
+                var destination = destinations[i];
+                if (File.Exists(destination))
+                {
+                    var backup = Path.Combine(stagingDirectory, $"backup-{i + 1:000}{Path.GetExtension(destination)}");
+                    File.Move(destination, backup);
+                    backups[destination] = backup;
+                }
+
+                File.Move(staged[i], destination);
+                published.Add(destination);
+            }
+        }
+        catch
+        {
+            foreach (var destination in published.AsEnumerable().Reverse())
+            {
+                try { if (File.Exists(destination)) File.Delete(destination); } catch { }
+            }
+            foreach (var pair in backups.Reverse())
+            {
+                try
+                {
+                    if (File.Exists(pair.Value)) File.Move(pair.Value, pair.Key, true);
+                }
+                catch { }
+            }
+            throw;
+        }
+
+        foreach (var backup in backups.Values)
+        {
+            try { if (File.Exists(backup)) File.Delete(backup); } catch { }
+        }
+    }
     private static void SaveConfiguredBitmap(BitmapSource bitmap, string path, PageImageFormat format, int jpegQuality)
     {
         BitmapEncoder encoder = format == PageImageFormat.Png

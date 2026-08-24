@@ -139,7 +139,7 @@ public partial class MainWindow
         tab.IsDirty = HasUnsavedLayoutChanges();
         UpdateCommandStates();
 
-        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
         {
             PreviewScroll.ScrollToHorizontalOffset(tab.HorizontalOffset);
             PreviewScroll.ScrollToVerticalOffset(tab.VerticalOffset);
