@@ -240,6 +240,42 @@ public partial class MainWindow
             ExtractOcrText_Click(sender, e);
     }
 
+    private async void HomeWatermark_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to watermark") is not null)
+            Watermark_Click(sender, e);
+    }
+
+    private async void HomePageNumbers_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to add page numbers to") is not null)
+            PageNumbers_Click(sender, e);
+    }
+
+    private async void HomeHeaderFooter_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF for header/footer editing") is not null)
+            HeaderFooter_Click(sender, e);
+    }
+
+    private async void HomeMetadata_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF whose metadata you want to edit") is not null)
+            Metadata_Click(sender, e);
+    }
+
+    private async void HomeStampImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to stamp with an image") is not null)
+            StampImage_Click(sender, e);
+    }
+
+    private async void HomeFillForm_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF form to fill") is not null)
+            FillForm_Click(sender, e);
+    }
+
     private async void RecentItem_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string path }) return;
