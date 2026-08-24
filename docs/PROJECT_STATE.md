@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after master item 21 reached a green staged Windows gate and a clean no-patch committed-source rerun.
+Updated after master item 21 reached a green staged Windows gate and a clean no-patch committed-source rerun. Master item 22 Inspector work is now being staged in smaller, safer increments after the first carrier proved too assumption-heavy.
 
 ## Engineering baseline
 
@@ -16,7 +16,7 @@ RC10 installer SHA256:
 - Draft PR: `#3` — **AsantePDF master upgrade implementation**
 - Latest clean-proven ordinary source: `8500dcaae8bddf868a33850da57a9d47918fa70a`
 - Exact SDK: `.NET 10.0.202`
-- Current clean build: **0 warnings, 0 errors, all smoke tests passed**
+- Last clean validation: **0 warnings, 0 errors, all smoke tests passed**
 
 Patch carriers under `dev-patches/` are temporary staging mechanisms only. Canonical implementation is the promoted ordinary `src/` / `tests/` tree. Documentation-only or provenance commits may advance branch head without changing the clean-proven source tree.
 
@@ -67,54 +67,15 @@ Hands-on visual/runtime acceptance remains for these UI-facing items.
 
 Status: `IN PROGRESS`.
 
-The code-side completion system now covers essentially all output-producing workflows:
+The code-side completion system covers foreground PDF transformations, OCR, Office conversion, images-to-PDF, finishing/markup, form filling, Split, page-image exports, batch outputs and completed Task Center outputs. Completion makes source versus result explicit and provides the appropriate Open, safe replacement, Open Folder, Save As, Run Another and Close actions.
 
-- foreground PDF transformations such as Extract, Merge, Compress, Repair, Optimize, Protect and Unlock
-- OCR searchable PDF and OCR text
-- Office-to-PDF and PDF-to-Word/Excel/PowerPoint
-- Images-to-PDF
-- Watermark, Page Numbers, Header/Footer, Metadata, image stamping and AcroForm filling
-- Add Text, Highlight, Rectangle, Ellipse, Crop, Permanent Redaction and visual signature outputs
-- Split PDF multi-output sets
-- page-image multi-output sets
-- batch Compress/Repair/Optimize result sets
-- completed Task Center outputs
-
-Completion makes source versus result explicit and provides the appropriate combination of Open, safe current-context replacement for clean PDF source tabs, Open Folder, Save As, Run Another and Close. Multi-output workflows provide selectable result lists rather than a generic “Done” box.
-
-Evidence:
-
-- Task Center result-options phase staged/clean `97403214120` / `97403748273`
-- foreground completion migration staged `97412436863`
-- foreground clean `97413038885`
-- foreground promoted source `e70c5736508abfb73aeced2ae207d3de0678820e`
-- markup/batch completion staged `97414112602`
-- markup/batch clean `97414608852`
-- final item-19 code source `9a8c9993022493c10279c86ed2f9d25ab5012715`
-
-The remaining master-item-19 gap is **true side-by-side comparison with the original**. That depends on master item 6 split view, which is not yet implemented, so item 19 must remain `IN PROGRESS` rather than being overstated.
+The remaining item-19 gap is **true side-by-side comparison with the original**, which depends on master item 6 split view.
 
 ## Master item 20 — non-destructive processing
 
 Status: `IMPLEMENTED, NOT ACCEPTED`.
 
-The operation-by-operation audit confirms that transformations preserve originals by default and use new output paths unless the user deliberately chooses another non-source destination.
-
-Safety layers include:
-
-- shared configuration validation rejects source PDF = output path
-- qpdf operations independently reject source/output collisions
-- finishing, markup and AcroForm services independently reject source overwrite
-- qpdf writes stage output and only replace the destination after a successful engine result
-- Office/Word/Excel/PowerPoint writers stage before transactional commit
-- markup, crop, redaction and form output is staged before commit
-- page-image export publishes the complete set with backup/rollback instead of leaving half an export
-- Split stages the complete output set before publication
-- batch processing generates unique result names
-- dirty/scoped queued work uses disposable working-layout snapshots instead of mutating the original PDF
-- completion workflows clearly identify original versus result and can open the result alongside the original in another tab
-
-A new smoke test deliberately attempts to compress a PDF onto its own source path. The test requires the operation to be rejected before qpdf starts and verifies the source bytes remain unchanged.
+The operation-by-operation audit confirms that transformations preserve originals by default. Shared configuration validation, engine-level collision rejection, transactional writers, disposable dirty/scoped snapshots, complete-set publication and unique batch names all contribute to the safety boundary.
 
 Evidence:
 
@@ -132,36 +93,32 @@ Hands-on overwrite/copy/result-tab UX acceptance remains before `ACCEPTED`.
 
 Status: `IMPLEMENTED, NOT ACCEPTED`.
 
-The Doctor result experience now uses only evidence the current engine genuinely measures.
+The Doctor result experience uses only evidence the current engine genuinely measures. It has the honest initial state, professional Doctor action icon, Healthy / Attention Needed / Damaged status, health score, Structure/Security/Optimization/Performance grouping, qpdf engine details and contextual Repair PDF / Compress PDF actions only when supported.
 
-Implemented behavior:
-
-- initial state remains **Not analysed yet** with no fake recommendations
-- the main **Run PDF Doctor** button has a professional PDF Doctor icon
-- health state is presented as **Healthy**, **Attention Needed** or **Damaged**
-- health score remains visible beside the status
-- findings are grouped by the evidence-backed categories **Structure**, **Security**, **Optimization** and **Performance**
-- structural errors and warnings expose **Repair PDF** only when the finding supports repair
-- large-file recommendations expose **Compress PDF** only when that finding supports compression
-- qpdf engine messages are surfaced under Engine details
-- the Inspector continues to show PDF version, security state and the concise document-feature summary
-- opening another document resets the Doctor state and its status styling
-
-The current diagnostics truthfully cover structural qpdf errors/warnings, encryption, file size, page count and PDF version. No unsupported font/image/form/OCR diagnosis was invented merely to fill the UI.
+The current diagnostics cover structural qpdf errors/warnings, encryption, file size, page count and PDF version. No unsupported diagnosis was invented merely to fill the UI.
 
 Evidence:
 
-- richer Doctor implementation staged Windows gate `32726442308`
-- richer Doctor promoted source `732740ce4f734a96ddf53ae33483adc6b889bb0a`
-- richer Doctor clean no-patch gate `32726666914`
-- final Doctor polish staged Windows gate `32727012569`
-- final Doctor promoted source `8500dcaae8bddf868a33850da57a9d47918fa70a`
-- final Doctor clean no-patch gate `32727205478`
+- richer Doctor staged/clean `32726442308` / `32726666914`
+- final Doctor polish staged/clean `32727012569` / `32727205478`
+- final promoted source `8500dcaae8bddf868a33850da57a9d47918fa70a`
 - exact .NET `10.0.202`
 - 0 warnings, 0 errors
 - all AsantePDF smoke tests passed
 
-The item remains `IMPLEMENTED, NOT ACCEPTED` because the Doctor/Inspector UI still needs hands-on visual/runtime acceptance. Broader Inspector context behavior is tracked separately under item 22.
+The item remains `IMPLEMENTED, NOT ACCEPTED` because Doctor/Inspector still needs hands-on visual/runtime acceptance.
+
+## Master item 22 — Inspector
+
+Status: `IN PROGRESS`.
+
+The existing Inspector already exposes document-level file, page-count, size, PDF version, security and feature information. The next layer is context awareness so the same Inspector becomes useful for the current working selection instead of remaining a static document-details panel.
+
+The first attempted carrier, `dev-patches/260-inspector-context.ps1`, was deliberately rejected by the Windows gate. It assumed an annotation-selection code fragment that does not exist in the canonical source. Windows job `32728036402` stopped during patch application before SDK setup or compilation. A rerun of that historical workflow remains pinned to its original event SHA, so it reproduced the same old carrier failure. No item-22 source was promoted from that attempt.
+
+The failed carrier was removed from the branch. A smaller replacement carrier, `dev-patches/261-inspector-context-safe.ps1`, is now staged. It intentionally limits the first step to stable, source-backed context: current document, selected page, multi-page selection and annotation navigation summary. It adds a small partial `MainWindow.InspectorContext.cs` rather than rewriting the large main window file.
+
+This replacement has **not yet received a Windows gate**, so item 22 remains unaccepted and the clean source baseline remains `8500dcaae8bddf868a33850da57a9d47918fa70a` until a green staged gate and clean promoted rerun exist.
 
 ## Windows validation ledger
 
@@ -181,19 +138,22 @@ Important later gates:
 - item 20 staged/clean: `97416112570` / `97416554259`
 - item 21 richer Doctor staged/clean: `32726442308` / `32726666914`
 - item 21 Doctor polish staged/clean: `32727012569` / `32727205478`
+- item 22 first carrier failed at patch application: `32728036402`
 
 The former `MainWindow.DocumentTabs.cs` CS4014 warning was fixed during item 17. Current clean source is compiler-warning-free. GitHub Actions still emits its separate Node-action deprecation notice; that is not a .NET compiler warning.
 
 ## Immediate next work
 
-1. audit/extend master item 22 Inspector context behavior
-2. implement master item 6 split-view comparison, which will close item 19's final comparison gap
-3. audit master item 23 annotation coverage and editability
-4. audit master item 24 Save / Save As / Save a Copy behavior
-5. continue item 44 context-aware command recalculation
-6. add Settings, Light / Follow Windows themes, first-launch/privacy/recovery polish
-7. visually inspect Home, Workspace, Task Center, PDF Doctor and completion dialogs against canonical visual targets
-8. run the heavyweight installer/installed-copy gate only at a release-candidate checkpoint
+1. validate `261-inspector-context-safe.ps1` on Windows
+2. promote only if the staged compile/smoke gate is green
+3. rerun the promoted ordinary source with no patch carrier
+4. extend Inspector context to text selection and richer annotation details
+5. implement master item 6 split-view comparison
+6. audit master item 23 annotation coverage and editability
+7. audit master item 24 Save / Save As / Save a Copy behavior
+8. continue item 44 context-aware command recalculation
+9. add Settings, Light / Follow Windows themes, first-launch/privacy/recovery polish
+10. reserve the heavyweight installer/installed-copy gate for a release-candidate checkpoint
 
 ## Product sources of truth
 
