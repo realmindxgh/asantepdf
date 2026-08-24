@@ -160,7 +160,9 @@ public partial class MainWindow
         string summary,
         string sourcePath,
         IReadOnlyList<string> resultPaths,
-        Action runAgain)
+        Action runAgain,
+        string? sourceLabel = null,
+        string? sourceDescription = null)
     {
         var available = resultPaths
             .Where(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
@@ -169,7 +171,14 @@ public partial class MainWindow
             .ToArray();
         if (available.Length == 0) return;
 
-        var dialog = new MultiResultDialog(title, summary, sourcePath, available, runAgain is not null)
+        var dialog = new MultiResultDialog(
+            title,
+            summary,
+            sourcePath,
+            available,
+            runAgain is not null,
+            sourceLabel,
+            sourceDescription)
         {
             Owner = this
         };

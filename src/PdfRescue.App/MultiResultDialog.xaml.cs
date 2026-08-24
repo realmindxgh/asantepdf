@@ -25,14 +25,16 @@ public partial class MultiResultDialog : Window
         string summary,
         string sourcePath,
         IReadOnlyList<string> resultPaths,
-        bool canRunAgain)
+        bool canRunAgain,
+        string? sourceLabel = null,
+        string? sourceDescription = null)
     {
         InitializeComponent();
         Title = title;
         TitleText.Text = title;
         SummaryText.Text = summary;
-        SourceNameText.Text = Path.GetFileName(sourcePath);
-        SourcePathText.Text = sourcePath;
+        SourceNameText.Text = string.IsNullOrWhiteSpace(sourceLabel) ? Path.GetFileName(sourcePath) : sourceLabel;
+        SourcePathText.Text = string.IsNullOrWhiteSpace(sourceDescription) ? sourcePath : sourceDescription;
 
         var paths = resultPaths
             .Where(path => !string.IsNullOrWhiteSpace(path))
