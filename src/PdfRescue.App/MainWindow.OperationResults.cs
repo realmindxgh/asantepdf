@@ -144,6 +144,43 @@ public partial class MainWindow
         }
     }
 
+    private async Task ShowMultiResultWorkflowAsync(
+        string title,
+        string summary,
+        string sourcePath,
+        IReadOnlyList<string> resultPaths,
+        Action runAgain)
+    {
+        var available = resultPaths
+            .Where(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (available.Length == 0) return;
+
+        var dialog = new MultiResultDialog(title, summary, sourcePath, available, runAgain is not null)
+        {
+            Owner = this
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        switch (dialog.SelectedAction)
+        {
+            case MultiResultAction.OpenSelected:
+                if (dialog.SelectedPath is { } selected) await OpenTaskOutputAsync(selected);
+                break;
+            case MultiResultAction.SaveSelected:
+                if (dialog.SelectedPath is { } saveSelected) SaveResultCopy(saveSelected);
+                break;
+            case MultiResultAction.OpenFolder:
+                OpenContainingFolder(dialog.SelectedPath ?? available[0]);
+                break;
+            case MultiResultAction.RunAgain:
+                await InvokeToolOnUiAsync(runAgain);
+                break;
+        }
+    }
+
     private Task InvokeToolOnUiAsync(Action action)
     {
         ArgumentNullException.ThrowIfNull(action);

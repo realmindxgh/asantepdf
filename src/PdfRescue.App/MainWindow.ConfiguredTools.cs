@@ -218,7 +218,7 @@ public partial class MainWindow
             .Select(position => Path.Combine(directory, $"{stem}-page-{position:000}{extension}"))
             .ToArray();
 
-        await RunPdfOperationAsync("Exporting PDF pages as images...", "Page images exported.", async token =>
+        var success = await RunPdfOperationAsync("Exporting PDF pages as images...", "Page images exported.", async token =>
         {
             Directory.CreateDirectory(directory);
             var stagingDirectory = Path.Combine(directory, $".asantepdf-page-export-{Guid.NewGuid():N}");
@@ -251,6 +251,14 @@ public partial class MainWindow
                 try { if (Directory.Exists(stagingDirectory)) Directory.Delete(stagingDirectory, true); } catch { }
             }
         });
+
+        if (success)
+            await ShowMultiResultWorkflowAsync(
+                "Page export complete",
+                $"Exported {destinations.Length:N0} page image(s). The source PDF was not modified.",
+                source,
+                destinations,
+                () => ExportPagesAsImages_Click(this, new System.Windows.RoutedEventArgs()));
     }
 
     private static void PublishStagedPageImages(

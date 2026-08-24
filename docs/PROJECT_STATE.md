@@ -20,7 +20,7 @@ The normalized ordinary source tree is the working codebase. Patch carriers unde
 
 The most recent source commit proven by a clean no-patch Windows rerun is:
 
-`db8f7a7af2dabb4e8e383e7d6a00b71bbed11f95`
+`0b13016214a952945bbdb2cb9e81896fdf87c7f9`
 
 Documentation-only ledger commits may advance the branch head beyond this SHA without changing the proven `src/` tree.
 
@@ -201,7 +201,7 @@ Evidence:
 - clean OCR source `d41ba0bf4942b2179f5fa534101b32c479853876`
 - advanced conversion/export/security staged `97374175885`
 - advanced clean committed-source rerun `97374705820`
-- final clean item-16 source `db8f7a7af2dabb4e8e383e7d6a00b71bbed11f95`
+- final clean item-16 source `0b13016214a952945bbdb2cb9e81896fdf87c7f9`
 
 The final staged and clean builds compiled exact .NET `10.0.202` Windows x64 Release with zero errors and only the pre-existing CS4014 warning. All smoke tests passed, including assertions that selected qpdf printing/modification/extraction permissions reach the sensitive argument file.
 
@@ -233,7 +233,7 @@ Evidence:
 
 - staged `97400172851`
 - clean `97400644796`
-- clean-proven source `db8f7a7af2dabb4e8e383e7d6a00b71bbed11f95`
+- clean-proven source `0b13016214a952945bbdb2cb9e81896fdf87c7f9`
 - exact .NET 10.0.202 Windows x64 Release
 - 0 warnings, 0 errors, all smoke tests passed
 
@@ -304,7 +304,9 @@ These are development gates, not the final installer acceptance gate. UI items r
 
 ## Item 19 audit starting point
 
-The existing foreground PDF result dialog already makes ORIGINAL versus RESULT explicit and provides Open in New Tab, safe Use Result Here, Open Folder, Save As/Copy, Run Another and Close. The remaining gap is shared completion treatment for background Task Center outputs and multi-output workflows. True side-by-side comparison depends on master item 6 split view and must not be credited before that feature exists.
+The foreground PDF result dialog makes ORIGINAL versus RESULT explicit and provides Open in New Tab, safe Use Result Here, Open Folder, Save As, Run Another and Close. Phase A now extends that model to completed Task Center jobs: queued results retain source metadata, can reopen their originating tool, and open a generic result-options workflow for PDF and non-PDF outputs. Phase-A staged job `97403214120` and clean no-patch job `97403748273` both passed exact .NET 10.0.202 Windows x64 Release with 0 warnings, 0 errors and all smoke tests on source `0b13016214a952945bbdb2cb9e81896fdf87c7f9`.
+
+The remaining gaps are multi-output Split/page-image completion and true side-by-side comparison. Comparison depends on master item 6 split view and must not be credited before that feature exists.
 ## Product source of truth
 
 Future work is governed by:

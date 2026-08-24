@@ -479,8 +479,13 @@ public partial class MainWindow : Window
             StatusText.Text = $"Created {outputs!.Count:N0} split PDF file(s).";
         });
 
-        if (success && outputs is not null)
-            MessageBox.Show(this, $"Created {outputs.Count:N0} PDF file(s) in:\n\n{Path.GetDirectoryName(outputs[0])}", "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
+        if (success && outputs is { Count: > 0 })
+            await ShowMultiResultWorkflowAsync(
+                "Split complete",
+                $"Created {outputs.Count:N0} split PDF file(s). The source PDF was not overwritten.",
+                source,
+                outputs,
+                () => Split_Click(this, new RoutedEventArgs()));
     }
 
     private async void Compress_Click(object sender, RoutedEventArgs e)
