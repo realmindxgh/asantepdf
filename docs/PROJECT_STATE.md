@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after master item 20 reached a green staged Windows gate and a clean no-patch committed-source rerun.
+Updated after master item 21 reached a green staged Windows gate and a clean no-patch committed-source rerun.
 
 ## Engineering baseline
 
@@ -14,11 +14,11 @@ RC10 installer SHA256:
 
 - Branch: `development/master-upgrade-v2`
 - Draft PR: `#3` — **AsantePDF master upgrade implementation**
-- Latest clean-proven ordinary source: `c5588b15d39f56ffefc2aa239a951d9158e48f55`
+- Latest clean-proven ordinary source: `8500dcaae8bddf868a33850da57a9d47918fa70a`
 - Exact SDK: `.NET 10.0.202`
 - Current clean build: **0 warnings, 0 errors, all smoke tests passed**
 
-Patch carriers under `dev-patches/` are temporary staging mechanisms only. Canonical implementation is the promoted ordinary `src/` / `tests/` tree. Documentation-only commits may advance branch head without changing the clean-proven source SHA above.
+Patch carriers under `dev-patches/` are temporary staging mechanisms only. Canonical implementation is the promoted ordinary `src/` / `tests/` tree. Documentation-only or provenance commits may advance branch head without changing the clean-proven source tree.
 
 ## Current product architecture
 
@@ -128,24 +128,40 @@ Evidence:
 
 Hands-on overwrite/copy/result-tab UX acceptance remains before `ACCEPTED`.
 
-## Master item 21 — PDF Doctor audit now active
+## Master item 21 — PDF Doctor
 
-Current status remains `IN PROGRESS` while the richer Doctor experience is built.
+Status: `IMPLEMENTED, NOT ACCEPTED`.
 
-What already exists truthfully:
+The Doctor result experience now uses only evidence the current engine genuinely measures.
 
-- initial state is **Not analysed yet**
-- real **Run PDF Doctor** action
-- qpdf structural check with errors/warnings
-- page count
-- PDF version
-- encryption state
-- file size
-- health score
-- findings for structural error/warning, encryption, large files and very long documents
-- recommendations appear only when diagnosis supports them
+Implemented behavior:
 
-Current limitation: the Inspector shows only a compact flat result. The next Doctor batch should turn the existing evidence into a richer grouped health experience with understandable Healthy / Attention Needed / Damaged status, grouped Structure / Security / Optimization findings, surfaced engine messages where useful, and contextual repair/compress/optimize actions only when supported by findings. Do not invent font/image/form/OCR diagnoses the engine has not actually measured.
+- initial state remains **Not analysed yet** with no fake recommendations
+- the main **Run PDF Doctor** button has a professional PDF Doctor icon
+- health state is presented as **Healthy**, **Attention Needed** or **Damaged**
+- health score remains visible beside the status
+- findings are grouped by the evidence-backed categories **Structure**, **Security**, **Optimization** and **Performance**
+- structural errors and warnings expose **Repair PDF** only when the finding supports repair
+- large-file recommendations expose **Compress PDF** only when that finding supports compression
+- qpdf engine messages are surfaced under Engine details
+- the Inspector continues to show PDF version, security state and the concise document-feature summary
+- opening another document resets the Doctor state and its status styling
+
+The current diagnostics truthfully cover structural qpdf errors/warnings, encryption, file size, page count and PDF version. No unsupported font/image/form/OCR diagnosis was invented merely to fill the UI.
+
+Evidence:
+
+- richer Doctor implementation staged Windows gate `32726442308`
+- richer Doctor promoted source `732740ce4f734a96ddf53ae33483adc6b889bb0a`
+- richer Doctor clean no-patch gate `32726666914`
+- final Doctor polish staged Windows gate `32727012569`
+- final Doctor promoted source `8500dcaae8bddf868a33850da57a9d47918fa70a`
+- final Doctor clean no-patch gate `32727205478`
+- exact .NET `10.0.202`
+- 0 warnings, 0 errors
+- all AsantePDF smoke tests passed
+
+The item remains `IMPLEMENTED, NOT ACCEPTED` because the Doctor/Inspector UI still needs hands-on visual/runtime acceptance. Broader Inspector context behavior is tracked separately under item 22.
 
 ## Windows validation ledger
 
@@ -163,20 +179,21 @@ Important later gates:
 - item 19 foreground staged/clean: `97412436863` / `97413038885`
 - item 19 markup/batch staged/clean: `97414112602` / `97414608852`
 - item 20 staged/clean: `97416112570` / `97416554259`
+- item 21 richer Doctor staged/clean: `32726442308` / `32726666914`
+- item 21 Doctor polish staged/clean: `32727012569` / `32727205478`
 
 The former `MainWindow.DocumentTabs.cs` CS4014 warning was fixed during item 17. Current clean source is compiler-warning-free. GitHub Actions still emits its separate Node-action deprecation notice; that is not a .NET compiler warning.
 
 ## Immediate next work
 
-1. build the richer master-item-21 PDF Doctor result experience from evidence the engine genuinely has
-2. audit/extend master item 22 Inspector context behavior
-3. implement master item 6 split-view comparison, which will close item 19's final comparison gap
-4. audit master item 23 annotation coverage and editability
-5. audit master item 24 Save / Save As / Save a Copy behavior
-6. continue item 44 context-aware command recalculation
-7. add Settings, Light / Follow Windows themes, first-launch/privacy/recovery polish
-8. visually inspect Home, Workspace, Task Center and completion dialogs against canonical visual targets
-9. run the heavyweight installer/installed-copy gate only at a release-candidate checkpoint
+1. audit/extend master item 22 Inspector context behavior
+2. implement master item 6 split-view comparison, which will close item 19's final comparison gap
+3. audit master item 23 annotation coverage and editability
+4. audit master item 24 Save / Save As / Save a Copy behavior
+5. continue item 44 context-aware command recalculation
+6. add Settings, Light / Follow Windows themes, first-launch/privacy/recovery polish
+7. visually inspect Home, Workspace, Task Center, PDF Doctor and completion dialogs against canonical visual targets
+8. run the heavyweight installer/installed-copy gate only at a release-candidate checkpoint
 
 ## Product sources of truth
 
