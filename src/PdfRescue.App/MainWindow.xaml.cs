@@ -764,9 +764,18 @@ public partial class MainWindow : Window
         });
     }
 
-    private async void OcrPdf_Click(object sender, RoutedEventArgs e)
+    private async void OcrPdf_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredOcrAsync(OcrOutputKind.SearchablePdf);
+
+    private async void ExtractOcrText_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredOcrAsync(OcrOutputKind.PlainText);
+
+    private async Task RunConfiguredOcrAsync(OcrOutputKind defaultOutputKind)
     {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to OCR") is null) return;
+        var pickerTitle = defaultOutputKind == OcrOutputKind.SearchablePdf
+            ? "Choose a PDF to OCR"
+            : "Choose a PDF whose text you want to extract";
+        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync(pickerTitle) is null) return;
         if (!_ocr.IsAvailable)
         {
             ShowOcrUnavailable();
@@ -774,69 +783,57 @@ public partial class MainWindow : Window
         }
 
         var source = _currentPdf!;
-        var output = AskSavePath("Save searchable OCR PDF", SuggestName(source, "searchable"));
-        if (output is null) return;
+        var configuration = ToolConfigurationDialogs.ShowOcr(
+            this,
+            source,
+            Pages.Count,
+            _ocr.GetLanguageOptions(),
+            defaultOutputKind);
+        if (configuration is null) return;
+
         if (_backgroundTasks is not null)
         {
-            QueueSearchableOcrPdfBackground(source, output);
+            if (configuration.OutputKind == OcrOutputKind.SearchablePdf)
+                QueueSearchableOcrPdfBackground(source, configuration.OutputPath, configuration.PagePositions, configuration.LanguageId);
+            else
+                QueueOcrTextBackground(source, configuration.OutputPath, configuration.PagePositions, configuration.LanguageId);
             return;
         }
 
-        await RunPdfOperationAsync("Running local OCR...", "Searchable OCR PDF created.", async token =>
+        var workingPages = configuration.PagePositions.Select(position => Pages[position - 1]).ToArray();
+        if (configuration.OutputKind == OcrOutputKind.SearchablePdf)
         {
-            var rasterPages = new List<PdfRasterPage>(Pages.Count);
-            for (var i = 0; i < Pages.Count; i++)
+            await RunPdfOperationAsync("Running local OCR...", "Searchable OCR PDF created.", async token =>
             {
-                token.ThrowIfCancellationRequested();
-                SetDeterminateProgress(i, Pages.Count, $"OCR page {i + 1:N0} of {Pages.Count:N0}...");
-                var bitmap = await RenderWorkingPageAsync(Pages[i], 1800, token);
-                var recognized = await _ocr.RecognizeAsync(bitmap, token);
-                rasterPages.Add(ImagePdfBuilder.BitmapToJpegPage(bitmap, 88, recognized.Words));
-            }
-            SetDeterminateProgress(Pages.Count, Pages.Count, "Writing searchable PDF...");
-            await ImagePdfBuilder.WriteAsync(rasterPages, output, token);
-        });
-    }
-
-    private async void ExtractOcrText_Click(object sender, RoutedEventArgs e)
-    {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF whose text you want to extract") is null) return;
-        if (!_ocr.IsAvailable)
-        {
-            ShowOcrUnavailable();
-            return;
-        }
-
-        var source = _currentPdf!;
-        var suggested = Path.GetFileNameWithoutExtension(source) + "-ocr.txt";
-        var dialog = new SaveFileDialog
-        {
-            Title = "Save OCR text",
-            Filter = "Text file (*.txt)|*.txt",
-            FileName = suggested,
-            AddExtension = true,
-            DefaultExt = ".txt"
-        };
-        if (dialog.ShowDialog(this) != true) return;
-        if (_backgroundTasks is not null)
-        {
-            QueueOcrTextBackground(source, dialog.FileName);
+                var rasterPages = new List<PdfRasterPage>(workingPages.Length);
+                for (var i = 0; i < workingPages.Length; i++)
+                {
+                    token.ThrowIfCancellationRequested();
+                    SetDeterminateProgress(i, workingPages.Length, $"OCR page {i + 1:N0} of {workingPages.Length:N0}...");
+                    var bitmap = await RenderWorkingPageAsync(workingPages[i], 1800, token);
+                    var recognized = await _ocr.RecognizeAsync(bitmap, configuration.LanguageId, token);
+                    rasterPages.Add(ImagePdfBuilder.BitmapToJpegPage(bitmap, 88, recognized.Words));
+                }
+                SetDeterminateProgress(workingPages.Length, workingPages.Length, "Writing searchable PDF...");
+                await ImagePdfBuilder.WriteAsync(rasterPages, configuration.OutputPath, token);
+            });
             return;
         }
 
         await RunPdfOperationAsync("Extracting text with local OCR...", "OCR text extracted.", async token =>
         {
             var output = new System.Text.StringBuilder();
-            for (var i = 0; i < Pages.Count; i++)
+            for (var i = 0; i < workingPages.Length; i++)
             {
                 token.ThrowIfCancellationRequested();
-                SetDeterminateProgress(i, Pages.Count, $"Reading page {i + 1:N0} of {Pages.Count:N0}...");
-                var bitmap = await RenderWorkingPageAsync(Pages[i], 1800, token);
-                var recognized = await _ocr.RecognizeAsync(bitmap, token);
-                if (i > 0) output.AppendLine().AppendLine($"--- Page {i + 1} ---").AppendLine();
+                SetDeterminateProgress(i, workingPages.Length, $"Reading page {i + 1:N0} of {workingPages.Length:N0}...");
+                var bitmap = await RenderWorkingPageAsync(workingPages[i], 1800, token);
+                var recognized = await _ocr.RecognizeAsync(bitmap, configuration.LanguageId, token);
+                if (i > 0)
+                    output.AppendLine().AppendLine($"--- Page {configuration.PagePositions[i]} ---").AppendLine();
                 output.Append(recognized.Text);
             }
-            await File.WriteAllTextAsync(dialog.FileName, output.ToString(), token);
+            await File.WriteAllTextAsync(configuration.OutputPath, output.ToString(), token);
         });
     }
 

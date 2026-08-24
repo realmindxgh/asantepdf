@@ -35,10 +35,17 @@ public partial class MainWindow
 
     private Task<OcrPageResult> RecognizeBackgroundPageAsync(
         System.Windows.Media.Imaging.BitmapSource bitmap,
-        CancellationToken token) =>
-        _ocr.IsBundledTesseractAvailable
-            ? _ocr.RecognizeWithBundledTesseractAsync(bitmap, token)
-            : _ocr.RecognizeAsync(bitmap, token);
+        string? languageId,
+        CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(languageId) || string.Equals(languageId, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            return _ocr.IsBundledTesseractAvailable
+                ? _ocr.RecognizeWithBundledTesseractAsync(bitmap, token)
+                : _ocr.RecognizeAsync(bitmap, token);
+        }
+        return _ocr.RecognizeAsync(bitmap, languageId, token);
+    }
 
     private void QueuePdfToWordBackground(string source, string output)
     {
@@ -56,7 +63,7 @@ public partial class MainWindow
                     var progress = 0.14 + (page - 1) / (double)Math.Max(1, pageCount) * 0.70;
                     context.ReportProgress(progress, $"Recognising page {page:N0} of {pageCount:N0} for Word...");
                     var bitmap = await renderer.RenderAsync(page, 1800, ct);
-                    var result = await RecognizeBackgroundPageAsync(bitmap, ct);
+                    var result = await RecognizeBackgroundPageAsync(bitmap, null, ct);
                     pages.Add(result.Text);
                 }
                 return (IReadOnlyList<string>)pages;
@@ -88,7 +95,7 @@ public partial class MainWindow
                     var progress = 0.14 + (page - 1) / (double)Math.Max(1, pageCount) * 0.70;
                     context.ReportProgress(progress, $"Recognising page {page:N0} of {pageCount:N0} for Excel...");
                     var bitmap = await renderer.RenderAsync(page, 1800, ct);
-                    var result = await RecognizeBackgroundPageAsync(bitmap, ct);
+                    var result = await RecognizeBackgroundPageAsync(bitmap, null, ct);
                     pages.Add(result.Text);
                 }
                 return (IReadOnlyList<string>)pages;
@@ -138,10 +145,14 @@ public partial class MainWindow
         StatusText.Text = "PowerPoint export queued in Task Center. You can keep working.";
     }
 
-    private void QueueSearchableOcrPdfBackground(string source, string output)
+    private void QueueSearchableOcrPdfBackground(
+        string source,
+        string output,
+        IReadOnlyCollection<int>? pagePositions = null,
+        string? languageId = null)
     {
         if (_backgroundTasks is null) return;
-        var snapshot = CaptureBackgroundPdfSnapshot();
+        var snapshot = CaptureBackgroundPdfSnapshot(pagePositions);
 
         _backgroundTasks.Enqueue(PdfJobType.Ocr, $"OCR {Path.GetFileName(source)}", async (context, token) =>
         {
@@ -154,7 +165,7 @@ public partial class MainWindow
                     var progress = 0.14 + (page - 1) / (double)Math.Max(1, pageCount) * 0.72;
                     context.ReportProgress(progress, $"Recognising page {page:N0} of {pageCount:N0}...");
                     var bitmap = await renderer.RenderAsync(page, 1800, ct);
-                    var recognized = await RecognizeBackgroundPageAsync(bitmap, ct);
+                    var recognized = await RecognizeBackgroundPageAsync(bitmap, languageId, ct);
                     pages.Add(ImagePdfBuilder.BitmapToJpegPage(bitmap, 88, recognized.Words));
                 }
                 return (IReadOnlyList<PdfRasterPage>)pages;
@@ -170,10 +181,14 @@ public partial class MainWindow
         StatusText.Text = "OCR queued in Task Center. You can keep working.";
     }
 
-    private void QueueOcrTextBackground(string source, string output)
+    private void QueueOcrTextBackground(
+        string source,
+        string output,
+        IReadOnlyCollection<int>? pagePositions = null,
+        string? languageId = null)
     {
         if (_backgroundTasks is null) return;
-        var snapshot = CaptureBackgroundPdfSnapshot();
+        var snapshot = CaptureBackgroundPdfSnapshot(pagePositions);
 
         _backgroundTasks.Enqueue(PdfJobType.Ocr, $"Extract OCR text from {Path.GetFileName(source)}", async (context, token) =>
         {
@@ -186,7 +201,7 @@ public partial class MainWindow
                     var progress = 0.14 + (page - 1) / (double)Math.Max(1, pageCount) * 0.72;
                     context.ReportProgress(progress, $"Recognising page {page:N0} of {pageCount:N0}...");
                     var bitmap = await renderer.RenderAsync(page, 1800, ct);
-                    var recognized = await RecognizeBackgroundPageAsync(bitmap, ct);
+                    var recognized = await RecognizeBackgroundPageAsync(bitmap, languageId, ct);
                     if (page > 1) builder.AppendLine().AppendLine($"--- Page {page} ---").AppendLine();
                     builder.Append(recognized.Text);
                 }

@@ -11,15 +11,30 @@ public partial class MainWindow
         PdfPageTransform[] Layout,
         bool HasLayoutChanges);
 
-    private BackgroundPdfSnapshot CaptureBackgroundPdfSnapshot()
+    private BackgroundPdfSnapshot CaptureBackgroundPdfSnapshot(IReadOnlyCollection<int>? pagePositions = null)
     {
         if (_currentPdf is null || Pages.Count == 0)
             throw new InvalidOperationException("No PDF is open.");
 
+        PdfPageItem[] selectedPages;
+        if (pagePositions is null)
+        {
+            selectedPages = Pages.ToArray();
+        }
+        else
+        {
+            var positions = pagePositions.Distinct().ToArray();
+            if (positions.Length == 0 || positions.Any(position => position < 1 || position > Pages.Count))
+                throw new ArgumentOutOfRangeException(nameof(pagePositions), "Page positions must refer to the current working layout.");
+            selectedPages = positions.Select(position => Pages[position - 1]).ToArray();
+        }
+
+        var isWholeCurrentLayout = selectedPages.Length == Pages.Count &&
+                                   selectedPages.Select((page, index) => ReferenceEquals(page, Pages[index])).All(value => value);
         return new BackgroundPdfSnapshot(
             _currentPdf,
-            Pages.Select(page => new PdfPageTransform(page.SourcePageNumber, page.Rotation)).ToArray(),
-            HasLayoutChanges());
+            selectedPages.Select(page => new PdfPageTransform(page.SourcePageNumber, page.Rotation)).ToArray(),
+            HasLayoutChanges() || !isWholeCurrentLayout);
     }
 
     private async Task<(string WorkingPath, string? TemporaryPath)> PrepareBackgroundSourceAsync(

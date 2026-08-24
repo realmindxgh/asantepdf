@@ -21,6 +21,16 @@ internal sealed record SplitDialogResult(
     IReadOnlyList<string> PageGroups,
     string OutputBase);
 internal sealed record MergeDialogResult(IReadOnlyList<string> Files, string OutputPath);
+internal enum OcrOutputKind
+{
+    SearchablePdf,
+    PlainText
+}
+internal sealed record OcrDialogResult(
+    OcrOutputKind OutputKind,
+    string LanguageId,
+    IReadOnlyList<int> PagePositions,
+    string OutputPath);
 
 internal static class ToolConfigurationDialogs
 {
@@ -277,6 +287,150 @@ internal static class ToolConfigurationDialogs
             }
 
             result = new MergeDialogResult(valid, path);
+            window.DialogResult = true;
+        };
+        AddFooter(actions, window, run);
+        return window.ShowDialog() == true ? result : null;
+    }
+
+    public static OcrDialogResult? ShowOcr(
+        Window owner,
+        string sourcePath,
+        int pageCount,
+        IReadOnlyList<PdfRescue.App.Services.OcrLanguageOption> languageOptions,
+        OcrOutputKind defaultOutputKind)
+    {
+        var source = Path.GetFullPath(sourcePath);
+        var window = CreateShell(
+            owner,
+            "OCR PDF",
+            "Choose the recognizer, page scope and local output you actually need. All OCR stays on this computer.",
+            680,
+            650,
+            out var body,
+            out var actions);
+
+        body.Children.Add(FieldLabel("Input PDF"));
+        body.Children.Add(ReadOnlyPathBox($"{source}   •   {pageCount:N0} pages"));
+
+        body.Children.Add(FieldLabel("OCR language", top: 18));
+        var language = CreateComboBox();
+        language.ItemsSource = languageOptions;
+        language.SelectedIndex = 0;
+        body.Children.Add(language);
+        var languageDetail = MutedText(languageOptions.FirstOrDefault()?.Detail ?? "No OCR language information is available.");
+        languageDetail.TextWrapping = TextWrapping.Wrap;
+        languageDetail.Margin = new Thickness(0, 7, 0, 0);
+        body.Children.Add(languageDetail);
+        language.SelectionChanged += (_, _) =>
+        {
+            if (language.SelectedItem is PdfRescue.App.Services.OcrLanguageOption option)
+                languageDetail.Text = option.Detail;
+        };
+
+        body.Children.Add(FieldLabel("Pages", top: 18));
+        var allPages = CreateRadio($"All pages ({pageCount:N0})", isChecked: true);
+        var customPages = CreateRadio("Custom page range", isChecked: false);
+        allPages.GroupName = "OcrPageScope";
+        customPages.GroupName = "OcrPageScope";
+        body.Children.Add(allPages);
+        body.Children.Add(customPages);
+        var range = CreateTextBox(pageCount > 1 ? $"1-{pageCount}" : "1");
+        range.Margin = new Thickness(24, 5, 0, 0);
+        range.IsEnabled = false;
+        range.Opacity = 0.55;
+        body.Children.Add(range);
+        var rangeHint = MutedText("Examples: 1-3,5,8-10. Page numbers refer to the current working page layout.");
+        rangeHint.Margin = new Thickness(24, 5, 0, 0);
+        rangeHint.TextWrapping = TextWrapping.Wrap;
+        body.Children.Add(rangeHint);
+        customPages.Checked += (_, _) => { range.IsEnabled = true; range.Opacity = 1; };
+        allPages.Checked += (_, _) => { range.IsEnabled = false; range.Opacity = 0.55; };
+
+        body.Children.Add(FieldLabel("Output", top: 18));
+        var outputKind = CreateComboBox();
+        outputKind.ItemsSource = new[] { "Searchable PDF", "Plain text (.txt)" };
+        outputKind.SelectedIndex = defaultOutputKind == OcrOutputKind.SearchablePdf ? 0 : 1;
+        body.Children.Add(outputKind);
+        var outputNote = MutedText(string.Empty);
+        outputNote.Margin = new Thickness(0, 7, 0, 0);
+        outputNote.TextWrapping = TextWrapping.Wrap;
+        body.Children.Add(outputNote);
+
+        var initialKind = defaultOutputKind;
+        string Suggested(OcrOutputKind kind) => kind == OcrOutputKind.SearchablePdf
+            ? SuggestedSibling(source, "searchable")
+            : Path.Combine(Path.GetDirectoryName(source)!, Path.GetFileNameWithoutExtension(source) + "-ocr.txt");
+
+        body.Children.Add(FieldLabel("Output location", top: 14));
+        var outputGrid = new Grid();
+        outputGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        outputGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var outputBox = CreateTextBox(Suggested(initialKind));
+        outputGrid.Children.Add(outputBox);
+        var browse = CreateButton("Browse…");
+        browse.Margin = new Thickness(8, 0, 0, 0);
+        browse.Click += (_, _) =>
+        {
+            var kind = outputKind.SelectedIndex == 0 ? OcrOutputKind.SearchablePdf : OcrOutputKind.PlainText;
+            var extension = kind == OcrOutputKind.SearchablePdf ? ".pdf" : ".txt";
+            var dialog = new SaveFileDialog
+            {
+                Title = kind == OcrOutputKind.SearchablePdf ? "Save searchable OCR PDF" : "Save OCR text",
+                Filter = kind == OcrOutputKind.SearchablePdf ? "PDF files (*.pdf)|*.pdf" : "Text files (*.txt)|*.txt",
+                AddExtension = true,
+                DefaultExt = extension,
+                OverwritePrompt = true,
+                FileName = Path.GetFileName(outputBox.Text)
+            };
+            var directory = Path.GetDirectoryName(outputBox.Text);
+            if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory)) dialog.InitialDirectory = directory;
+            if (dialog.ShowDialog(window) == true) outputBox.Text = dialog.FileName;
+        };
+        Grid.SetColumn(browse, 1);
+        outputGrid.Children.Add(browse);
+        body.Children.Add(outputGrid);
+
+        void RefreshOutputKind(bool replacePath)
+        {
+            var kind = outputKind.SelectedIndex == 0 ? OcrOutputKind.SearchablePdf : OcrOutputKind.PlainText;
+            outputNote.Text = kind == OcrOutputKind.SearchablePdf
+                ? "Creates a new PDF containing the selected pages with a searchable text layer over their raster image."
+                : "Recognises the selected pages and writes their text to a UTF-8 text file.";
+            if (replacePath) outputBox.Text = Suggested(kind);
+        }
+        outputKind.SelectionChanged += (_, _) => RefreshOutputKind(replacePath: true);
+        RefreshOutputKind(replacePath: false);
+
+        OcrDialogResult? result = null;
+        var run = CreateButton("Run OCR", primary: true);
+        run.Click += (_, _) =>
+        {
+            if (language.SelectedItem is not PdfRescue.App.Services.OcrLanguageOption languageOption)
+            {
+                MessageBox.Show(window, "Choose an OCR language.", "OCR PDF", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            int[] positions;
+            if (customPages.IsChecked == true)
+            {
+                if (!PageScopeParser.TryParse(range.Text, pageCount, out positions, out var error))
+                {
+                    MessageBox.Show(window, error, "OCR PDF", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+            }
+            else
+            {
+                positions = Enumerable.Range(1, pageCount).ToArray();
+            }
+
+            var kind = outputKind.SelectedIndex == 0 ? OcrOutputKind.SearchablePdf : OcrOutputKind.PlainText;
+            var extension = kind == OcrOutputKind.SearchablePdf ? ".pdf" : ".txt";
+            var path = ValidateOutputPath(window, source, outputBox.Text, extension);
+            if (path is null) return;
+            result = new OcrDialogResult(kind, languageOption.Id, positions, path);
             window.DialogResult = true;
         };
         AddFooter(actions, window, run);
