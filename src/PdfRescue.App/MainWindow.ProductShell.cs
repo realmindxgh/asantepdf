@@ -31,6 +31,8 @@ public partial class MainWindow
         _backgroundTasks = new BackgroundTaskQueueService(_taskCenterService);
         _taskCenterView = new TaskCenterView(_taskCenterService);
         _taskCenterView.OpenOutputRequested += OpenTaskOutputAsync;
+        _taskCenterService.Changed += (_, _) => RefreshTaskCenterIndicator();
+        RefreshTaskCenterIndicator();
         InitializeDocumentTabs();
         InitializeDocumentOutline();
         InitializeDocumentTextSelection();
@@ -122,6 +124,26 @@ public partial class MainWindow
         _recentFilesView?.SetPinnedOnly(true);
         LoadHomeRecents();
         HomeRecentSection.BringIntoView();
+    }
+
+    private void RefreshTaskCenterIndicator()
+    {
+        if (TaskCenterActiveBadge is null || TaskCenterActiveCountText is null || TaskCenterNavButton is null) return;
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(RefreshTaskCenterIndicator);
+            return;
+        }
+
+        var counts = _taskCenterService.GetCounts();
+        var active = counts.Running + counts.Queued;
+        TaskCenterActiveCountText.Text = active > 99 ? "99+" : active.ToString("N0");
+        TaskCenterActiveBadge.Visibility = active > 0 ? Visibility.Visible : Visibility.Collapsed;
+        TaskCenterNavButton.ToolTip = active > 0
+            ? $"Task Center · {counts.Running:N0} running, {counts.Queued:N0} queued"
+            : counts.Failed > 0
+                ? $"Task Center · {counts.Failed:N0} failed task(s) need attention"
+                : "View running and completed PDF tasks";
     }
 
     private void TaskCenterNav_Click(object sender, RoutedEventArgs e)

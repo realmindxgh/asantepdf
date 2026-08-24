@@ -85,8 +85,22 @@
                         <Button Style="{StaticResource NavButtonStyle}" Click="DocumentNav_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Return to the active document">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Active Document"/></StackPanel>
                         </Button>
-                        <Button Style="{StaticResource NavButtonStyle}" Click="TaskCenterNav_Click" ToolTip="View running and completed PDF tasks">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Task Center"/></StackPanel>
+                        <Button x:Name="TaskCenterNavButton" Style="{StaticResource NavButtonStyle}" Click="TaskCenterNav_Click" ToolTip="View running and completed PDF tasks">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Task Center" VerticalAlignment="Center" />
+                                <Border x:Name="TaskCenterActiveBadge" Grid.Column="2" MinWidth="24" Height="22" Margin="10,0,0,0"
+                                        Padding="6,0" CornerRadius="11" Background="#1F63A8" Visibility="Collapsed"
+                                        VerticalAlignment="Center" ToolTip="Running and queued tasks">
+                                    <TextBlock x:Name="TaskCenterActiveCountText" Text="0" Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
                         </Button>
                         <Separator Margin="16,14" Background="{StaticResource BorderBrushSoft}" />
                         <TextBlock Text="STORAGE" Foreground="#6F8399" FontSize="12" FontWeight="SemiBold" Margin="20,0,0,7" />
