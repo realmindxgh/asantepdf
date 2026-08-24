@@ -443,34 +443,15 @@ public partial class MainWindow : Window
         });
     }
 
-    private async void Merge_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog
-        {
-            Title = "Select PDFs to merge",
-            Filter = "PDF files (*.pdf)|*.pdf",
-            Multiselect = true,
-            CheckFileExists = true
-        };
-        if (dialog.ShowDialog(this) == true)
-            await MergeFilesAsync(dialog.FileNames);
-    }
+    private async void Merge_Click(object sender, RoutedEventArgs e) =>
+        await MergeFilesAsync(Array.Empty<string>());
 
     private async Task MergeFilesAsync(IReadOnlyList<string> files)
     {
-        var inputs = files.Where(File.Exists)
-            .Where(path => string.Equals(Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (inputs.Length < 2)
-        {
-            MessageBox.Show(this, "Choose at least two PDFs to merge.", "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        var output = AskSavePath("Save merged PDF", "merged.pdf");
-        if (output is null) return;
+        var configuration = ToolConfigurationDialogs.ShowMerge(this, files);
+        if (configuration is null) return;
+        var inputs = configuration.Files.ToArray();
+        var output = configuration.OutputPath;
         if (_backgroundTasks is not null)
         {
             QueueMergeBackground(inputs, output);
@@ -483,17 +464,17 @@ public partial class MainWindow : Window
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to split") is null) return;
         var source = _currentPdf!;
-        var pagesPerFile = PromptForPositiveInt("Split PDF", "Pages per output file:", 1);
-        if (pagesPerFile is null) return;
-        var outputBase = AskSavePath("Choose split output base name", SuggestName(source, "part"));
-        if (outputBase is null) return;
+        var configuration = ToolConfigurationDialogs.ShowSplit(this, source, Pages.Count);
+        if (configuration is null) return;
 
         IReadOnlyList<string>? outputs = null;
         var success = await RunBusyAsync("Splitting PDF...", async token =>
         {
             await RunAgainstWorkingLayoutAsync(async (working, ct) =>
             {
-                outputs = await _operations.SplitAsync(working, pagesPerFile.Value, outputBase, ct);
+                outputs = configuration.Mode == SplitRuleMode.FixedChunks
+                    ? await _operations.SplitAsync(working, configuration.PagesPerFile, configuration.OutputBase, ct)
+                    : await SplitByPageGroupsAsync(working, configuration.PageGroups, configuration.OutputBase, ct);
             }, token);
             StatusText.Text = $"Created {outputs!.Count:N0} split PDF file(s).";
         });
@@ -506,13 +487,13 @@ public partial class MainWindow : Window
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to compress") is null) return;
         var source = _currentPdf!;
-        var profile = PromptCompressionProfile();
-        if (profile is null) return;
-        var output = AskSavePath("Save compressed PDF", SuggestName(source, "compressed"));
-        if (output is null) return;
+        var configuration = ToolConfigurationDialogs.ShowCompression(this, source);
+        if (configuration is null) return;
+        var profile = configuration.Profile;
+        var output = configuration.OutputPath;
         if (_backgroundTasks is not null)
         {
-            QueueCompressionBackground(source, profile.Value, output);
+            QueueCompressionBackground(source, profile, output);
             return;
         }
 
@@ -524,7 +505,7 @@ public partial class MainWindow : Window
             await RunAgainstWorkingLayoutAsync(async (working, ct) =>
             {
                 before = new FileInfo(working).Length;
-                await _operations.CompressAsync(working, profile.Value, output, ct);
+                await _operations.CompressAsync(working, profile, output, ct);
             }, token);
             after = new FileInfo(output).Length;
             var delta = before - after;
