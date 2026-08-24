@@ -70,8 +70,8 @@
                                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#FF777D" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
-                                    <Button Style="{StaticResource FlatButtonStyle}" Content="Open Result" Click="OpenOutput_Click"
-                                            IsEnabled="{Binding CanOpenOutput}" ToolTip="{Binding OutputPath}" Padding="12,6" />
+                                    <Button Style="{StaticResource FlatButtonStyle}" Content="Result Options" Click="OpenOutput_Click"
+                                            IsEnabled="{Binding CanOpenOutput}" ToolTip="Open result actions" Padding="12,6" />
                                     <Button Style="{StaticResource FlatButtonStyle}" Content="Retry" Click="RetryTask_Click"
                                             IsEnabled="{Binding CanRetry}" Padding="12,6" />
                                     <Button Style="{StaticResource FlatButtonStyle}" Content="Cancel" Click="CancelTask_Click"

@@ -172,7 +172,9 @@ public partial class MainWindow
                 await _office.ExportWordAsync(texts, configuration.OutputPath, token);
             context.ReportProgress(0.98, $"{label} output created.");
             return configuration.OutputPath;
-        });
+        }, sourcePath: source, runAgainAction: kind == PdfConversionKind.Excel
+            ? () => InvokeToolOnUiAsync(() => PdfToExcel_Click(this, new System.Windows.RoutedEventArgs()))
+            : () => InvokeToolOnUiAsync(() => PdfToWord_Click(this, new System.Windows.RoutedEventArgs())));
         StatusText.Text = $"{label} export queued in Task Center. You can keep working.";
     }
 
@@ -198,7 +200,7 @@ public partial class MainWindow
             await _office.ExportPowerPointAsync(slides, configuration.OutputPath, token);
             context.ReportProgress(0.98, "PowerPoint presentation created.");
             return configuration.OutputPath;
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => PdfToPowerPoint_Click(this, new System.Windows.RoutedEventArgs())));
         StatusText.Text = "PowerPoint export queued in Task Center. You can keep working.";
     }
 

@@ -92,7 +92,7 @@ public partial class MainWindow
             {
                 DeleteBackgroundTemporary(temporary);
             }
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => Compress_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Compression queued in Task Center. You can keep working.";
     }
@@ -119,7 +119,7 @@ public partial class MainWindow
             {
                 DeleteBackgroundTemporary(temporary);
             }
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => Repair_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Repair queued in Task Center. You can keep working.";
     }
@@ -146,7 +146,7 @@ public partial class MainWindow
             {
                 DeleteBackgroundTemporary(temporary);
             }
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => Linearize_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Web optimization queued in Task Center. You can keep working.";
     }
@@ -162,7 +162,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.96, "Unlocked copy created.");
             return output;
-        }, retryable: false);
+        }, retryable: false, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => Unlock_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Unlock queued in Task Center. You can keep working.";
     }

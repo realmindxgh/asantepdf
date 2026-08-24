@@ -40,7 +40,10 @@ public sealed class BackgroundTaskQueueService : IAsyncDisposable
         PdfJobType type,
         string title,
         Func<BackgroundTaskContext, CancellationToken, Task<string?>> operation,
-        bool retryable = true)
+        bool retryable = true,
+        string? sourcePath = null,
+        string? sourceLabel = null,
+        Func<Task>? runAgainAction = null)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         ArgumentNullException.ThrowIfNull(operation);
@@ -54,11 +57,24 @@ public sealed class BackgroundTaskQueueService : IAsyncDisposable
         Task RetryAsync()
         {
             if (Volatile.Read(ref _disposed) == 0)
-                Enqueue(type, title, operation, retryable: true);
+                Enqueue(
+                    type,
+                    title,
+                    operation,
+                    retryable: true,
+                    sourcePath: sourcePath,
+                    sourceLabel: sourceLabel,
+                    runAgainAction: runAgainAction);
             return Task.CompletedTask;
         }
 
-        var item = _taskCenter.Track(job, cts.Cancel, retryable ? RetryAsync : null);
+        var item = _taskCenter.Track(
+            job,
+            cts.Cancel,
+            retryable ? RetryAsync : null,
+            sourcePath,
+            sourceLabel,
+            runAgainAction);
         var execution = ExecuteAsync(job, item, operation, cts);
         _executions[job.Id] = execution;
         _ = execution.ContinueWith(

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
+using PdfRescue.App.Services;
 
 namespace PdfRescue.App;
 
@@ -84,6 +85,76 @@ public partial class MainWindow
         }
     }
 
+    private async Task ShowTaskResultWorkflowAsync(TaskCenterItem item)
+    {
+        if (!item.CanOpenOutput || string.IsNullOrWhiteSpace(item.OutputPath)) return;
+        var resultPath = item.OutputPath;
+        if (!File.Exists(resultPath))
+        {
+            MessageBox.Show(this, "This task output is no longer available at its saved location.",
+                "Task Center", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var isPdf = string.Equals(Path.GetExtension(resultPath), ".pdf", StringComparison.OrdinalIgnoreCase);
+        var sourcePath = item.SourcePath;
+        var originalTab = isPdf && !string.IsNullOrWhiteSpace(sourcePath)
+            ? FindOpenDocumentTab(sourcePath)
+            : null;
+        var canReplaceCurrent = originalTab is not null &&
+            ReferenceEquals(originalTab, _activeDocumentTab) &&
+            !originalTab.IsDirty;
+
+        var dialog = new PdfResultDialog(
+            $"{item.Title} complete",
+            string.IsNullOrWhiteSpace(item.Stage) ? "Your result is ready." : item.Stage,
+            sourcePath,
+            resultPath,
+            canReplaceCurrent,
+            item.CanRunAgain,
+            isPdf,
+            item.SourceLabel)
+        {
+            Owner = this
+        };
+
+        if (dialog.ShowDialog() != true) return;
+        switch (dialog.SelectedAction)
+        {
+            case PdfResultAction.OpenNewTab:
+                await OpenTaskOutputAsync(resultPath);
+                break;
+            case PdfResultAction.ReplaceCurrent:
+                if (isPdf && canReplaceCurrent && originalTab is not null)
+                {
+                    await OpenPdfAsync(resultPath);
+                    if (DocumentTabs.Contains(originalTab))
+                        await CloseDocumentTabAsync(originalTab);
+                }
+                break;
+            case PdfResultAction.OpenFolder:
+                OpenContainingFolder(resultPath);
+                break;
+            case PdfResultAction.SaveCopy:
+                SaveResultCopy(resultPath);
+                break;
+            case PdfResultAction.RunAgain:
+                await item.RequestRunAgainAsync();
+                break;
+        }
+    }
+
+    private Task InvokeToolOnUiAsync(Action action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        if (Dispatcher.CheckAccess())
+        {
+            action();
+            return Task.CompletedTask;
+        }
+        return Dispatcher.InvokeAsync(action).Task;
+    }
+
     private async Task OpenTaskOutputAsync(string path)
     {
         if (!File.Exists(path))
@@ -134,13 +205,19 @@ public partial class MainWindow
     private void SaveResultCopy(string resultPath)
     {
         if (!File.Exists(resultPath)) return;
+        var extension = Path.GetExtension(resultPath);
+        var displayType = string.IsNullOrWhiteSpace(extension)
+            ? "Result"
+            : extension.TrimStart('.').ToUpperInvariant();
         var dialog = new SaveFileDialog
         {
-            Title = "Save a copy of the result",
-            Filter = "PDF files (*.pdf)|*.pdf",
+            Title = "Save result as",
+            Filter = string.IsNullOrWhiteSpace(extension)
+                ? "All files|*.*"
+                : $"{displayType} files (*{extension})|*{extension}|All files|*.*",
             FileName = Path.GetFileName(resultPath),
-            DefaultExt = ".pdf",
-            AddExtension = true,
+            DefaultExt = extension,
+            AddExtension = !string.IsNullOrWhiteSpace(extension),
             OverwritePrompt = true
         };
         if (dialog.ShowDialog(this) != true) return;

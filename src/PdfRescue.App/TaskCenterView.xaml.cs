@@ -14,7 +14,7 @@ public partial class TaskCenterView : UserControl
     private readonly ICollectionView _view;
     private readonly DispatcherTimer _elapsedTimer;
 
-    public event Func<string, Task>? OpenOutputRequested;
+    public event Func<TaskCenterItem, Task>? ResultOptionsRequested;
 
     public TaskCenterView(TaskCenterService service)
     {
@@ -90,8 +90,8 @@ public partial class TaskCenterView : UserControl
             !item.CanOpenOutput || string.IsNullOrWhiteSpace(item.OutputPath))
             return;
 
-        var handler = OpenOutputRequested;
-        if (handler is not null) await handler(item.OutputPath);
+        var handler = ResultOptionsRequested;
+        if (handler is not null) await handler(item);
     }
 
     private async void RetryTask_Click(object sender, RoutedEventArgs e)

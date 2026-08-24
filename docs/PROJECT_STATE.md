@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after master items 15 and 16 reached green staged Windows gates and clean committed-source reruns.
+Updated after master items 17 and 18 reached green staged Windows gates and clean committed-source reruns.
 
 ## Engineering baseline
 
@@ -20,7 +20,7 @@ The normalized ordinary source tree is the working codebase. Patch carriers unde
 
 The most recent source commit proven by a clean no-patch Windows rerun is:
 
-`b0dd94da3266b94e63470c2abd697149218de156`
+`db8f7a7af2dabb4e8e383e7d6a00b71bbed11f95`
 
 Documentation-only ledger commits may advance the branch head beyond this SHA without changing the proven `src/` tree.
 
@@ -42,7 +42,7 @@ Real tabs preserve independent page layout, baseline, selected page, zoom, scrol
 
 Foreground `RunBusyAsync` work and a real background queue feed the same Task Center. The queue is backed by the core `PdfJobQueue`, is single-worker, and is smoke-tested for pre-queued jobs, serialization and cancellation while queued.
 
-Task Center supports Running, Queued, Completed, Failed and Cancelled states, progress/stage updates, percentage, elapsed time, Cancel, Open Result, clear-finished history and single-use Retry for retry-safe jobs.
+Task Center supports Running, Queued, Completed, Failed and Cancelled states, progress/stage updates, percentage, elapsed time, Cancel, result options, clear-finished history and single-use Retry for retry-safe jobs. The permanent Task Center navigation entry also carries a live running+queued badge and failed-task attention tooltip, so background work remains visible while the user works elsewhere.
 
 Current background-capable production workflows include Compress, Repair, Optimize for Web, Unlock, Merge, Office-to-PDF, PDF-to-Word, PDF-to-Excel, PDF-to-PowerPoint, searchable OCR PDF and OCR-text extraction. Configured Word/Excel/PowerPoint and OCR jobs preserve the selected working-layout page scope when queued.
 
@@ -201,11 +201,43 @@ Evidence:
 - clean OCR source `d41ba0bf4942b2179f5fa534101b32c479853876`
 - advanced conversion/export/security staged `97374175885`
 - advanced clean committed-source rerun `97374705820`
-- final clean item-16 source `b0dd94da3266b94e63470c2abd697149218de156`
+- final clean item-16 source `db8f7a7af2dabb4e8e383e7d6a00b71bbed11f95`
 
 The final staged and clean builds compiled exact .NET `10.0.202` Windows x64 Release with zero errors and only the pre-existing CS4014 warning. All smoke tests passed, including assertions that selected qpdf printing/modification/extraction permissions reach the sensitive argument file.
 
 Hands-on sizing, keyboard flow, validation messaging, theme consistency and real-operation acceptance remain before item 16 can become `ACCEPTED`.
+
+## Master item 17 — application-wide task/progress framework
+
+Status: `IMPLEMENTED, NOT ACCEPTED`.
+
+Foreground and queued work now share the same task model, with task name, stage, percentage/progress, elapsed time, page/item counts where useful and graceful cancellation. Renderer-dependent queued work owns isolated renderers; dirty/scoped layouts use disposable snapshots; transactional writers preserve sources/destinations on failure. Page-image export additionally stages the complete image set and publishes it with backup/rollback so cancellation cannot leave a half-exported set.
+
+Evidence:
+
+- staged `97376499301`
+- clean `97377277505`
+- clean-proven source `059327d0c37f8a55625dfe59417d875884d9ea20`
+- exact .NET 10.0.202 Windows x64 Release
+- 0 warnings, 0 errors, all smoke tests passed
+
+Hands-on progress/cancellation UX acceptance remains.
+
+## Master item 18 — Task Center
+
+Status: `IMPLEMENTED, NOT ACCEPTED`.
+
+Task Center exposes Running, Queued, Completed, Failed and Cancelled work with filters, progress, elapsed time, cancellation, retry for retry-safe failures, output opening and multiple queued jobs. Users can continue working in other tabs. A live badge on the permanent Task Center navigation entry now acts as the minimized task indicator and reports active or failed-task attention without forcing a modal progress window.
+
+Evidence:
+
+- staged `97400172851`
+- clean `97400644796`
+- clean-proven source `db8f7a7af2dabb4e8e383e7d6a00b71bbed11f95`
+- exact .NET 10.0.202 Windows x64 Release
+- 0 warnings, 0 errors, all smoke tests passed
+
+Hands-on visual/runtime acceptance remains.
 
 ## Result routing
 
@@ -249,40 +281,30 @@ Important green development gates include:
 - item 16 OCR clean: `97372254897`
 - item 16 advanced configuration staged: `97374175885`
 - item 16 final clean: `97374705820`
+- item 17 task/progress hardening staged: `97376499301`
+- item 17 clean: `97377277505`
+- item 18 live Task Center indicator staged: `97400172851`
+- item 18 clean: `97400644796`
 
-The one current compiler warning remains the pre-existing unawaited-call warning in `MainWindow.DocumentTabs.cs(142,9)` and was not introduced by items 13–16.
+The former `MainWindow.DocumentTabs.cs` CS4014 warning was explicitly fixed during item 17. Current clean source compiles with 0 warnings and 0 errors.
 
 These are development gates, not the final installer acceptance gate. UI items remain unaccepted until hands-on visual/runtime verification is completed.
 
 ## Immediate next work
 
-1. finish the exact master-item-17 task/progress audit and close any consistency or cancellation-cleanup gaps
-2. audit item 18 Task Center against its exact requirement now that the shared task framework is mature
-3. expand item 19 split/multi-output and remaining completion workflows
+1. expand master item 19 so background Task Center results get the same meaningful completion choices as foreground PDF transformations
+2. keep side-by-side original/result comparison explicitly pending until master item 6 split view is implemented
+3. audit item 20 non-destructive behavior operation by operation
 4. continue the context-aware command audit
 5. enrich Inspector and PDF Doctor states
 6. implement Light / Follow Windows themes and a real Settings experience
 7. add first-launch/privacy/recovery polish
 8. implement remaining viewing modes and split-view comparison
-9. visually inspect the running Windows app against the canonical Home and Document targets, including the new standalone/configuration workflows
+9. visually inspect the running Windows app against the canonical Home and Document targets
 
-## Item 17 audit starting point
+## Item 19 audit starting point
 
-The task/progress architecture already materially covers the master requirement:
-
-- foreground `RunBusyAsync` creates a tracked Task Center item
-- visible progress strip and Cancel action
-- linked cancellation tokens
-- graceful `OperationCanceledException` handling
-- background `PdfJobQueue` and `BackgroundTaskQueueService`
-- task title, stage, percentage, elapsed time and state
-- page-level progress for OCR/conversion where useful
-- queued work does not globally lock unrelated tabs
-- dirty/scoped background layouts use temporary PDFs and clean them afterward
-- core qpdf writes use transactional staging and preserve destinations on failure
-
-The remaining item-17 work is an operation-by-operation audit of long-running routes, especially temporary-output cleanup and whether every applicable path reports useful determinate progress.
-
+The existing foreground PDF result dialog already makes ORIGINAL versus RESULT explicit and provides Open in New Tab, safe Use Result Here, Open Folder, Save As/Copy, Run Another and Close. The remaining gap is shared completion treatment for background Task Center outputs and multi-output workflows. True side-by-side comparison depends on master item 6 split view and must not be credited before that feature exists.
 ## Product source of truth
 
 Future work is governed by:

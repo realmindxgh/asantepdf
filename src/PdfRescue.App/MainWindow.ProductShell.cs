@@ -30,7 +30,7 @@ public partial class MainWindow
         _homeContent = EmptyPanel.Child;
         _backgroundTasks = new BackgroundTaskQueueService(_taskCenterService);
         _taskCenterView = new TaskCenterView(_taskCenterService);
-        _taskCenterView.OpenOutputRequested += OpenTaskOutputAsync;
+        _taskCenterView.ResultOptionsRequested += ShowTaskResultWorkflowAsync;
         _taskCenterService.Changed += (_, _) => RefreshTaskCenterIndicator();
         RefreshTaskCenterIndicator();
         InitializeDocumentTabs();

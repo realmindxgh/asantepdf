@@ -19,7 +19,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.96, $"Merged {capturedInputs.Length:N0} PDFs.");
             return output;
-        });
+        }, sourceLabel: $"{capturedInputs.Length:N0} source PDFs", runAgainAction: () => InvokeToolOnUiAsync(() => Merge_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = $"Merge queued in Task Center ({capturedInputs.Length:N0} PDFs). You can keep working.";
     }
@@ -38,7 +38,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.96, "PDF conversion complete.");
             return output;
-        });
+        }, sourcePath: capturedInput, runAgainAction: () => InvokeToolOnUiAsync(() => OfficeToPdf_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Office conversion queued in Task Center. You can keep working.";
     }

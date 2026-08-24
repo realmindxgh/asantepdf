@@ -48,15 +48,15 @@
             </Border>
         </Grid>
 
-        <TextBlock Grid.Row="2" Text="Choose what to do with the new PDF. The original remains untouched unless you explicitly replace its tab."
+        <TextBlock Grid.Row="2" Text="Choose what to do with the result. The source remains untouched unless you explicitly replace its tab."
                    Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,18,0,0" />
 
         <WrapPanel Grid.Row="3" Margin="0,22,0,0" HorizontalAlignment="Right">
             <Button x:Name="ReplaceCurrentButton" Style="{StaticResource FlatButtonStyle}" Click="ReplaceCurrent_Click"
                     Content="Use Result Here" Padding="13,8" ToolTip="Open the result and close the original tab" />
-            <Button Style="{StaticResource PrimaryButtonStyle}" Click="OpenNewTab_Click" Content="Open in New Tab" Padding="16,8" />
+            <Button x:Name="OpenNewTabButton" Style="{StaticResource PrimaryButtonStyle}" Click="OpenNewTab_Click" Content="Open in New Tab" Padding="16,8" />
             <Button Style="{StaticResource FlatButtonStyle}" Click="OpenFolder_Click" Content="Open Folder" Padding="13,8" />
-            <Button Style="{StaticResource FlatButtonStyle}" Click="SaveCopy_Click" Content="Save a Copy" Padding="13,8" />
+            <Button Style="{StaticResource FlatButtonStyle}" Click="SaveCopy_Click" Content="Save As…" Padding="13,8" />
             <Button x:Name="RunAgainButton" Style="{StaticResource FlatButtonStyle}" Click="RunAgain_Click" Content="Run Another" Padding="13,8" />
             <Button Style="{StaticResource FlatButtonStyle}" Click="Close_Click" Content="Close" Padding="13,8" />
         </WrapPanel>

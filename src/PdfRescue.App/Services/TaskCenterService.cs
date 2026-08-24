@@ -15,12 +15,26 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     private readonly Func<Task>? _retryAction;
     private bool _retryRequested;
     private string? _outputPath;
+    private readonly string? _sourcePath;
+    private readonly string _sourceLabel;
+    private readonly Func<Task>? _runAgainAction;
 
-    internal TaskCenterItem(PdfJob job, Action? cancelAction, Func<Task>? retryAction = null)
+    internal TaskCenterItem(
+        PdfJob job,
+        Action? cancelAction,
+        Func<Task>? retryAction = null,
+        string? sourcePath = null,
+        string? sourceLabel = null,
+        Func<Task>? runAgainAction = null)
     {
         _job = job;
         _cancelAction = cancelAction;
         _retryAction = retryAction;
+        _sourcePath = string.IsNullOrWhiteSpace(sourcePath) ? null : Path.GetFullPath(sourcePath);
+        _sourceLabel = !string.IsNullOrWhiteSpace(sourceLabel)
+            ? sourceLabel.Trim()
+            : _sourcePath is null ? "Source" : Path.GetFileName(_sourcePath);
+        _runAgainAction = runAgainAction;
     }
 
     public Guid Id => _job.Id;
@@ -38,7 +52,10 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     public bool ShowProgress => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
     public string? OutputPath => _outputPath;
     public string OutputName => string.IsNullOrWhiteSpace(_outputPath) ? string.Empty : Path.GetFileName(_outputPath);
+    public string? SourcePath => _sourcePath;
+    public string SourceLabel => _sourceLabel;
     public bool CanOpenOutput => State == PdfJobState.Completed && !string.IsNullOrWhiteSpace(_outputPath) && File.Exists(_outputPath);
+    public bool CanRunAgain => State == PdfJobState.Completed && _runAgainAction is not null;
     public DateTimeOffset CreatedAt => _job.CreatedAt;
     public DateTimeOffset? StartedAt => _job.StartedAt;
     public DateTimeOffset? FinishedAt => _job.FinishedAt;
@@ -80,6 +97,9 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         }
     }
 
+    public Task RequestRunAgainAsync() =>
+        CanRunAgain && _runAgainAction is not null ? _runAgainAction() : Task.CompletedTask;
+
     internal void SetOutput(string? path)
     {
         _outputPath = string.IsNullOrWhiteSpace(path) ? null : Path.GetFullPath(path);
@@ -101,6 +121,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanRetry));
         OnPropertyChanged(nameof(ShowProgress));
         OnPropertyChanged(nameof(CanOpenOutput));
+        OnPropertyChanged(nameof(CanRunAgain));
         OnPropertyChanged(nameof(StartedAt));
         OnPropertyChanged(nameof(FinishedAt));
         OnPropertyChanged(nameof(ElapsedLabel));
@@ -119,13 +140,19 @@ public sealed class TaskCenterService
     public ObservableCollection<TaskCenterItem> Items { get; } = [];
     public event EventHandler? Changed;
 
-    public TaskCenterItem Track(PdfJob job, Action? cancelAction = null, Func<Task>? retryAction = null)
+    public TaskCenterItem Track(
+        PdfJob job,
+        Action? cancelAction = null,
+        Func<Task>? retryAction = null,
+        string? sourcePath = null,
+        string? sourceLabel = null,
+        Func<Task>? runAgainAction = null)
     {
         ArgumentNullException.ThrowIfNull(job);
         TaskCenterItem? created = null;
         RunOnUi(() =>
         {
-            created = new TaskCenterItem(job, cancelAction, retryAction);
+            created = new TaskCenterItem(job, cancelAction, retryAction, sourcePath, sourceLabel, runAgainAction);
             Items.Insert(0, created);
             created.Refresh();
             Changed?.Invoke(this, EventArgs.Empty);

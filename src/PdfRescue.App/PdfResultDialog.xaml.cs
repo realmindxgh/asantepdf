@@ -18,16 +18,20 @@ public partial class PdfResultDialog : Window
     public PdfResultDialog(
         string operationTitle,
         string summary,
-        string originalPath,
+        string? originalPath,
         string resultPath,
         bool canReplaceCurrent,
-        bool canRunAgain)
+        bool canRunAgain,
+        bool resultIsPdf = true,
+        string? sourceLabel = null)
     {
         InitializeComponent();
         OperationTitleText.Text = operationTitle;
         SummaryText.Text = summary;
-        OriginalNameText.Text = Path.GetFileName(originalPath);
-        OriginalPathText.Text = originalPath;
+        OriginalNameText.Text = !string.IsNullOrWhiteSpace(sourceLabel)
+            ? sourceLabel.Trim()
+            : string.IsNullOrWhiteSpace(originalPath) ? "Source" : Path.GetFileName(originalPath);
+        OriginalPathText.Text = string.IsNullOrWhiteSpace(originalPath) ? "Source details retained by the task." : originalPath;
         ResultNameText.Text = Path.GetFileName(resultPath);
         ResultPathText.Text = resultPath;
 
@@ -41,10 +45,12 @@ public partial class PdfResultDialog : Window
             ResultMetaText.Text = "Result file";
         }
 
-        ReplaceCurrentButton.IsEnabled = canReplaceCurrent;
+        ReplaceCurrentButton.Visibility = resultIsPdf ? Visibility.Visible : Visibility.Collapsed;
+        ReplaceCurrentButton.IsEnabled = resultIsPdf && canReplaceCurrent;
         ReplaceCurrentButton.ToolTip = canReplaceCurrent
             ? "Open the result and close the original tab"
             : "The original tab has unsaved changes or is not the active source tab";
+        OpenNewTabButton.Content = resultIsPdf ? "Open in New Tab" : "Open Result";
         RunAgainButton.IsEnabled = canRunAgain;
     }
 

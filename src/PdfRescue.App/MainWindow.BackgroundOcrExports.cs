@@ -74,7 +74,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.98, "Word document created.");
             return output;
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => PdfToWord_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Word export queued in Task Center. You can keep working.";
     }
@@ -106,7 +106,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.98, "Excel workbook created.");
             return output;
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => PdfToExcel_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "Excel export queued in Task Center. You can keep working.";
     }
@@ -140,7 +140,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.98, "PowerPoint presentation created.");
             return output;
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => PdfToPowerPoint_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "PowerPoint export queued in Task Center. You can keep working.";
     }
@@ -176,7 +176,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.98, "Searchable OCR PDF created.");
             return output;
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => OcrPdf_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "OCR queued in Task Center. You can keep working.";
     }
@@ -213,7 +213,7 @@ public partial class MainWindow
             token.ThrowIfCancellationRequested();
             context.ReportProgress(0.98, "OCR text file created.");
             return output;
-        });
+        }, sourcePath: source, runAgainAction: () => InvokeToolOnUiAsync(() => ExtractOcrText_Click(this, new System.Windows.RoutedEventArgs())));
 
         StatusText.Text = "OCR text extraction queued in Task Center. You can keep working.";
     }
