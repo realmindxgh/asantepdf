@@ -5,9 +5,9 @@ $target = Join-Path $SourceRoot 'dev-patches\200-task-result-completion.ps1'
 if (-not (Test-Path $target)) { throw 'Main item-19 carrier is missing.' }
 $text = [IO.File]::ReadAllText($target)
 $replacements = @(
-    @("'^\\| 17 \\|.*$'", "'^\\| 17 \\|[^\\n]*$'"),
-    @("'^\\| 18 \\|.*$'", "'^\\| 18 \\|[^\\n]*$'"),
-    @("'^\\| 43 \\|.*$'", "'^\\| 43 \\|[^\\n]*$'")
+    @("'^\| 17 \|.*$'", "'^\| 17 \|[^\n]*$'"),
+    @("'^\| 18 \|.*$'", "'^\| 18 \|[^\n]*$'"),
+    @("'^\| 43 \|.*$'", "'^\| 43 \|[^\n]*$'")
 )
 foreach ($pair in $replacements) {
     if (-not $text.Contains($pair[0])) { throw "Could not find regex carrier target $($pair[0])" }
