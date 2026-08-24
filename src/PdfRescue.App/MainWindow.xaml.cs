@@ -434,13 +434,21 @@ public partial class MainWindow : Window
         var output = AskSavePath("Extract selected pages", SuggestName(_currentPdf, "extracted"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Extracting pages...", "Extracted selected pages.", async token =>
+        var source = _currentPdf;
+        var success = await RunPdfOutputOperationAsync("Extracting pages...", "Extracted selected pages.", output, async token =>
         {
             var transforms = selected.OrderBy(p => p.Position)
                 .Select(p => new PdfPageTransform(p.SourcePageNumber, p.Rotation))
                 .ToArray();
-            await _operations.ApplyPageLayoutAsync(_currentPdf, transforms, output, token);
+            await _operations.ApplyPageLayoutAsync(source, transforms, output, token);
         });
+        if (success)
+            await ShowPdfResultWorkflowAsync(
+                "Extraction complete",
+                $"Created a PDF containing {selected.Count:N0} selected page(s). The source PDF was not modified.",
+                source,
+                output,
+                () => Extract_Click(this, new RoutedEventArgs()));
     }
 
     private async void Merge_Click(object sender, RoutedEventArgs e) =>
@@ -457,7 +465,16 @@ public partial class MainWindow : Window
             QueueMergeBackground(inputs, output);
             return;
         }
-        await RunPdfOperationAsync("Merging PDFs...", $"Merged {inputs.Length:N0} PDFs.", token => _operations.MergeAsync(inputs, output, token));
+        var success = await RunPdfOutputOperationAsync("Merging PDFs...", $"Merged {inputs.Length:N0} PDFs.", output, token => _operations.MergeAsync(inputs, output, token));
+        if (success)
+            await ShowResultWorkflowAsync(
+                "Merge complete",
+                $"Merged {inputs.Length:N0} source PDFs into one result.",
+                inputs[0],
+                output,
+                resultIsPdf: true,
+                () => Merge_Click(this, new RoutedEventArgs()),
+                $"{inputs.Length:N0} source PDFs");
     }
 
     private async void Split_Click(object sender, RoutedEventArgs e)
@@ -610,10 +627,20 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save image PDF", suggested);
         if (output is null) return;
 
-        await RunPdfOperationAsync(
+        var success = await RunPdfOutputOperationAsync(
             "Building PDF from images...",
             "Image PDF created.",
+            output,
             token => ImagePdfBuilder.CreateFromImageFilesAsync(dialog.FileNames, output, token));
+        if (success)
+            await ShowResultWorkflowAsync(
+                "Image PDF complete",
+                $"Created a PDF from {dialog.FileNames.Length:N0} source image(s).",
+                dialog.FileNames[0],
+                output,
+                resultIsPdf: true,
+                () => ImagesToPdf_Click(this, new RoutedEventArgs()),
+                $"{dialog.FileNames.Length:N0} source images");
     }
 
     private async void ExportPagesAsImages_Click(object sender, RoutedEventArgs e) =>
@@ -657,7 +684,7 @@ public partial class MainWindow : Window
         var workingPages = configuration.PagePositions.Select(position => Pages[position - 1]).ToArray();
         if (configuration.OutputKind == OcrOutputKind.SearchablePdf)
         {
-            await RunPdfOperationAsync("Running local OCR...", "Searchable OCR PDF created.", async token =>
+            var success = await RunPdfOutputOperationAsync("Running local OCR...", "Searchable OCR PDF created.", configuration.OutputPath, async token =>
             {
                 var rasterPages = new List<PdfRasterPage>(workingPages.Length);
                 for (var i = 0; i < workingPages.Length; i++)
@@ -671,10 +698,17 @@ public partial class MainWindow : Window
                 SetDeterminateProgress(workingPages.Length, workingPages.Length, "Writing searchable PDF...");
                 await ImagePdfBuilder.WriteAsync(rasterPages, configuration.OutputPath, token);
             });
+            if (success)
+                await ShowPdfResultWorkflowAsync(
+                    "OCR complete",
+                    $"Created a searchable PDF from {workingPages.Length:N0} selected page(s). The source PDF was not overwritten.",
+                    source,
+                    configuration.OutputPath,
+                    () => OcrPdf_Click(this, new RoutedEventArgs()));
             return;
         }
 
-        await RunPdfOperationAsync("Extracting text with local OCR...", "OCR text extracted.", async token =>
+        var textSuccess = await RunPdfOutputOperationAsync("Extracting text with local OCR...", "OCR text extracted.", configuration.OutputPath, async token =>
         {
             var output = new System.Text.StringBuilder();
             for (var i = 0; i < workingPages.Length; i++)
@@ -689,6 +723,14 @@ public partial class MainWindow : Window
             }
             await File.WriteAllTextAsync(configuration.OutputPath, output.ToString(), token);
         });
+        if (textSuccess)
+            await ShowResultWorkflowAsync(
+                "OCR text extraction complete",
+                $"Recovered local OCR text from {workingPages.Length:N0} selected page(s).",
+                source,
+                configuration.OutputPath,
+                resultIsPdf: false,
+                () => ExtractOcrText_Click(this, new RoutedEventArgs()));
     }
 
     private async void Watermark_Click(object sender, RoutedEventArgs e)
@@ -700,8 +742,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save watermarked PDF", SuggestName(source, "watermarked"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Adding watermark...", "Watermark added.", token =>
+        var success = await RunPdfOutputOperationAsync("Adding watermark...", "Watermark added.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _finishing.AddWatermarkAsync(working, output, text, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Watermark complete", "A watermarked copy was created. The source PDF was not overwritten.", source, output,
+                () => Watermark_Click(this, new RoutedEventArgs()));
     }
 
     private async void PageNumbers_Click(object sender, RoutedEventArgs e)
@@ -715,8 +760,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save numbered PDF", SuggestName(source, "numbered"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Adding page numbers...", "Page numbers added.", token =>
+        var success = await RunPdfOutputOperationAsync("Adding page numbers...", "Page numbers added.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _finishing.AddPageNumbersAsync(working, output, prefix, start.Value, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Page numbering complete", "A numbered copy was created. The source PDF was not overwritten.", source, output,
+                () => PageNumbers_Click(this, new RoutedEventArgs()));
     }
 
     private async void HeaderFooter_Click(object sender, RoutedEventArgs e)
@@ -728,8 +776,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save PDF with header/footer", SuggestName(source, "header-footer"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Adding header and footer...", "Header/footer added.", token =>
+        var success = await RunPdfOutputOperationAsync("Adding header and footer...", "Header/footer added.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _finishing.AddHeaderFooterAsync(working, output, values.Value.Header, values.Value.Footer, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Header/footer complete", "A copy with the requested header and footer was created. The source PDF was not overwritten.", source, output,
+                () => HeaderFooter_Click(this, new RoutedEventArgs()));
     }
 
     private async void Metadata_Click(object sender, RoutedEventArgs e)
@@ -741,8 +792,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save PDF with updated metadata", SuggestName(source, "metadata"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Updating PDF metadata...", "Metadata updated.", token =>
+        var success = await RunPdfOutputOperationAsync("Updating PDF metadata...", "Metadata updated.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _finishing.UpdateMetadataAsync(working, output, metadata, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Metadata update complete", "A copy with updated metadata was created. The source PDF was not overwritten.", source, output,
+                () => Metadata_Click(this, new RoutedEventArgs()));
     }
 
     private async void StampImage_Click(object sender, RoutedEventArgs e)
@@ -769,8 +823,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save stamped PDF", SuggestName(source, "stamped"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Stamping image...", "Image/signature stamp added.", token =>
+        var success = await RunPdfOutputOperationAsync("Stamping image...", "Image/signature stamp added.", output, token =>
             RunAgainstWorkingLayoutAsync((working, ct) => _finishing.StampImageAsync(working, output, imageDialog.FileName, page.Value, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Image stamp complete", "A stamped copy was created. The source PDF was not overwritten.", source, output,
+                () => StampImage_Click(this, new RoutedEventArgs()));
     }
 
 
@@ -807,8 +864,11 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save filled form", SuggestName(source, "filled"));
         if (output is null) return;
 
-        await RunPdfOperationAsync("Filling PDF form...", "Form fields filled.", token =>
+        var success = await RunPdfOutputOperationAsync("Filling PDF form...", "Form fields filled.", output, token =>
             _forms.FillAsync(source, output, values, token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Form filling complete", "A filled copy was created. The source PDF was not overwritten.", source, output,
+                () => FillForm_Click(this, new RoutedEventArgs()));
     }
 
     private void PlaceSignature_Click(object sender, RoutedEventArgs e)

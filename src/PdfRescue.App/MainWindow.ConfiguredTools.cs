@@ -59,8 +59,16 @@ public partial class MainWindow
             QueueOfficeToPdfBackground(configuration.InputPath, configuration.OutputPath);
             return;
         }
-        await RunPdfOperationAsync("Converting Office document to PDF...", "Office document converted to PDF.", token =>
+        var success = await RunPdfOutputOperationAsync("Converting Office document to PDF...", "Office document converted to PDF.", configuration.OutputPath, token =>
             _office.ConvertOfficeToPdfAsync(configuration.InputPath, configuration.OutputPath, token));
+        if (success)
+            await ShowResultWorkflowAsync(
+                "Office conversion complete",
+                "A PDF copy was created from the Office source file.",
+                configuration.InputPath,
+                configuration.OutputPath,
+                resultIsPdf: true,
+                () => OfficeToPdf_Click(this, new System.Windows.RoutedEventArgs()));
     }
 
     private async Task RunConfiguredPdfConversionAsync(PdfConversionKind defaultKind)
@@ -101,7 +109,7 @@ public partial class MainWindow
         var workingPages = configuration.PagePositions.Select(position => Pages[position - 1]).ToArray();
         if (configuration.Kind == PdfConversionKind.PowerPoint)
         {
-            await RunPdfOperationAsync("Rendering PDF pages for PowerPoint...", "PowerPoint presentation created.", async token =>
+            var powerPointSuccess = await RunPdfOutputOperationAsync("Rendering PDF pages for PowerPoint...", "PowerPoint presentation created.", configuration.OutputPath, async token =>
             {
                 var slides = new List<PowerPointPage>(workingPages.Length);
                 for (var i = 0; i < workingPages.Length; i++)
@@ -114,6 +122,14 @@ public partial class MainWindow
                 await _office.ExportPowerPointAsync(slides, configuration.OutputPath, token);
                 SetDeterminateProgress(workingPages.Length, workingPages.Length, "Finishing PowerPoint...");
             });
+            if (powerPointSuccess)
+                await ShowResultWorkflowAsync(
+                    "PowerPoint export complete",
+                    $"Created a presentation from {workingPages.Length:N0} selected PDF page(s).",
+                    source,
+                    configuration.OutputPath,
+                    resultIsPdf: false,
+                    () => PdfToPowerPoint_Click(this, new System.Windows.RoutedEventArgs()));
             return;
         }
 
@@ -136,7 +152,16 @@ public partial class MainWindow
                 else
                     await _office.ExportWordAsync(texts, configuration.OutputPath, token);
             });
-        _ = success;
+        if (success)
+            await ShowResultWorkflowAsync(
+                configuration.Kind == PdfConversionKind.Excel ? "Excel export complete" : "Word export complete",
+                $"Created a {configuration.Kind} result from {workingPages.Length:N0} selected PDF page(s).",
+                source,
+                configuration.OutputPath,
+                resultIsPdf: false,
+                configuration.Kind == PdfConversionKind.Excel
+                    ? () => PdfToExcel_Click(this, new System.Windows.RoutedEventArgs())
+                    : () => PdfToWord_Click(this, new System.Windows.RoutedEventArgs()));
     }
 
     private void QueueConfiguredPdfToWordBackground(string source, PdfConversionDialogResult configuration) =>

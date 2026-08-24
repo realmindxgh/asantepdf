@@ -24,12 +24,22 @@ public partial class MainWindow
         return success;
     }
 
-    private async Task ShowPdfResultWorkflowAsync(
+    private Task ShowPdfResultWorkflowAsync(
         string operationTitle,
         string summary,
         string originalPath,
         string resultPath,
-        Action? runAgain = null)
+        Action? runAgain = null) =>
+        ShowResultWorkflowAsync(operationTitle, summary, originalPath, resultPath, resultIsPdf: true, runAgain);
+
+    private async Task ShowResultWorkflowAsync(
+        string operationTitle,
+        string summary,
+        string? originalPath,
+        string resultPath,
+        bool resultIsPdf,
+        Action? runAgain = null,
+        string? sourceLabel = null)
     {
         if (!File.Exists(resultPath))
         {
@@ -38,10 +48,13 @@ public partial class MainWindow
             return;
         }
 
-        var originalTab = FindOpenDocumentTab(originalPath);
+        var originalTab = resultIsPdf && !string.IsNullOrWhiteSpace(originalPath)
+            ? FindOpenDocumentTab(originalPath)
+            : null;
         var canReplaceCurrent = originalTab is not null &&
             ReferenceEquals(originalTab, _activeDocumentTab) &&
             !originalTab.IsDirty;
+        var runAgainAction = runAgain;
 
         var dialog = new PdfResultDialog(
             operationTitle,
@@ -49,38 +62,36 @@ public partial class MainWindow
             originalPath,
             resultPath,
             canReplaceCurrent,
-            runAgain is not null)
+            runAgainAction is not null,
+            resultIsPdf,
+            sourceLabel)
         {
             Owner = this
         };
 
         if (dialog.ShowDialog() != true) return;
-
         switch (dialog.SelectedAction)
         {
             case PdfResultAction.OpenNewTab:
-                await OpenPdfAsync(resultPath);
+                await OpenTaskOutputAsync(resultPath);
                 break;
-
             case PdfResultAction.ReplaceCurrent:
-                if (canReplaceCurrent && originalTab is not null)
+                if (resultIsPdf && canReplaceCurrent && originalTab is not null)
                 {
                     await OpenPdfAsync(resultPath);
                     if (DocumentTabs.Contains(originalTab))
                         await CloseDocumentTabAsync(originalTab);
                 }
                 break;
-
             case PdfResultAction.OpenFolder:
                 OpenContainingFolder(resultPath);
                 break;
-
             case PdfResultAction.SaveCopy:
                 SaveResultCopy(resultPath);
                 break;
-
             case PdfResultAction.RunAgain:
-                runAgain?.Invoke();
+                if (runAgainAction is not null)
+                    await InvokeToolOnUiAsync(runAgainAction);
                 break;
         }
     }
