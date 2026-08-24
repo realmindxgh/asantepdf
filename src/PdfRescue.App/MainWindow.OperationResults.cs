@@ -176,7 +176,7 @@ public partial class MainWindow
                 OpenContainingFolder(dialog.SelectedPath ?? available[0]);
                 break;
             case MultiResultAction.RunAgain:
-                await InvokeToolOnUiAsync(runAgain);
+                await InvokeToolOnUiAsync(runAgain!);
                 break;
         }
     }
