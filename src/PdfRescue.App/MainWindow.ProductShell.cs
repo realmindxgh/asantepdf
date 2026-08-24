@@ -155,8 +155,13 @@ public partial class MainWindow
             Multiselect = false
         };
         if (dialog.ShowDialog(this) != true) return null;
-        await OpenPdfAsync(dialog.FileName);
-        return _currentPdf;
+
+        var selectedPath = Path.GetFullPath(dialog.FileName);
+        await OpenPdfAsync(selectedPath);
+        return _currentPdf is not null &&
+               string.Equals(Path.GetFullPath(_currentPdf), selectedPath, StringComparison.OrdinalIgnoreCase)
+            ? _currentPdf
+            : null;
     }
 
     private async void HomeOcr_Click(object sender, RoutedEventArgs e)
@@ -187,6 +192,52 @@ public partial class MainWindow
     {
         if (await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to Word") is not null)
             PdfToWord_Click(sender, e);
+    }
+
+    private async void HomeRepair_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to repair") is not null)
+            Repair_Click(sender, e);
+    }
+
+    private async void HomeOptimize_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to optimize for web viewing") is not null)
+            Linearize_Click(sender, e);
+    }
+
+    private async void HomeProtect_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to protect with a password") is not null)
+            Protect_Click(sender, e);
+    }
+
+    private void HomeUnlock_Click(object sender, RoutedEventArgs e) => Unlock_Click(sender, e);
+
+    private async void HomeToExcel_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to Excel") is not null)
+            PdfToExcel_Click(sender, e);
+    }
+
+    private async void HomeToPowerPoint_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to PowerPoint") is not null)
+            PdfToPowerPoint_Click(sender, e);
+    }
+
+    private void HomeOfficeToPdf_Click(object sender, RoutedEventArgs e) => OfficeToPdf_Click(sender, e);
+
+    private async void HomeExportImages_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF whose pages you want to export as images") is not null)
+            ExportPagesAsImages_Click(sender, e);
+    }
+
+    private async void HomeOcrText_Click(object sender, RoutedEventArgs e)
+    {
+        if (await SelectPdfForStandaloneToolAsync("Choose a PDF whose text you want to extract with OCR") is not null)
+            ExtractOcrText_Click(sender, e);
     }
 
     private async void RecentItem_Click(object sender, RoutedEventArgs e)
