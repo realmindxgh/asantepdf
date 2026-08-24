@@ -482,9 +482,10 @@ public partial class MainWindow : Window
     private async void Split_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to split") is null) return;
+        var source = _currentPdf!;
         var pagesPerFile = PromptForPositiveInt("Split PDF", "Pages per output file:", 1);
         if (pagesPerFile is null) return;
-        var outputBase = AskSavePath("Choose split output base name", SuggestName(_currentPdf, "part"));
+        var outputBase = AskSavePath("Choose split output base name", SuggestName(source, "part"));
         if (outputBase is null) return;
 
         IReadOnlyList<string>? outputs = null;
@@ -504,7 +505,7 @@ public partial class MainWindow : Window
     private async void Compress_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to compress") is null) return;
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var profile = PromptCompressionProfile();
         if (profile is null) return;
         var output = AskSavePath("Save compressed PDF", SuggestName(source, "compressed"));
@@ -540,7 +541,7 @@ public partial class MainWindow : Window
     private async void Repair_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to repair") is null) return;
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var output = AskSavePath("Save repaired PDF", SuggestName(source, "repaired"));
         if (output is null) return;
         if (_backgroundTasks is not null)
@@ -558,7 +559,7 @@ public partial class MainWindow : Window
     private async void Linearize_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to optimize for web viewing") is null) return;
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var output = AskSavePath("Save web-optimized PDF", SuggestName(source, "web"));
         if (output is null) return;
         if (_backgroundTasks is not null)
@@ -576,9 +577,10 @@ public partial class MainWindow : Window
     private async void Protect_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to protect") is null) return;
+        var source = _currentPdf!;
         var passwords = PromptProtectionPasswords();
         if (passwords is null) return;
-        var output = AskSavePath("Save password-protected PDF", SuggestName(_currentPdf, "protected"));
+        var output = AskSavePath("Save password-protected PDF", SuggestName(source, "protected"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Protecting PDF...", "Created password-protected PDF.", token =>
@@ -643,7 +645,7 @@ public partial class MainWindow : Window
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to Word") is null) return;
         if (!_ocr.IsAvailable) { ShowOcrUnavailable(); return; }
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var output = AskSaveFile("Export PDF to Word", Path.GetFileNameWithoutExtension(source) + ".docx", "Word document (*.docx)|*.docx", ".docx");
         if (output is null) return;
         if (_backgroundTasks is not null)
@@ -662,7 +664,7 @@ public partial class MainWindow : Window
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to Excel") is null) return;
         if (!_ocr.IsAvailable) { ShowOcrUnavailable(); return; }
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var output = AskSaveFile("Export PDF to Excel", Path.GetFileNameWithoutExtension(source) + ".xlsx", "Excel workbook (*.xlsx)|*.xlsx", ".xlsx");
         if (output is null) return;
         if (_backgroundTasks is not null)
@@ -680,7 +682,7 @@ public partial class MainWindow : Window
     private async void PdfToPowerPoint_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to PowerPoint") is null) return;
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var output = AskSaveFile("Export PDF to PowerPoint", Path.GetFileNameWithoutExtension(source) + ".pptx", "PowerPoint presentation (*.pptx)|*.pptx", ".pptx");
         if (output is null) return;
         if (_backgroundTasks is not null)
@@ -747,11 +749,12 @@ public partial class MainWindow : Window
     private async void ExportPagesAsImages_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF whose pages you want to export") is null) return;
+        var source = _currentPdf!;
         var imageDialog = new SaveFileDialog
         {
             Title = "Choose page image destination",
             Filter = "PNG image (*.png)|*.png",
-            FileName = Path.GetFileNameWithoutExtension(_currentPdf) + "-page-001.png",
+            FileName = Path.GetFileNameWithoutExtension(source) + "-page-001.png",
             AddExtension = true,
             DefaultExt = ".png",
             OverwritePrompt = true
@@ -789,7 +792,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var output = AskSavePath("Save searchable OCR PDF", SuggestName(source, "searchable"));
         if (output is null) return;
         if (_backgroundTasks is not null)
@@ -823,7 +826,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var source = _currentPdf;
+        var source = _currentPdf!;
         var suggested = Path.GetFileNameWithoutExtension(source) + "-ocr.txt";
         var dialog = new SaveFileDialog
         {
@@ -859,9 +862,10 @@ public partial class MainWindow : Window
     private async void Watermark_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to watermark") is null) return;
+        var source = _currentPdf!;
         var text = PromptText("Add Watermark", "Watermark text:", "CONFIDENTIAL");
         if (string.IsNullOrWhiteSpace(text)) return;
-        var output = AskSavePath("Save watermarked PDF", SuggestName(_currentPdf, "watermarked"));
+        var output = AskSavePath("Save watermarked PDF", SuggestName(source, "watermarked"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Adding watermark...", "Watermark added.", token =>
@@ -871,11 +875,12 @@ public partial class MainWindow : Window
     private async void PageNumbers_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to number") is null) return;
+        var source = _currentPdf!;
         var prefix = PromptText("Add Page Numbers", "Text before the number (optional):", "Page ");
         if (prefix is null) return;
         var start = PromptForPositiveInt("Add Page Numbers", "Starting number:", 1);
         if (start is null) return;
-        var output = AskSavePath("Save numbered PDF", SuggestName(_currentPdf, "numbered"));
+        var output = AskSavePath("Save numbered PDF", SuggestName(source, "numbered"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Adding page numbers...", "Page numbers added.", token =>
@@ -885,9 +890,10 @@ public partial class MainWindow : Window
     private async void HeaderFooter_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF for header/footer editing") is null) return;
+        var source = _currentPdf!;
         var values = PromptHeaderFooter();
         if (values is null) return;
-        var output = AskSavePath("Save PDF with header/footer", SuggestName(_currentPdf, "header-footer"));
+        var output = AskSavePath("Save PDF with header/footer", SuggestName(source, "header-footer"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Adding header and footer...", "Header/footer added.", token =>
@@ -897,9 +903,10 @@ public partial class MainWindow : Window
     private async void Metadata_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF whose metadata you want to edit") is null) return;
+        var source = _currentPdf!;
         var metadata = PromptMetadata();
         if (metadata is null) return;
-        var output = AskSavePath("Save PDF with updated metadata", SuggestName(_currentPdf, "metadata"));
+        var output = AskSavePath("Save PDF with updated metadata", SuggestName(source, "metadata"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Updating PDF metadata...", "Metadata updated.", token =>
@@ -909,6 +916,7 @@ public partial class MainWindow : Window
     private async void StampImage_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to stamp with an image") is null) return;
+        var source = _currentPdf!;
         var imageDialog = new OpenFileDialog
         {
             Title = "Choose image or signature stamp",
@@ -926,7 +934,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var output = AskSavePath("Save stamped PDF", SuggestName(_currentPdf, "stamped"));
+        var output = AskSavePath("Save stamped PDF", SuggestName(source, "stamped"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Stamping image...", "Image/signature stamp added.", token =>
@@ -937,6 +945,7 @@ public partial class MainWindow : Window
     private async void FillForm_Click(object sender, RoutedEventArgs e)
     {
         if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF form to fill") is null) return;
+        var source = _currentPdf!;
         if (HasLayoutChanges())
         {
             MessageBox.Show(this,
@@ -949,7 +958,7 @@ public partial class MainWindow : Window
         var loaded = await RunBusyAsync("Reading form fields...", token => Task.Run(() =>
         {
             token.ThrowIfCancellationRequested();
-            fields = _forms.ReadFields(_currentPdf);
+            fields = _forms.ReadFields(source);
         }, token));
         if (!loaded) return;
 
@@ -963,11 +972,11 @@ public partial class MainWindow : Window
 
         var values = PromptFormValues(fields);
         if (values is null) return;
-        var output = AskSavePath("Save filled form", SuggestName(_currentPdf, "filled"));
+        var output = AskSavePath("Save filled form", SuggestName(source, "filled"));
         if (output is null) return;
 
         await RunPdfOperationAsync("Filling PDF form...", "Form fields filled.", token =>
-            _forms.FillAsync(_currentPdf, output, values, token));
+            _forms.FillAsync(source, output, values, token));
     }
 
     private void PlaceSignature_Click(object sender, RoutedEventArgs e)
