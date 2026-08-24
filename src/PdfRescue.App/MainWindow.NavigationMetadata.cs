@@ -225,6 +225,9 @@ public partial class MainWindow
         if (!_productShellInitialized || AnnotationsList is null || AttachmentsList is null) return;
         AnnotationsList.ItemsSource = null;
         AttachmentsList.ItemsSource = null;
+        PagesList.Visibility = Visibility.Visible;
+        BookmarksPanel.Visibility = Visibility.Collapsed;
+        SearchResultsPanel.Visibility = Visibility.Collapsed;
         AnnotationsPanel.Visibility = Visibility.Collapsed;
         AttachmentsPanel.Visibility = Visibility.Collapsed;
         SaveAttachmentButton.Visibility = Visibility.Collapsed;
