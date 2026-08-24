@@ -186,6 +186,9 @@ public partial class MainWindow : Window
     private async void PagesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         UpdateCommandStates();
+        var selectedPages = SelectedPages();
+        if (selectedPages.Count > 1)
+            StatusText.Text = $"Selected {selectedPages.Count:N0} pages: {FormatPagePositionSummary(selectedPages)}.";
         if (PagesList.SelectedItem is PdfPageItem page)
             await RenderPreviewAsync(page);
     }
@@ -1060,6 +1063,15 @@ public partial class MainWindow : Window
     private void CropMarkup_Click(object sender, RoutedEventArgs e)
     {
         if (_currentPdf is null || Pages.Count == 0) return;
+        var selectedPages = SelectedPages();
+        if (selectedPages.Count > 1)
+        {
+            BeginMarkupMode(
+                MarkupMode.Crop,
+                $"Crop mode: drag the area to keep. The same crop will apply to {selectedPages.Count:N0} selected pages: {FormatPagePositionSummary(selectedPages)}.");
+            return;
+        }
+
         BeginMarkupMode(MarkupMode.Crop, "Crop mode: drag the area to keep on the current page.");
     }
 
@@ -1246,10 +1258,30 @@ public partial class MainWindow : Window
     private async Task ApplyCropMarkupAsync(int pageNumber, NormalizedPdfRect rect)
     {
         if (_currentPdf is null) return;
-        var output = AskSavePath("Save cropped PDF", SuggestName(_currentPdf, "cropped"));
+
+        var selectedPages = SelectedPages();
+        var targetPositions = selectedPages
+            .Select(page => page.Position)
+            .Append(pageNumber)
+            .Distinct()
+            .OrderBy(position => position)
+            .ToArray();
+        var targetSummary = FormatPagePositionSummary(targetPositions);
+
+        var output = AskSavePath(
+            targetPositions.Length == 1 ? "Save cropped PDF" : $"Save PDF with {targetPositions.Length:N0} cropped pages",
+            SuggestName(_currentPdf, "cropped"));
         if (output is null) return;
-        await RunPdfOperationAsync("Cropping page...", "Page crop applied.", token =>
-            RunAgainstWorkingLayoutAsync((working, ct) => _markup.CropPageAsync(working, output, pageNumber, rect, ct), token));
+
+        var runningText = targetPositions.Length == 1
+            ? "Cropping page..."
+            : $"Cropping {targetPositions.Length:N0} selected pages...";
+        var completedText = targetPositions.Length == 1
+            ? $"Crop applied to page {targetPositions[0]:N0}."
+            : $"Crop applied to {targetPositions.Length:N0} selected pages: {targetSummary}.";
+
+        await RunPdfOperationAsync(runningText, completedText, token =>
+            RunAgainstWorkingLayoutAsync((working, ct) => _markup.CropPagesAsync(working, output, targetPositions, rect, ct), token));
     }
 
     private async Task ApplyPermanentRedactionAsync(int pageNumber, NormalizedPdfRect rect)
@@ -1565,6 +1597,34 @@ public partial class MainWindow : Window
 
     private List<PdfPageItem> SelectedPages() =>
         PagesList.SelectedItems.Cast<PdfPageItem>().OrderBy(p => p.Position).ToList();
+
+    private static string FormatPagePositionSummary(IReadOnlyCollection<PdfPageItem> pages) =>
+        FormatPagePositionSummary(pages.Select(page => page.Position));
+
+    private static string FormatPagePositionSummary(IEnumerable<int> positions)
+    {
+        var ordered = positions.Distinct().OrderBy(position => position).ToArray();
+        if (ordered.Length == 0) return "none";
+
+        var ranges = new List<string>();
+        var start = ordered[0];
+        var end = start;
+        for (var i = 1; i < ordered.Length; i++)
+        {
+            if (ordered[i] == end + 1)
+            {
+                end = ordered[i];
+                continue;
+            }
+
+            ranges.Add(start == end ? $"{start:N0}" : $"{start:N0}–{end:N0}");
+            start = end = ordered[i];
+        }
+        ranges.Add(start == end ? $"{start:N0}" : $"{start:N0}–{end:N0}");
+
+        if (ranges.Count <= 6) return string.Join(", ", ranges);
+        return string.Join(", ", ranges.Take(5)) + $", … (+{ranges.Count - 5:N0} ranges)";
+    }
 
     private void AfterLayoutChange(IReadOnlyCollection<PdfPageItem> selection, string status)
     {

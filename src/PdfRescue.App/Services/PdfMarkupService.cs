@@ -69,6 +69,9 @@ public sealed class PdfMarkupService
         }, token);
 
     public Task CropPageAsync(string inputPath, string outputPath, int pageNumber, NormalizedPdfRect area, CancellationToken token = default) =>
+        CropPagesAsync(inputPath, outputPath, [pageNumber], area, token);
+
+    public Task CropPagesAsync(string inputPath, string outputPath, IReadOnlyCollection<int> pageNumbers, NormalizedPdfRect area, CancellationToken token = default) =>
         Task.Run(() =>
         {
             var input = Path.GetFullPath(inputPath);
@@ -76,6 +79,14 @@ public sealed class PdfMarkupService
             ValidatePaths(input, output);
             var rect = area.Clamp();
             if (rect.Width < 0.02 || rect.Height < 0.02) throw new ArgumentException("The crop area is too small.", nameof(area));
+
+            var targets = pageNumbers
+                .Distinct()
+                .OrderBy(pageNumber => pageNumber)
+                .ToArray();
+            if (targets.Length == 0)
+                throw new ArgumentException("At least one page must be selected for cropping.", nameof(pageNumbers));
+
             var tempDir = Path.Combine(Path.GetTempPath(), "AsantePDF", "crop", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
             var raw = Path.Combine(tempDir, "cropped-raw.pdf");
@@ -84,16 +95,21 @@ public sealed class PdfMarkupService
             {
                 using (var document = PdfReader.Open(input, PdfDocumentOpenMode.Modify))
                 {
-                    if (pageNumber < 1 || pageNumber > document.Pages.Count) throw new ArgumentOutOfRangeException(nameof(pageNumber));
-                    token.ThrowIfCancellationRequested();
-                    var page = document.Pages[pageNumber - 1];
-                    page.CropBox = new PdfRectangle(
-                        new XPoint(
-                            rect.X * page.Width.Point,
-                            (1d - rect.Y - rect.Height) * page.Height.Point),
-                        new XPoint(
-                            (rect.X + rect.Width) * page.Width.Point,
-                            (1d - rect.Y) * page.Height.Point));
+                    foreach (var pageNumber in targets)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        if (pageNumber < 1 || pageNumber > document.Pages.Count)
+                            throw new ArgumentOutOfRangeException(nameof(pageNumbers), $"Page {pageNumber:N0} is outside this PDF.");
+
+                        var page = document.Pages[pageNumber - 1];
+                        page.CropBox = new PdfRectangle(
+                            new XPoint(
+                                rect.X * page.Width.Point,
+                                (1d - rect.Y - rect.Height) * page.Height.Point),
+                            new XPoint(
+                                (rect.X + rect.Width) * page.Width.Point,
+                                (1d - rect.Y) * page.Height.Point));
+                    }
                     document.Save(raw);
                 }
                 token.ThrowIfCancellationRequested();
