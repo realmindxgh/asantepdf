@@ -555,137 +555,21 @@ public partial class MainWindow : Window
                 () => Linearize_Click(this, new RoutedEventArgs()));
     }
 
-    private async void Protect_Click(object sender, RoutedEventArgs e)
-    {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to protect") is null) return;
-        var source = _currentPdf!;
-        var passwords = PromptProtectionPasswords();
-        if (passwords is null) return;
-        var output = AskSavePath("Save password-protected PDF", SuggestName(source, "protected"));
-        if (output is null) return;
+    private async void Protect_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredProtectAsync();
 
-        await RunPdfOperationAsync("Protecting PDF...", "Created password-protected PDF.", token =>
-            RunAgainstWorkingLayoutAsync((working, ct) =>
-                _operations.ProtectAsync(working, passwords.Value.UserPassword, passwords.Value.OwnerPassword, output, ct), token));
-    }
+    private async void Unlock_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredUnlockAsync();
+    private async void OfficeToPdf_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredOfficeToPdfAsync();
+    private async void PdfToWord_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredPdfConversionAsync(PdfConversionKind.Word);
 
-    private async void Unlock_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog
-        {
-            Title = "Select password-protected PDF",
-            Filter = "PDF files (*.pdf)|*.pdf",
-            CheckFileExists = true
-        };
-        if (dialog.ShowDialog(this) != true) return;
+    private async void PdfToExcel_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredPdfConversionAsync(PdfConversionKind.Excel);
 
-        var password = PromptPassword("Remove PDF Password", "Enter the current PDF password:");
-        if (password is null) return;
-        var output = AskSavePath("Save unlocked PDF", SuggestName(dialog.FileName, "unlocked"));
-        if (output is null) return;
-        if (_backgroundTasks is not null)
-        {
-            QueueUnlockBackground(dialog.FileName, password, output);
-            return;
-        }
-
-        var success = await RunPdfOutputOperationAsync("Removing PDF password...", "Created unlocked PDF.", output, token =>
-            _operations.DecryptAsync(dialog.FileName, password, output, token));
-        if (success)
-            await ShowPdfResultWorkflowAsync("Unlock complete", "An unlocked copy was created. The protected source was left unchanged.", dialog.FileName, output,
-                () => Unlock_Click(this, new RoutedEventArgs()));
-    }
-
-    private async void OfficeToPdf_Click(object sender, RoutedEventArgs e)
-    {
-        if (_busy) return;
-        if (!_office.IsLibreOfficeAvailable)
-        {
-            MessageBox.Show(this, "The bundled Office conversion engine is unavailable.", "AsantePDF Convert", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-        var dialog = new OpenFileDialog
-        {
-            Title = "Choose Office document to convert",
-            Filter = "Office documents|*.doc;*.docx;*.xls;*.xlsx;*.ppt;*.pptx;*.odt;*.ods;*.odp;*.rtf|All files|*.*",
-            CheckFileExists = true
-        };
-        if (dialog.ShowDialog(this) != true) return;
-        var output = AskSaveFile("Save converted PDF", Path.GetFileNameWithoutExtension(dialog.FileName) + ".pdf", "PDF files (*.pdf)|*.pdf", ".pdf");
-        if (output is null) return;
-        if (_backgroundTasks is not null)
-        {
-            QueueOfficeToPdfBackground(dialog.FileName, output);
-            return;
-        }
-        await RunPdfOperationAsync("Converting Office document to PDF...", "Office document converted to PDF.", token =>
-            _office.ConvertOfficeToPdfAsync(dialog.FileName, output, token));
-    }
-
-    private async void PdfToWord_Click(object sender, RoutedEventArgs e)
-    {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to Word") is null) return;
-        if (!_ocr.IsAvailable) { ShowOcrUnavailable(); return; }
-        var source = _currentPdf!;
-        var output = AskSaveFile("Export PDF to Word", Path.GetFileNameWithoutExtension(source) + ".docx", "Word document (*.docx)|*.docx", ".docx");
-        if (output is null) return;
-        if (_backgroundTasks is not null)
-        {
-            QueuePdfToWordBackground(source, output);
-            return;
-        }
-        await RunPdfOperationAsync("Recovering PDF text for Word...", "Word document created.", async token =>
-        {
-            var texts = await RecognizeWorkingPagesAsync(token);
-            await _office.ExportWordAsync(texts, output, token);
-        });
-    }
-
-    private async void PdfToExcel_Click(object sender, RoutedEventArgs e)
-    {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to Excel") is null) return;
-        if (!_ocr.IsAvailable) { ShowOcrUnavailable(); return; }
-        var source = _currentPdf!;
-        var output = AskSaveFile("Export PDF to Excel", Path.GetFileNameWithoutExtension(source) + ".xlsx", "Excel workbook (*.xlsx)|*.xlsx", ".xlsx");
-        if (output is null) return;
-        if (_backgroundTasks is not null)
-        {
-            QueuePdfToExcelBackground(source, output);
-            return;
-        }
-        await RunPdfOperationAsync("Recovering PDF text for Excel...", "Excel workbook created.", async token =>
-        {
-            var texts = await RecognizeWorkingPagesAsync(token);
-            await _office.ExportExcelAsync(texts, output, token);
-        });
-    }
-
-    private async void PdfToPowerPoint_Click(object sender, RoutedEventArgs e)
-    {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF to convert to PowerPoint") is null) return;
-        var source = _currentPdf!;
-        var output = AskSaveFile("Export PDF to PowerPoint", Path.GetFileNameWithoutExtension(source) + ".pptx", "PowerPoint presentation (*.pptx)|*.pptx", ".pptx");
-        if (output is null) return;
-        if (_backgroundTasks is not null)
-        {
-            QueuePdfToPowerPointBackground(source, output);
-            return;
-        }
-        await RunPdfOperationAsync("Rendering PDF pages for PowerPoint...", "PowerPoint presentation created.", async token =>
-        {
-            var slides = new List<PowerPointPage>(Pages.Count);
-            for (var i = 0; i < Pages.Count; i++)
-            {
-                token.ThrowIfCancellationRequested();
-                SetDeterminateProgress(i, Pages.Count, $"Rendering slide {i + 1:N0} of {Pages.Count:N0}...");
-                var bitmap = await RenderWorkingPageAsync(Pages[i], 1800, token);
-                slides.Add(new PowerPointPage(OfficeConversionService.EncodePng(bitmap), bitmap.PixelWidth, bitmap.PixelHeight));
-            }
-            await _office.ExportPowerPointAsync(slides, output, token);
-            SetDeterminateProgress(Pages.Count, Pages.Count, "Finishing PowerPoint...");
-        });
-    }
-
+    private async void PdfToPowerPoint_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredPdfConversionAsync(PdfConversionKind.PowerPoint);
     private async Task<IReadOnlyList<string>> RecognizeWorkingPagesAsync(CancellationToken token)
     {
         var texts = new List<string>(Pages.Count);
@@ -727,43 +611,8 @@ public partial class MainWindow : Window
             token => ImagePdfBuilder.CreateFromImageFilesAsync(dialog.FileNames, output, token));
     }
 
-    private async void ExportPagesAsImages_Click(object sender, RoutedEventArgs e)
-    {
-        if ((_currentPdf is null || Pages.Count == 0) && await SelectPdfForStandaloneToolAsync("Choose a PDF whose pages you want to export") is null) return;
-        var source = _currentPdf!;
-        var imageDialog = new SaveFileDialog
-        {
-            Title = "Choose page image destination",
-            Filter = "PNG image (*.png)|*.png",
-            FileName = Path.GetFileNameWithoutExtension(source) + "-page-001.png",
-            AddExtension = true,
-            DefaultExt = ".png",
-            OverwritePrompt = true
-        };
-        if (imageDialog.ShowDialog(this) != true) return;
-        var first = imageDialog.FileName;
-
-        var folder = Path.GetDirectoryName(first)!;
-        var firstStem = Path.GetFileNameWithoutExtension(first);
-        var stem = firstStem.EndsWith("-page-001", StringComparison.OrdinalIgnoreCase)
-            ? firstStem[..^9]
-            : firstStem;
-
-        await RunPdfOperationAsync("Exporting PDF pages as images...", "Page images exported.", async token =>
-        {
-            Directory.CreateDirectory(folder);
-            for (var i = 0; i < Pages.Count; i++)
-            {
-                token.ThrowIfCancellationRequested();
-                SetDeterminateProgress(i, Pages.Count, $"Exporting page {i + 1:N0} of {Pages.Count:N0}...");
-                var bitmap = await RenderWorkingPageAsync(Pages[i], 1800, token);
-                var path = Path.Combine(folder, $"{stem}-page-{i + 1:000}.png");
-                SaveBitmap(bitmap, path, png: true);
-            }
-            SetDeterminateProgress(Pages.Count, Pages.Count, "Finishing page export...");
-        });
-    }
-
+    private async void ExportPagesAsImages_Click(object sender, RoutedEventArgs e) =>
+        await RunConfiguredPageImageExportAsync();
     private async void OcrPdf_Click(object sender, RoutedEventArgs e) =>
         await RunConfiguredOcrAsync(OcrOutputKind.SearchablePdf);
 
@@ -2254,30 +2103,49 @@ public partial class MainWindow : Window
 
     private Window BuildPromptWindow(string title, string label, FrameworkElement control, out Button okButton)
     {
+        var background = Application.Current.TryFindResource("AppBackground") as Brush ?? new SolidColorBrush(Color.FromRgb(9, 19, 31));
+        var primary = Application.Current.TryFindResource("PrimaryTextBrush") as Brush ?? Brushes.White;
+        var muted = Application.Current.TryFindResource("MutedTextBrush") as Brush ?? Brushes.LightGray;
         var window = new Window
         {
-            Title = title,
+            Title = $"AsantePDF · {title}",
             Owner = this,
-            Width = 440,
+            Width = 480,
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             ResizeMode = ResizeMode.NoResize,
-            Background = Brushes.White,
+            Background = background,
+            Foreground = primary,
             ShowInTaskbar = false
         };
-        var stack = new StackPanel { Margin = new Thickness(18) };
-        stack.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap });
+        var stack = new StackPanel { Margin = new Thickness(22) };
+        stack.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontSize = 20,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = primary,
+            Margin = new Thickness(0, 0, 0, 6)
+        });
+        stack.Children.Add(new TextBlock
+        {
+            Text = label,
+            Foreground = muted,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 12)
+        });
         stack.Children.Add(control);
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var cancel = new Button { Content = "Cancel", IsCancel = true, MinWidth = 82 };
-        okButton = new Button { Content = "OK", IsDefault = true, MinWidth = 82 };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0) };
+        var cancel = new Button { Content = "Cancel", IsCancel = true, MinWidth = 88, Margin = new Thickness(4, 0, 0, 0) };
+        okButton = new Button { Content = "OK", IsDefault = true, MinWidth = 88, Margin = new Thickness(4, 0, 0, 0) };
+        if (Application.Current.TryFindResource("FlatButtonStyle") is Style flat) cancel.Style = flat;
+        if (Application.Current.TryFindResource("PrimaryButtonStyle") is Style primaryStyle) okButton.Style = primaryStyle;
         buttons.Children.Add(cancel);
         buttons.Children.Add(okButton);
         stack.Children.Add(buttons);
         window.Content = stack;
         return window;
     }
-
     private sealed record PageState(int SourcePageNumber, int Rotation, BitmapSource? Thumbnail);
     private sealed record PageLayoutSnapshot(IReadOnlyList<PageState> Pages, IReadOnlyList<int> SelectedPositions);
 }

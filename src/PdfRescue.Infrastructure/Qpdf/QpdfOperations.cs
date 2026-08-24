@@ -211,15 +211,46 @@ public sealed class QpdfOperations(IExternalProcessRunner processRunner, string 
         string userPassword,
         string ownerPassword,
         string output,
+        CancellationToken cancellationToken = default) =>
+        ProtectWithPermissionsAsync(
+            input,
+            userPassword,
+            ownerPassword,
+            PdfSecurityPermissions.FullyPermissive,
+            output,
+            cancellationToken);
+
+    public Task ProtectWithPermissionsAsync(
+        string input,
+        string userPassword,
+        string ownerPassword,
+        PdfSecurityPermissions permissions,
+        string output,
         CancellationToken cancellationToken = default)
     {
         ValidateInput(input);
         ValidateOutput(output);
         ValidateDistinctOutput(input, output);
+        ArgumentNullException.ThrowIfNull(permissions);
         if (string.IsNullOrEmpty(userPassword))
             throw new ArgumentException("An opening password is required.", nameof(userPassword));
         if (string.IsNullOrEmpty(ownerPassword))
             throw new ArgumentException("An owner password is required.", nameof(ownerPassword));
+
+        var print = permissions.Printing switch
+        {
+            PdfPrintPermission.None => "none",
+            PdfPrintPermission.LowResolution => "low",
+            _ => "full"
+        };
+        var modify = permissions.Modification switch
+        {
+            PdfModifyPermission.None => "none",
+            PdfModifyPermission.Assembly => "assembly",
+            PdfModifyPermission.Form => "form",
+            PdfModifyPermission.Annotate => "annotate",
+            _ => "all"
+        };
 
         return RunSensitiveWriteAsync(
             [
@@ -229,12 +260,15 @@ public sealed class QpdfOperations(IExternalProcessRunner processRunner, string 
                 $"--user-password={userPassword}",
                 $"--owner-password={ownerPassword}",
                 "--bits=256",
+                $"--print={print}",
+                $"--modify={modify}",
+                $"--extract={(permissions.AllowExtraction ? "y" : "n")}",
+                "--accessibility=y",
                 "--"
             ],
             output,
             cancellationToken);
     }
-
     public Task DecryptAsync(string input, string password, string output, CancellationToken cancellationToken = default)
     {
         ValidateInput(input);

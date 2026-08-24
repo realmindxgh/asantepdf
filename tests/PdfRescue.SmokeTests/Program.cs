@@ -302,7 +302,12 @@ async Task TestSensitiveArgumentsAsync()
     {
         var runner = new SensitiveQpdfRunner();
         var operations = new QpdfOperations(runner);
-        await operations.ProtectAsync(input, "very secret", "owner secret", output);
+        await operations.ProtectWithPermissionsAsync(
+            input,
+            "very secret",
+            "owner secret",
+            new PdfSecurityPermissions(PdfPrintPermission.LowResolution, PdfModifyPermission.Form, false),
+            output);
         Assert(File.Exists(output), "Protection should create an output file.");
         Assert(runner.ProcessArguments.Count == 1 && runner.ProcessArguments[0].StartsWith('@'),
             "Passwords should be supplied through qpdf's argument-file mechanism rather than directly in process arguments.");
@@ -310,6 +315,12 @@ async Task TestSensitiveArgumentsAsync()
             "The temporary qpdf argument file should contain the opening password.");
         Assert(runner.SensitiveArguments.Any(line => line == "--owner-password=owner secret"),
             "The temporary qpdf argument file should contain the owner password.");
+        Assert(runner.SensitiveArguments.Any(line => line == "--print=low"),
+            "Protection should pass the selected printing permission through qpdf.");
+        Assert(runner.SensitiveArguments.Any(line => line == "--modify=form"),
+            "Protection should pass the selected modification permission through qpdf.");
+        Assert(runner.SensitiveArguments.Any(line => line == "--extract=n"),
+            "Protection should pass the selected extraction permission through qpdf.");
     }
     finally
     {

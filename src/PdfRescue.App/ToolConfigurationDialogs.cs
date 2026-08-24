@@ -32,7 +32,7 @@ internal sealed record OcrDialogResult(
     IReadOnlyList<int> PagePositions,
     string OutputPath);
 
-internal static class ToolConfigurationDialogs
+internal static partial class ToolConfigurationDialogs
 {
     private sealed record CompressionChoice(PdfCompressionProfile Profile, string Label, string Description)
     {

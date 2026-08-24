@@ -12,6 +12,7 @@ public interface IPdfOperations
     Task ApplyPageLayoutAsync(string input, IReadOnlyList<PdfPageTransform> pages, string output, CancellationToken cancellationToken = default);
     Task CompressAsync(string input, PdfCompressionProfile profile, string output, CancellationToken cancellationToken = default);
     Task ProtectAsync(string input, string userPassword, string ownerPassword, string output, CancellationToken cancellationToken = default);
+    Task ProtectWithPermissionsAsync(string input, string userPassword, string ownerPassword, PdfSecurityPermissions permissions, string output, CancellationToken cancellationToken = default);
     Task DecryptAsync(string input, string password, string output, CancellationToken cancellationToken = default);
     Task RepairAsync(string input, string output, CancellationToken cancellationToken = default);
     Task LinearizeAsync(string input, string output, CancellationToken cancellationToken = default);
