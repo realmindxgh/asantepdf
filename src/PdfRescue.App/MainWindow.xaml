@@ -495,9 +495,52 @@
                                             <Border Width="30" Height="30" CornerRadius="6" Background="#3C1B22" Margin="0,0,10,0"><TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" Foreground="#FF6268" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
                                             <StackPanel><TextBlock Text="PDF Doctor" FontWeight="SemiBold"/><TextBlock Text="Document health" FontSize="12" Foreground="{StaticResource MutedTextBrush}"/></StackPanel>
                                         </StackPanel>
-                                        <TextBlock x:Name="HealthText" Text="Not analysed yet" FontSize="19" FontWeight="SemiBold" Margin="0,14,0,4" />
-                                        <Button Style="{StaticResource PrimaryButtonStyle}" Click="Doctor_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" HorizontalAlignment="Left" Content="Run PDF Doctor" Margin="0,8,0,10" />
-                                        <ItemsControl x:Name="FindingsList" Margin="0,4,0,10" />
+                                        <Grid Margin="0,14,0,4">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="HealthStatusText" Text="Not analysed yet" FontSize="19" FontWeight="SemiBold" />
+                                            <TextBlock x:Name="HealthText" Grid.Column="1" Text="" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <TextBlock x:Name="HealthSummaryText" Text="Run PDF Doctor to check structure, security and optimization signals." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" Click="Doctor_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" HorizontalAlignment="Left" Content="Run PDF Doctor" Margin="0,4,0,10" />
+                                        <ItemsControl x:Name="FindingsList" Margin="0,4,0,10">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#101F2E" BorderBrush="#243D56" BorderThickness="1" CornerRadius="7" Padding="10" Margin="0,0,0,7">
+                                                        <StackPanel>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding Category}" Foreground="#7192B1" FontSize="10" FontWeight="SemiBold" />
+                                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                                <Button Grid.Column="1" Content="{Binding ActionLabel}" Tag="{Binding Code}" Click="DoctorIssueAction_Click"
+                                                                        Padding="8,4" Margin="8,0,0,0">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource FlatButtonStyle}">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding CanAutoFix}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                </Button>
+                                                            </Grid>
+                                                            <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,7,0,0" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Engine details" Foreground="{StaticResource MutedTextBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,4,0,5" />
+                                        <ItemsControl x:Name="DoctorMessagesList" Margin="0,0,0,8">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="•  {Binding}" Foreground="#7E92A8" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                         <TextBlock Text="Recommendations appear only when diagnosis supports them." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </StackPanel>

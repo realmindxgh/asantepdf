@@ -164,7 +164,10 @@ public partial class MainWindow : Window
             InspectorVersion.Text = "Not checked";
             InspectorSecurity.Text = "Not checked";
             InspectorFeatures.Text = "Run PDF Doctor to inspect";
-            HealthText.Text = "Not checked";
+            HealthStatusText.Text = "Not analysed yet";
+            HealthText.Text = string.Empty;
+            HealthSummaryText.Text = "Run PDF Doctor to check structure, security and optimization signals.";
+            DoctorMessagesList.ItemsSource = null;
             FindingsList.ItemsSource = null;
             EmptyPanel.Visibility = Visibility.Collapsed;
             PreviewScroll.Visibility = Visibility.Visible;
@@ -1362,17 +1365,40 @@ public partial class MainWindow : Window
                 report = await _doctor.DiagnoseAsync(working, ct);
             }, token);
             if (report is null) throw new InvalidOperationException("PDF Doctor did not return a report.");
-            HealthText.Text = $"{report.HealthScore}% health";
+            HealthStatusText.Text = report.StatusLabel;
+            HealthText.Text = $"{report.HealthScore}%";
+            HealthSummaryText.Text = report.StatusDescription;
+            HealthStatusText.Foreground = report.StatusLabel switch
+            {
+                "Damaged" => new SolidColorBrush(Color.FromRgb(255, 98, 104)),
+                "Attention Needed" => new SolidColorBrush(Color.FromRgb(244, 184, 72)),
+                _ => new SolidColorBrush(Color.FromRgb(98, 212, 111))
+            };
             InspectorVersion.Text = report.Inspection.PdfVersion ?? "Unknown";
             InspectorSecurity.Text = report.Inspection.IsEncrypted ? "Encrypted" : "Not encrypted";
             InspectorFeatures.Text = BuildFeatureSummary(report.Inspection);
-            FindingsList.ItemsSource = report.Issues.Count == 0
-                ? new[] { "No structural problems detected." }
-                : report.Issues.Select(i => $"{i.Title}\n{i.Description}").ToArray();
+            FindingsList.ItemsSource = report.Issues;
+            DoctorMessagesList.ItemsSource = report.Inspection.Messages;
             StatusText.Text = report.NeedsAttention
                 ? "PDF Doctor found issues that may need attention."
                 : "PDF Doctor found no serious structural issues.";
         });
+    }
+
+    private void DoctorIssueAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string code }) return;
+
+        switch (code)
+        {
+            case "STRUCTURE_ERROR":
+            case "STRUCTURE_WARNING":
+                Repair_Click(this, new RoutedEventArgs());
+                break;
+            case "LARGE_FILE":
+                Compress_Click(this, new RoutedEventArgs());
+                break;
+        }
     }
 
     private void ZoomIn_Click(object sender, RoutedEventArgs e)

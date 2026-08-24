@@ -20,7 +20,9 @@ public sealed class PdfDoctor(IPdfInspector inspector)
                 "PDF structure needs repair",
                 "The PDF engine found structural errors. Keep the original untouched and repair a working copy.",
                 PdfHealthSeverity.Error,
-                CanAutoFix: true));
+                CanAutoFix: true,
+                Category: "Structure",
+                ActionLabel: "Repair PDF"));
             score -= 40;
         }
 
@@ -31,7 +33,9 @@ public sealed class PdfDoctor(IPdfInspector inspector)
                 "PDF contains recoverable warnings",
                 "The document opened, but its internal structure is not fully clean.",
                 PdfHealthSeverity.Warning,
-                CanAutoFix: true));
+                CanAutoFix: true,
+                Category: "Structure",
+                ActionLabel: "Repair PDF"));
             score -= 15;
         }
 
@@ -41,7 +45,8 @@ public sealed class PdfDoctor(IPdfInspector inspector)
                 "ENCRYPTED",
                 "Document is encrypted",
                 "Some operations may require the document password before they can continue.",
-                PdfHealthSeverity.Info));
+                PdfHealthSeverity.Info,
+                Category: "Security"));
         }
 
         if (inspection.FileSizeBytes >= LargePdfBytes)
@@ -51,7 +56,9 @@ public sealed class PdfDoctor(IPdfInspector inspector)
                 "Large PDF",
                 $"This file is {FormatBytes(inspection.FileSizeBytes)}. Compression may reduce storage and sharing size.",
                 PdfHealthSeverity.Recommendation,
-                CanAutoFix: true));
+                CanAutoFix: true,
+                Category: "Optimization",
+                ActionLabel: "Compress PDF"));
             score -= 5;
         }
 
@@ -61,7 +68,8 @@ public sealed class PdfDoctor(IPdfInspector inspector)
                 "VERY_LONG_DOCUMENT",
                 "Very long document",
                 $"The document contains {inspection.PageCount:N0} pages. Heavy tasks should run as cancellable background jobs.",
-                PdfHealthSeverity.Info));
+                PdfHealthSeverity.Info,
+                Category: "Performance"));
         }
 
         score = Math.Clamp(score, 0, 100);

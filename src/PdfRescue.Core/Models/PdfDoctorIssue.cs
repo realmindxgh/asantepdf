@@ -5,4 +5,6 @@ public sealed record PdfDoctorIssue(
     string Title,
     string Description,
     PdfHealthSeverity Severity,
-    bool CanAutoFix = false);
+    bool CanAutoFix = false,
+    string Category = "Structure",
+    string? ActionLabel = null);

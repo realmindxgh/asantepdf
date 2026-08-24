@@ -200,7 +200,9 @@ async Task TestDoctorAsync()
         var doctor = new PdfDoctor(new QpdfInspector(new FakeQpdfRunner()));
         var report = await doctor.DiagnoseAsync(path);
         Assert(report.HealthScore == 85, "A structural warning should currently cost 15 health points.");
+        Assert(report.StatusLabel == "Attention Needed", "A structural warning should produce an Attention Needed health state.");
         Assert(report.Issues.Any(i => i.Code == "STRUCTURE_WARNING"), "Doctor should surface the structural warning.");
+        Assert(report.Issues.Any(i => i.Code == "STRUCTURE_WARNING" && i.Category == "Structure" && i.ActionLabel == "Repair PDF"), "Structural warnings should expose a repair action.");
     }
     finally
     {
