@@ -31,6 +31,8 @@ public partial class MainWindow
     {
         PagesList.Visibility = Visibility.Collapsed;
         SearchResultsPanel.Visibility = Visibility.Collapsed;
+        AnnotationsPanel.Visibility = Visibility.Collapsed;
+        AttachmentsPanel.Visibility = Visibility.Collapsed;
         BookmarksPanel.Visibility = Visibility.Visible;
     }
 

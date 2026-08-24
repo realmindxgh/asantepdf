@@ -34,6 +34,7 @@ public partial class MainWindow
         InitializeDocumentTabs();
         InitializeDocumentOutline();
         InitializeDocumentTextSelection();
+        InitializeDocumentNavigationMetadata();
 
         _recentFilesView = new RecentFilesView();
         _recentFilesView.SetService(_recentDocuments);
@@ -351,5 +352,7 @@ public partial class MainWindow
         PagesList.Visibility = Visibility.Visible;
         BookmarksPanel.Visibility = Visibility.Collapsed;
         SearchResultsPanel.Visibility = Visibility.Collapsed;
+        AnnotationsPanel.Visibility = Visibility.Collapsed;
+        AttachmentsPanel.Visibility = Visibility.Collapsed;
     }
 }

@@ -85,6 +85,8 @@ public partial class MainWindow
     {
         PagesList.Visibility = Visibility.Collapsed;
         BookmarksPanel.Visibility = Visibility.Collapsed;
+        AnnotationsPanel.Visibility = Visibility.Collapsed;
+        AttachmentsPanel.Visibility = Visibility.Collapsed;
         SearchResultsPanel.Visibility = Visibility.Visible;
         UpdateSearchEmptyState();
     }

@@ -139,6 +139,7 @@ public partial class MainWindow : Window
             ResetDocumentSearchForDocumentChange();
             ResetDocumentOutlineForDocumentChange();
             ResetDocumentTextSelectionForDocumentChange();
+            ResetDocumentNavigationMetadataForDocumentChange();
             _documentGeneration++;
             _undo.Clear();
             _redo.Clear();
