@@ -1,6 +1,6 @@
 # AsantePDF Project State
 
-Updated after the complete left-navigation sidebar requirement reached a green staged Windows gate and a clean committed-source rerun, and after the multi-page management audit began.
+Updated after master item 14 multi-page selection/page management reached a green staged Windows gate and a clean committed-source rerun.
 
 ## Engineering baseline
 
@@ -20,7 +20,7 @@ The normalized ordinary source tree is the working codebase.
 
 The most recent source commit proven by a clean no-patch Windows rerun is:
 
-`b8874135a6883bd6d8f2fc89bb1d66694aadbbdc`
+`ee014c0a7cc1cb0fa97d6551e13a6575930bcb75`
 
 Documentation-only ledger commits may advance the branch head beyond this SHA without changing the proven `src/` tree.
 
@@ -124,7 +124,7 @@ Searchable PDFs work directly. Searchable PDFs produced by the local OCR workflo
 
 ### Five-mode left navigation sidebar
 
-Master item 13 is now `IMPLEMENTED, NOT ACCEPTED`.
+Master item 13 is `IMPLEMENTED, NOT ACCEPTED`.
 
 The document sidebar provides five real modes:
 
@@ -134,7 +134,7 @@ The document sidebar provides five real modes:
 - Comments / Annotations
 - Attachments
 
-The Pages mode keeps incremental asynchronous thumbnail rendering and now has an explicit selected-card border/background state.
+The Pages mode keeps incremental asynchronous thumbnail rendering and has an explicit selected-card border/background state.
 
 `DocumentAnnotationService` reads native PDFium page annotations on demand, including annotation type, page, author, modified metadata and comment contents. Selecting a sidebar annotation maps its source page through the current unsaved working layout and navigates the document. A removed source page is reported instead of causing incorrect navigation.
 
@@ -144,24 +144,32 @@ The sidebar is bounded and resizable. It has a real collapse control, removes th
 
 Hands-on visual/runtime acceptance of all five modes, resizing/collapse feel and representative annotation/attachment PDFs remains before item 13 can become `ACCEPTED`.
 
-### Multi-page management audit
+### Multi-page selection and page management
 
-Master item 14 is now `IN PROGRESS` rather than `REVIEW REQUIRED`.
+Master item 14 is `IMPLEMENTED, NOT ACCEPTED`.
 
-The existing page workspace already provides substantial real functionality:
+The page workspace now covers the full functional checklist in the master requirement:
 
-- WPF Extended selection, which supports Ctrl+Click and Shift+Click ranges
+- WPF Extended selection for Ctrl+Click and Shift+Click ranges
 - Select All
 - selected-page Rotate Left / Rotate Right
 - selected-page Delete
 - selected-page Extract
 - selected-page Duplicate
 - selected-page Move Up / Move Down
-- drag-and-drop reorder for the selected page set
-- page-layout Undo / Redo snapshots
+- selected-page drag-and-drop reorder
+- selected-page Crop where appropriate
 - explicit selected-thumbnail visual state
+- page-range operation-scope feedback in the status strip
+- page-layout Undo / Redo snapshots including selected positions
 
-The clearest remaining functional gap is Crop. The current crop interaction is a canvas action for the current page only, so the master requirement's selected-pages crop behaviour still needs a deliberate design/implementation where appropriate. Operation-scope feedback and hands-on multi-selection/drag/undo acceptance also remain.
+Crop is no longer limited to the current page. `PdfMarkupService.CropPagesAsync` accepts a set of working-layout page positions. The user draws one normalized crop rectangle on the active preview and the same crop box can be applied transactionally to all selected pages while unselected pages remain unchanged. The original source PDF is not overwritten.
+
+Staged Windows job `97345750241` explicitly applied the multi-page crop/scope patch, compiled exact .NET `10.0.202` Windows x64 Release with zero errors and passed all smoke tests, promoting source to `ee014c0a7cc1cb0fa97d6551e13a6575930bcb75`.
+
+Clean committed-source rerun job `97346132649` checked out that exact commit, explicitly reported `No staged development patches. Building branch as committed.`, compiled Windows x64 Release with zero errors and passed every smoke test.
+
+Hands-on Ctrl/Shift selection, range feedback, batch crop, drag reorder and Undo/Redo acceptance remains before item 14 can become `ACCEPTED`.
 
 ### Result routing
 
@@ -195,26 +203,24 @@ Important green development gates include:
 - Comments/Annotations + Attachments staged-validation job: `97343869116`
 - sidebar document-reset hardening staged-validation job: `97344342154`
 - final item-13 clean committed-source rerun: `97344623846`
+- multi-page management staged-validation job: `97345750241`
+- multi-page management clean committed-source rerun: `97346132649`
 
-Sidebar-collapse job `97256927225` passed Windows Release x64 compile and smoke testing, and clean rerun `97341768147` checked the promoted sidebar source.
+The one current compiler warning remains the pre-existing unawaited-call warning in `MainWindow.DocumentTabs.cs(142,9)` and was not introduced by items 13 or 14.
 
-Comments/Attachments job `97343869116` explicitly applied the actual feature patch, used exact .NET `10.0.202`, compiled Windows x64 Release with zero errors, passed all smoke tests and promoted the generated implementation source. Reset-hardening job `97344342154` also passed and promoted final source commit `b8874135a6883bd6d8f2fc89bb1d66694aadbbdc`.
-
-Clean rerun job `97344623846` then checked out that exact commit, explicitly reported that no staged development patches existed, compiled Windows x64 Release with zero errors and passed every core smoke test. The one compiler warning remains the pre-existing unawaited-call warning in `MainWindow.DocumentTabs.cs(142,9)` and is not introduced by the sidebar work.
-
-These are development gates, not the final installer acceptance gate. Search, Bookmarks, interactive text and the five-mode sidebar remain unaccepted until hands-on visual/runtime verification is completed.
+These are development gates, not the final installer acceptance gate. Search, Bookmarks, interactive text, the five-mode sidebar and multi-page management remain unaccepted until hands-on visual/runtime verification is completed.
 
 ## Immediate next work
 
-1. finish master item 14 multi-page management, especially selected-page Crop behaviour where appropriate and clearer operation-scope feedback
-2. hands-on verify Ctrl/Shift selection, drag reorder, batch operations and Undo/Redo
+1. finish master item 15 standalone-tool availability so non-canvas tools can launch without an already-open PDF
+2. audit Repair/Optimize, Protect/Unlock, conversion and export routes against the exact item-15 checklist
 3. expand split/multi-output completion workflows
 4. continue the context-aware command audit
 5. enrich Inspector and PDF Doctor states
 6. implement Light / Follow Windows themes and a real Settings experience
 7. add first-launch/privacy/recovery polish
 8. implement remaining viewing modes and split-view comparison
-9. visually inspect the running Windows app against the canonical Home and Document target screens, including search, Bookmarks, text-selection and all five sidebar modes
+9. visually inspect the running Windows app against the canonical Home and Document target screens, including search, Bookmarks, text-selection, all five sidebar modes and multi-page management
 
 ## Product source of truth
 
