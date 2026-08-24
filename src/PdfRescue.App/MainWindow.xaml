@@ -501,7 +501,12 @@
                                             <TextBlock x:Name="HealthText" Grid.Column="1" Text="" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
                                         </Grid>
                                         <TextBlock x:Name="HealthSummaryText" Text="Run PDF Doctor to check structure, security and optimization signals." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8" />
-                                        <Button Style="{StaticResource PrimaryButtonStyle}" Click="Doctor_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" HorizontalAlignment="Left" Content="Run PDF Doctor" Margin="0,4,0,10" />
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" Click="Doctor_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" HorizontalAlignment="Left" Margin="0,4,0,10">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" FontSize="15" Margin="0,0,8,0" />
+                                                <TextBlock Text="Run PDF Doctor" />
+                                            </StackPanel>
+                                        </Button>
                                         <ItemsControl x:Name="FindingsList" Margin="0,4,0,10">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>

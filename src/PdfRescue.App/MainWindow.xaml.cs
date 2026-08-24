@@ -165,6 +165,7 @@ public partial class MainWindow : Window
             InspectorSecurity.Text = "Not checked";
             InspectorFeatures.Text = "Run PDF Doctor to inspect";
             HealthStatusText.Text = "Not analysed yet";
+            HealthStatusText.Foreground = (Brush)FindResource("MutedTextBrush");
             HealthText.Text = string.Empty;
             HealthSummaryText.Text = "Run PDF Doctor to check structure, security and optimization signals.";
             DoctorMessagesList.ItemsSource = null;
