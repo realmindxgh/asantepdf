@@ -1,2 +1,0 @@
-AsantePDF 1.0.0-rc49 final Windows release gate trigger.
-Source must remain free of dev-patches before this gate runs.
