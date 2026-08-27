@@ -31,7 +31,8 @@ WizardStyle=modern
 WizardSizePercent=110
 DisableWelcomePage=no
 CloseApplications=yes
-RestartApplications=yes
+RestartApplications=no
+RestartIfNeededByRun=no
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
@@ -47,7 +48,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
-Name: "openwith"; Description: "Add AsantePDF to the Windows Open with menu for PDF files"; GroupDescription: "PDF integration:"; Flags: checkedonce
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -58,21 +58,32 @@ Name: "{autoprograms}\AsantePDF"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\AsantePDF"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Registry]
-Root: HKCU; Subkey: "Software\Classes\Applications\{#MyAppExeName}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "AsantePDF"; Tasks: openwith; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".pdf"; ValueData: ""; Tasks: openwith
-Root: HKCU; Subkey: "Software\Classes\Applications\{#MyAppExeName}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: openwith
+Root: HKLM64; Subkey: "Software\Classes\Applications\{#MyAppExeName}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "AsantePDF"; Flags: uninsdeletekey
+Root: HKLM64; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".pdf"; ValueData: ""
+Root: HKLM64; Subkey: "Software\Classes\Applications\{#MyAppExeName}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
 [Run]
-Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing required Microsoft runtime..."; Flags: waituntilterminated
+Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing required Microsoft runtime..."; Flags: waituntilterminated; Check: not IsVCRuntimeInstalled
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch AsantePDF"; Flags: nowait postinstall skipifsilent
 
 [Code]
+function IsVCRuntimeInstalled: Boolean;
+var
+  Installed: Cardinal;
+begin
+  Result := RegQueryDWordValue(
+    HKLM64,
+    'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64',
+    'Installed',
+    Installed) and (Installed = 1);
+end;
+
 procedure InitializeWizard;
 begin
   WizardForm.Color := $00F7F7F7;
   WizardForm.WelcomeLabel1.Caption := 'Install AsantePDF';
   WizardForm.WelcomeLabel2.Caption :=
     'A local-first PDF workspace for organising, converting, OCR, editing, signing, inspecting, repairing and processing PDF files.' + #13#10 + #13#10 +
-    'Setup includes the local PDF, OCR and Office conversion engines required by AsantePDF.' + #13#10 +
+    'Setup automatically integrates AsantePDF with Windows PDF Open With, and includes the local PDF, OCR and Office conversion engines required by AsantePDF.' + #13#10 +
     'Your documents stay on this computer during normal AsantePDF operations.';
 end;

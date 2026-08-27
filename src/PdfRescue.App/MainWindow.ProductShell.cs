@@ -39,6 +39,7 @@ public partial class MainWindow
         InitializeDocumentTextSelection();
         InitializeDocumentNavigationMetadata();
         InitializePageViewModes();
+        InitializeResponsiveLayout();
         _pendingRecoverySnapshot = RecoverySnapshotService.Current.BeginSession();
 
         _recentFilesView = new RecentFilesView();

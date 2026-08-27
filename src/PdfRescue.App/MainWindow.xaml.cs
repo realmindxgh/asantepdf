@@ -1016,6 +1016,60 @@ public partial class MainWindow : Window
         };
         if (folderDialog.ShowDialog(this) != true) return;
 
+        if (_backgroundTasks is not null)
+        {
+            var outputFolder = folderDialog.FolderName;
+            var selectedOperation = operation.Value;
+            foreach (var input in files.FileNames.Select(Path.GetFullPath))
+            {
+                var capturedInput = input;
+                var jobType = selectedOperation switch
+                {
+                    BatchPdfOperation.CompressBalanced => PdfJobType.Compress,
+                    BatchPdfOperation.Repair => PdfJobType.Repair,
+                    _ => PdfJobType.Repair
+                };
+                var operationLabel = selectedOperation switch
+                {
+                    BatchPdfOperation.CompressBalanced => "Compress",
+                    BatchPdfOperation.Repair => "Repair",
+                    _ => "Optimize"
+                };
+
+                _backgroundTasks.Enqueue(
+                    jobType,
+                    $"{operationLabel} {Path.GetFileName(capturedInput)}",
+                    async (context, token) =>
+                    {
+                        context.ReportProgress(0.08, $"Preparing {Path.GetFileName(capturedInput)}...");
+                        var fileProgress = new Progress<(int Completed, int Total, string FileName)>(item =>
+                        {
+                            var fraction = item.Total <= 0 ? 0.15 : Math.Clamp(item.Completed / (double)item.Total, 0, 1);
+                            context.ReportProgress(0.15 + fraction * 0.75,
+                                $"{operationLabel}: {item.FileName}");
+                        });
+                        var one = await _batch.ProcessAsync(
+                            [capturedInput],
+                            outputFolder,
+                            selectedOperation,
+                            fileProgress,
+                            token);
+                        var result = one.Single();
+                        if (!result.Success)
+                            throw new InvalidOperationException(result.Error ?? $"{operationLabel} failed for {Path.GetFileName(capturedInput)}.");
+                        context.ReportProgress(0.98, $"{operationLabel} complete.");
+                        return result.OutputPath;
+                    },
+                    retryable: true,
+                    sourcePath: capturedInput,
+                    runAgainAction: () => InvokeToolOnUiAsync(() => BatchProcess_Click(this, new RoutedEventArgs())));
+            }
+
+            StatusText.Text = $"Queued {files.FileNames.Length:N0} PDF(s) in Task Center. Each file can be cancelled, retried or opened independently.";
+            RefreshTaskCenterIndicator();
+            return;
+        }
+
         IReadOnlyList<BatchPdfResult> results = Array.Empty<BatchPdfResult>();
         var progress = new Progress<(int Completed, int Total, string FileName)>(item =>
             SetDeterminateProgress(item.Completed, item.Total,

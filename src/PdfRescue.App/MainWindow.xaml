@@ -1,7 +1,7 @@
 <Window x:Class="PdfRescue.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AsantePDF" Height="940" Width="1600" MinHeight="720" MinWidth="1120" FontSize="14"
+        Title="AsantePDF" Height="940" Width="1600" MinHeight="500" MinWidth="880" FontSize="14"
         Background="{StaticResource AppBackground}" Foreground="{StaticResource PrimaryTextBrush}"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
         AllowDrop="True" DragOver="Window_DragOver" Drop="Window_Drop"
@@ -678,13 +678,22 @@
                             <Button x:Name="ExpandPagesSidebarButton" Style="{StaticResource FlatButtonStyle}" Content="›" Width="30" Height="38"
                                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Padding="0" Visibility="Collapsed" Panel.ZIndex="10"
                                     Click="ExpandPagesSidebar_Click" ToolTip="Show navigation sidebar" />
+                            <Button x:Name="ExpandInspectorButton" Style="{StaticResource FlatButtonStyle}" Content="‹" Width="30" Height="38"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Padding="0" Visibility="Collapsed" Panel.ZIndex="10"
+                                    Click="ExpandInspector_Click" ToolTip="Show Inspector" AutomationProperties.Name="Show Inspector" />
                         </Grid>
 
-                        <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="#172738" />
+                        <GridSplitter x:Name="InspectorSplitter" Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="#172738" />
 
-                        <Border Grid.Column="4" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1,0,0,0">
+                        <Border x:Name="InspectorBorder" Grid.Column="4" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1,0,0,0">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Margin="16">
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="Inspector" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Content="›" Width="30" Height="30" Padding="0"
+                                                Click="CollapseInspector_Click" ToolTip="Collapse Inspector" AutomationProperties.Name="Collapse Inspector" />
+                                    </Grid>
                                     <Border x:Name="InspectorContextCard" Background="#101F2E" BorderBrush="#243D56" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,0,0,14">
                                         <StackPanel>
                                             <TextBlock x:Name="InspectorContextTitle" Text="Document" FontSize="14" FontWeight="SemiBold" />
