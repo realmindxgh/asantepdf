@@ -1,0 +1,1 @@
+Run the full AsantePDF 1.0.0-rc49 installed-copy release gate against the reconciled 49-item candidate after custom zoom and update-ordering hardening.
