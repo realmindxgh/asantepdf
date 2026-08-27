@@ -1632,7 +1632,7 @@ public partial class MainWindow : Window
     {
         var percent = (int)Math.Round(_previewWidth / 1100d * 100d);
         ZoomStatusText.Text = $"{percent}%";
-        ZoomButton.Content = $"{percent}%";
+        ZoomPercentBox.Text = $"{percent}%";
     }
 
     private double _lastPagesSidebarWidth = 245;

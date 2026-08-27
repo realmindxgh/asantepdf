@@ -39,7 +39,7 @@ public sealed class SettingsWindow : Window
         _theme.SelectedItem = preferences.Theme;
         _pageView.ItemsSource = Enum.GetValues<DefaultPageViewMode>();
         _pageView.SelectedItem = preferences.DefaultPageView;
-        _zoom.Text = preferences.DefaultRenderWidth.ToString();
+        _zoom.Text = $"{Math.Round(preferences.DefaultRenderWidth / 1100d * 100d):0}";
         _reopen.IsChecked = preferences.ReopenLastSession;
         _trackRecent.IsChecked = preferences.TrackRecentFiles;
         _thumbnails.IsChecked = preferences.ShowRecentThumbnails;
@@ -68,7 +68,7 @@ public sealed class SettingsWindow : Window
 
         AddSection(content, "Appearance");
         AddField(content, "Theme", _theme);
-        AddField(content, "Default render width", _zoom, "320 to 4000. Current default is 1100.");
+        AddField(content, "Default zoom (%)", _zoom, "30 to 350. 100% is actual size.");
         AddField(content, "Default page view", _pageView);
 
         AddSection(content, "Session and privacy");
@@ -124,11 +124,13 @@ public sealed class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (!uint.TryParse(_zoom.Text.Trim(), out var width) || width < 320 || width > 4000)
+        if (!double.TryParse(_zoom.Text.Trim().TrimEnd('%').Trim(), out var zoomPercent) || zoomPercent < 30 || zoomPercent > 350)
         {
-            MessageBox.Show(this, "Default render width must be between 320 and 4000.", "Settings", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, "Default zoom must be between 30% and 350%.", "Settings", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
+
+        var width = (uint)Math.Clamp((int)Math.Round(1100d * zoomPercent / 100d), 320, 4000);
 
         SavedPreferences = new AppPreferences
         {
