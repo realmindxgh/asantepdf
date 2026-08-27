@@ -133,7 +133,7 @@ public partial class MainWindow
             PagesList.SelectedIndex = index;
             PagesList.ScrollIntoView(PagesList.SelectedItem);
             if (PagesList.SelectedItem is PdfPageItem page)
-                await RenderPreviewAsync(page);
+                await RenderSelectedPageForActiveViewAsync(page);
         }
 
         tab.IsDirty = HasUnsavedLayoutChanges();
@@ -342,6 +342,7 @@ public partial class MainWindow
         FindingsList.ItemsSource = null;
         PreviewScroll.Visibility = Visibility.Collapsed;
         ShowHomeContent();
+        ApplyPageViewVisibility();
         UpdateCommandStates();
     }
 

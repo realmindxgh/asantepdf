@@ -51,7 +51,7 @@ public partial class MainWindow
         finally { _splitUpdatingSelection = false; }
 
         SplitComparisonPanel.Visibility = Visibility.Visible;
-        PreviewScroll.Visibility = Visibility.Collapsed;
+        HidePrimaryPageViews();
         EmptyPanel.Visibility = Visibility.Collapsed;
         await LoadSplitPaneAsync(true, left);
         await LoadSplitPaneAsync(false, right);
@@ -236,7 +236,7 @@ public partial class MainWindow
     {
         if (SplitComparisonPanel is null) return;
         SplitComparisonPanel.Visibility = Visibility.Collapsed;
-        if (_currentPdf is not null) PreviewScroll.Visibility = Visibility.Visible;
+        if (_currentPdf is not null) ApplyPageViewVisibility();
         StatusText.Text = "Ready.";
     }
 }

@@ -30,6 +30,10 @@ public partial class MainWindow
         AppSettingsService.Current.Save(dialog.SavedPreferences);
         AppearanceService.Apply(dialog.SavedPreferences.Theme);
         if (_currentPdf is null) _previewWidth = dialog.SavedPreferences.DefaultRenderWidth;
+        _syncingPageViewSelection = true;
+        PageViewModeCombo.SelectedIndex = (int)dialog.SavedPreferences.DefaultPageView;
+        _syncingPageViewSelection = false;
+        _ = SetPageViewModeAsync(dialog.SavedPreferences.DefaultPageView, persist: false);
         UpdateThemeToggleState();
         LoadHomeRecents();
         RefreshResumeCommandState();

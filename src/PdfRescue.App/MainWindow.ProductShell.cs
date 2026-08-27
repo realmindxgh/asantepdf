@@ -38,6 +38,7 @@ public partial class MainWindow
         InitializeDocumentOutline();
         InitializeDocumentTextSelection();
         InitializeDocumentNavigationMetadata();
+        InitializePageViewModes();
         _pendingRecoverySnapshot = RecoverySnapshotService.Current.BeginSession();
 
         _recentFilesView = new RecentFilesView();
@@ -169,7 +170,7 @@ public partial class MainWindow
     {
         if (_currentPdf is null) return;
         EmptyPanel.Visibility = Visibility.Collapsed;
-        PreviewScroll.Visibility = Visibility.Visible;
+        ApplyPageViewVisibility();
     }
 
     private async Task<string?> SelectPdfForStandaloneToolAsync(string title)
@@ -422,7 +423,7 @@ public partial class MainWindow
             PagesList.SelectedIndex = target;
             PagesList.ScrollIntoView(PagesList.SelectedItem);
             if (PagesList.SelectedItem is PdfPageItem page)
-                await RenderPreviewAsync(page);
+                await RenderSelectedPageForActiveViewAsync(page);
         }
         PersistWorkspacePosition(immediate: true);
     }
@@ -460,6 +461,13 @@ public partial class MainWindow
 
     private void FitPageShell_Click(object sender, RoutedEventArgs e)
     {
+        if (!IsSinglePageViewActive)
+        {
+            _previewWidth = CalculateFitWidthRenderWidth();
+            PersistWorkspacePosition();
+            _ = RerenderSelectedPageAsync();
+            return;
+        }
         if (PreviewImage.Source is not System.Windows.Media.Imaging.BitmapSource bitmap) return;
         var viewportWidth = PreviewScroll.ViewportWidth > 100 ? PreviewScroll.ViewportWidth : PreviewScroll.ActualWidth;
         var viewportHeight = PreviewScroll.ViewportHeight > 100 ? PreviewScroll.ViewportHeight : PreviewScroll.ActualHeight;

@@ -186,6 +186,7 @@ public partial class MainWindow : Window
             AddRecentDocument(_currentPdf);
         UpdateCommandStates();
         StartThumbnailRendering(_documentGeneration);
+        await RefreshActivePageViewAsync();
     }
 
     private async void PagesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -195,7 +196,7 @@ public partial class MainWindow : Window
         if (selectedPages.Count > 1)
             StatusText.Text = $"Selected {selectedPages.Count:N0} pages: {FormatPagePositionSummary(selectedPages)}.";
         if (PagesList.SelectedItem is PdfPageItem page)
-            await RenderPreviewAsync(page);
+            await RenderSelectedPageForActiveViewAsync(page);
     }
 
     private async Task RenderPreviewAsync(PdfPageItem page)
@@ -312,7 +313,7 @@ public partial class MainWindow : Window
         if (selectedPages.Count == 0) return;
         RecordUndoState();
         foreach (var page in selectedPages) page.Rotation -= 90;
-        if (PagesList.SelectedItem is PdfPageItem selected) await RenderPreviewAsync(selected);
+        if (PagesList.SelectedItem is PdfPageItem selected) await RenderSelectedPageForActiveViewAsync(selected);
         StatusText.Text = "Rotated selected page(s) left in the working layout.";
         UpdateCommandStates();
     }
@@ -323,7 +324,7 @@ public partial class MainWindow : Window
         if (selectedPages.Count == 0) return;
         RecordUndoState();
         foreach (var page in selectedPages) page.Rotation += 90;
-        if (PagesList.SelectedItem is PdfPageItem selected) await RenderPreviewAsync(selected);
+        if (PagesList.SelectedItem is PdfPageItem selected) await RenderSelectedPageForActiveViewAsync(selected);
         StatusText.Text = "Rotated selected page(s) right in the working layout.";
         UpdateCommandStates();
     }
@@ -467,10 +468,11 @@ public partial class MainWindow : Window
         for (var page = 1; page <= count; page++) Pages.Add(new PdfPageItem(page, page));
         _savedLayoutBaseline = CaptureLayout();
         PagesList.SelectedIndex = Math.Clamp(PagesList.SelectedIndex, 0, Math.Max(0, Pages.Count - 1));
-        if (PagesList.SelectedItem is PdfPageItem selected) await RenderPreviewAsync(selected);
+        if (PagesList.SelectedItem is PdfPageItem selected) await RenderSelectedPageForActiveViewAsync(selected);
         CaptureActiveDocumentTabState();
         UpdateCommandStates();
         StartThumbnailRendering(_documentGeneration);
+        await RefreshActivePageViewAsync();
     }
 
     private async Task<bool> SaveAsCurrentDocumentAsync(bool showSuccessMessage)
@@ -1523,15 +1525,15 @@ public partial class MainWindow : Window
 
     private void FitWidth_Click(object sender, RoutedEventArgs e)
     {
-        var viewport = PreviewScroll.ViewportWidth > 100 ? PreviewScroll.ViewportWidth : PreviewScroll.ActualWidth;
-        _previewWidth = (uint)Math.Clamp((int)Math.Round(viewport - 80), 360, 2000);
+        _previewWidth = CalculateFitWidthRenderWidth();
+        PersistWorkspacePosition();
         _ = RerenderSelectedPageAsync();
     }
 
     private async Task RerenderSelectedPageAsync()
     {
         if (PagesList.SelectedItem is PdfPageItem page)
-            await RenderPreviewAsync(page);
+            await RenderSelectedPageForActiveViewAsync(page);
         else
             UpdateZoomText();
     }

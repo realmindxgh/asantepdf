@@ -310,6 +310,13 @@
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="ZoomIn_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Width="34" Padding="4">+</Button>
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="FitWidth_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="Fit Width" Margin="12,0,2,0" Padding="10,5" />
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="FitPageShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="Fit Page" Padding="10,5" />
+                                <ComboBox x:Name="PageViewModeCombo" Width="128" Height="30" Margin="12,0,0,0"
+                                          SelectionChanged="PageViewModeCombo_SelectionChanged"
+                                          IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Document viewing mode">
+                                    <ComboBoxItem Content="Single Page" />
+                                    <ComboBoxItem Content="Continuous" />
+                                    <ComboBoxItem Content="Two Page" />
+                                </ComboBox>
                             </StackPanel>
                             <Border Grid.Column="2" Background="#101D2A" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="7" Padding="4">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -531,6 +538,71 @@
                                         </Canvas>
                                     </Grid>
                                 </Border>
+                            </ScrollViewer>
+
+                            <ListBox x:Name="ContinuousPagesList" Visibility="Collapsed" Background="Transparent" BorderThickness="0"
+                                     SelectionMode="Single" SelectionChanged="ContinuousPagesList_SelectionChanged"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Margin" Value="0" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="ContinuousPageCard" Margin="28,14" Padding="12" Background="White" BorderBrush="#3A4A59" BorderThickness="1" CornerRadius="3">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Page.Label}" Foreground="#5D6875" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                                <Grid>
+                                                    <Image Source="{Binding Bitmap}" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality"
+                                                           Loaded="ContinuousPageImage_Loaded" Unloaded="ContinuousPageImage_Unloaded">
+                                                        <Image.LayoutTransform><RotateTransform Angle="{Binding Page.Rotation}" /></Image.LayoutTransform>
+                                                    </Image>
+                                                    <TextBlock Text="Rendering page…" Foreground="#607080" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                <Style.Triggers><DataTrigger Binding="{Binding HasBitmap}" Value="True"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                <Setter TargetName="ContinuousPageCard" Property="BorderBrush" Value="#2D7DFF" />
+                                                <Setter TargetName="ContinuousPageCard" Property="BorderThickness" Value="2" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <ScrollViewer x:Name="TwoPageScroll" Visibility="Collapsed" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <Grid Margin="22" HorizontalAlignment="Center" VerticalAlignment="Top">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Margin="8" Padding="10" Background="White" BorderBrush="#3A4A59" BorderThickness="1" CornerRadius="3">
+                                        <StackPanel>
+                                            <TextBlock x:Name="TwoPageLeftLabel" Foreground="#5D6875" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                            <Image x:Name="TwoPageLeftImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border x:Name="TwoPageRightCard" Grid.Column="1" Margin="8" Padding="10" Background="White" BorderBrush="#3A4A59" BorderThickness="1" CornerRadius="3">
+                                        <StackPanel>
+                                            <TextBlock x:Name="TwoPageRightLabel" Foreground="#5D6875" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                            <Image x:Name="TwoPageRightImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
                             </ScrollViewer>
 
                             <Grid x:Name="SplitComparisonPanel" Visibility="Collapsed" Background="#0A1520" Panel.ZIndex="15">
