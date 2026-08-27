@@ -1,180 +1,124 @@
 # AsantePDF Project State
 
-Updated after master item 21 reached a green staged Windows gate and a clean no-patch committed-source rerun. Master item 22 Inspector work is now being staged in smaller, safer increments after the first carrier proved too assumption-heavy.
+Updated after the full 49-item source reconciliation, custom zoom completion and updater version-ordering hardening.
 
-## Engineering baseline
-
-RC10 remains the proven release-engineering baseline, not the finished product design. Full RC10 Windows release run `32636807149` proved x64 compilation, smoke tests, self-contained publish, qpdf/Tesseract/LibreOffice staging, final-candidate tests, Inno Setup compilation, silent installation and installed-copy verification.
-
-RC10 installer SHA256:
-
-`16db141f34da837bfbe55e842c4aa7f93b2a6b1af83d6987514a07c0c2070802`
-
-## Active development
+## Current product state
 
 - Branch: `development/master-upgrade-v2`
 - Draft PR: `#3` — **AsantePDF master upgrade implementation**
-- Latest clean-proven ordinary source: `8500dcaae8bddf868a33850da57a9d47918fa70a`
+- Candidate version: `1.0.0-rc49`
 - Exact SDK: `.NET 10.0.202`
-- Last clean validation: **0 warnings, 0 errors, all smoke tests passed**
+- Latest Windows-validated promoted feature source: `50f953237f7276c010e9e7c457ad9970551a9770`
+- Master requirements implemented in source: **49 / 49**
+- Master requirements accepted: **0 / 49**
 
-Patch carriers under `dev-patches/` are temporary staging mechanisms only. Canonical implementation is the promoted ordinary `src/` / `tests/` tree. Documentation-only or provenance commits may advance branch head without changing the clean-proven source tree.
+`IMPLEMENTED, NOT ACCEPTED` is intentional. The implementation phase is complete, but UI-facing requirements still require hands-on Windows visual/runtime acceptance. Do not call AsantePDF 1.0 finished merely because CI is green.
 
-## Current product architecture
+`IMPLEMENTATION_MATRIX.md` is now the authoritative 49-item source audit. `MASTER_49_CHECKLIST.md` remains the compact contract index and `ASANTEPDF_MASTER_UPGRADE_SPEC.md` contains the detailed sub-requirements for items 1–45.
+
+## Engineering state
+
+Development changes continue to use Windows validation before promotion:
+
+1. stage one coherent `dev-patches/*.ps1` carrier
+2. compile x64 Release on Windows with exact .NET `10.0.202`
+3. run the core smoke suite
+4. promote only after green validation
+5. remove the carrier so ordinary `src/` / `tests/` source remains canonical
+
+The branch currently has **no `dev-patches` directory**. The latest promoted code includes:
+
+- direct custom zoom percentage entry plus a distinct 1:1/100% control
+- human-facing default zoom percentage in Settings rather than internal render width
+- screen-reader metadata updated for the new zoom surface
+- stable/prerelease-aware update ordering so `1.0.0-rc49` correctly recognizes stable `1.0.0` as newer
+
+Custom zoom staged validation initially exposed one stale `ZoomButton` accessibility reference. That attempt failed safely before promotion. The corrected carrier passed Windows run `33111445879` and promoted at `95ac65a3f98aeb6608a06e2024bf2dd0418c2f1a`.
+
+Updater version-ordering hardening passed Windows run `33111633571` and promoted at `50f953237f7276c010e9e7c457ad9970551a9770`.
+
+## Product architecture now present
 
 ### Home / Launcher
 
-Real Home mode provides Open PDF, standalone Quick Tools, Recent/Starred, cached PDFium thumbnails, Grid/List/Compact layouts, sorting/search/pinning, moved-file handling, context actions and Resume Last Session.
+Real Home mode provides Recent, Starred, conditional Resume, Open PDF, standalone tools, cached PDFium thumbnails, Grid/List/Compact layouts, sorting/search/pinning, moved-file handling, context actions and drag/drop.
 
-### Multi-document Document Workspace
+### Document Workspace
 
-Real document tabs preserve independent page layout, saved baseline, page selection, zoom, scroll and Undo/Redo. Tabs support active/dirty state, close, drag reorder, middle-click close, overflow, Ctrl+Tab, Ctrl+W and Ctrl+Shift+T.
+Multi-document tabs preserve page, zoom, scroll, working layout and Undo/Redo state. The workspace includes:
 
-### Five-mode navigation sidebar
+- Single Page, lazy Continuous and Two Page viewing
+- typed custom zoom, Fit Width, Fit Page and 1:1
+- native PDF text selection and copy
+- native document search with snippets/highlights
+- five-mode navigation sidebar: Pages, Bookmarks, Search, Comments/Annotations, Attachments
+- contextual Inspector
+- page management and drag reorder
+- native text markup, notes, shapes, freehand ink and annotation edit/delete
+- Save, Save As and Save a Copy contracts with multi-dirty-tab close handling
+- printing with page scope/orientation/fit controls
+- two-document split comparison with independent or linked scroll/zoom, swap and page alignment
 
-Pages, native Bookmarks/Outline, Search Results, Comments/Annotations and Attachments are implemented. The sidebar is resizable and truly collapsible without a leftover gutter.
+### Task System
 
-### Interactive text and search
+Foreground and queued operations feed one Task Center model with Running/Queued/Completed/Failed/Cancelled states, progress, elapsed time, cancellation, retry and output actions.
 
-PDFium-backed page-local text geometry provides click/drag selection, visible selection highlights, Ctrl+C and context Copy. Native document search has cached indexing, snippets, next/previous navigation and on-page match highlights mapped through the unsaved working layout.
+Background-capable workflows include compression, repair, optimize-for-web, unlock, merge, Office-to-PDF, PDF-to-Word/Excel/PowerPoint and OCR outputs. Dirty/scoped active documents are materialized into isolated snapshots so queued work cannot be changed by later tab edits.
 
-### Task framework / Task Center
+### Settings / lifecycle
 
-Foreground `RunBusyAsync` work and background `PdfJobQueue` / `BackgroundTaskQueueService` feed one task model. Task Center exposes Running, Queued, Completed, Failed and Cancelled states, stage/progress/percentage, elapsed time, Cancel, retry-safe Retry, result actions and a live running+queued navigation badge.
+Settings now exposes Light, Dark, Follow Windows, default zoom, default page view, session/recent/privacy controls, OCR default, output folder/naming, overwrite policy, recovery and update preferences.
 
-Renderer-dependent queued work owns isolated PDFium renderers. Dirty/scoped active-document work is materialized into disposable layout snapshots so later tab changes cannot alter queued input.
+One-time onboarding, abnormal-shutdown recovery, user-facing error details/log actions, About/Diagnostics, bundled-engine information and explicit user-controlled update download/install are implemented.
 
-Current background-capable workflows include Compress, Repair, Optimize for Web, Unlock, Merge, Office-to-PDF, PDF-to-Word, PDF-to-Excel, PDF-to-PowerPoint, searchable OCR PDF and OCR-text extraction.
+### Identity
 
-## Master items 11–18
+The product uses the restrained Ghana-inspired red/gold/green/black document/A identity in title-bar/vector assets and the Windows ICO used by the application and installer. Internal `PdfRescue.*` namespaces/project folders remain technical implementation names only and are not product-facing branding.
 
-Items 11 through 18 are `IMPLEMENTED, NOT ACCEPTED`.
+## Full installed-copy release evidence
 
-Key final clean evidence:
+Full RC49 Windows release gate run `33107418982` passed end to end on source `a08d0c6eb31dd367217d71ea70a5cd95a40717f2`:
 
-- 11 interactive PDF text: staged/clean `97256072705` / `97256350665`
-- 12 document search: Windows validation `97236130041`
-- 13 sidebar: final clean `97344623846`, source `b8874135a6883bd6d8f2fc89bb1d66694aadbbdc`
-- 14 multi-page management: staged/clean `97345750241` / `97346132649`
-- 15 standalone tools: clean `97364651130`, source `2c4f4373d93d49b0bea4079aa0c3c9c3dd127958`
-- 16 configuration dialogs: final clean `97374705820`
-- 17 task/progress framework: staged/clean `97376499301` / `97377277505`, source `059327d0c37f8a55625dfe59417d875884d9ea20`
-- 18 Task Center: staged/clean `97400172851` / `97400644796`
+- clean-source verification
+- exact SDK
+- Release x64 compile and smoke tests
+- self-contained Windows x64 publish
+- pinned qpdf, Tesseract and LibreOffice staging
+- bundled VC++ redistributable
+- published-app final-candidate self-test
+- production Inno Setup compilation
+- silent installation of the exact generated installer
+- Program Files launch and final-candidate self-test
+- Windows PDF/Open With registration and Start Menu verification
+- release receipt and SHA256 generation
+- silent uninstall and registration/application cleanup verification
+- release package/artifact upload
 
-Hands-on visual/runtime acceptance remains for these UI-facing items.
+That gate predates the final custom-zoom and updater-ordering refinements. Therefore the heavyweight installed-copy gate must be rerun on the current source before the candidate is ready for hands-on acceptance.
 
-## Master item 19 — completion workflows
+## Remaining work
 
-Status: `IN PROGRESS`.
+There is no known missing master-feature implementation after the 49-item source audit. Remaining work is acceptance and final release evidence:
 
-The code-side completion system covers foreground PDF transformations, OCR, Office conversion, images-to-PDF, finishing/markup, form filling, Split, page-image exports, batch outputs and completed Task Center outputs. Completion makes source versus result explicit and provides the appropriate Open, safe replacement, Open Folder, Save As, Run Another and Close actions.
-
-The remaining item-19 gap is **true side-by-side comparison with the original**, which depends on master item 6 split view.
-
-## Master item 20 — non-destructive processing
-
-Status: `IMPLEMENTED, NOT ACCEPTED`.
-
-The operation-by-operation audit confirms that transformations preserve originals by default. Shared configuration validation, engine-level collision rejection, transactional writers, disposable dirty/scoped snapshots, complete-set publication and unique batch names all contribute to the safety boundary.
-
-Evidence:
-
-- staged item-20 job `97416112570`
-- clean no-patch job `97416554259`
-- clean-proven source `c5588b15d39f56ffefc2aa239a951d9158e48f55`
-- exact .NET `10.0.202`
-- 0 warnings, 0 errors
-- `PASS  Source PDF overwrite is rejected`
-- all AsantePDF smoke tests passed
-
-Hands-on overwrite/copy/result-tab UX acceptance remains before `ACCEPTED`.
-
-## Master item 21 — PDF Doctor
-
-Status: `IMPLEMENTED, NOT ACCEPTED`.
-
-The Doctor result experience uses only evidence the current engine genuinely measures. It has the honest initial state, professional Doctor action icon, Healthy / Attention Needed / Damaged status, health score, Structure/Security/Optimization/Performance grouping, qpdf engine details and contextual Repair PDF / Compress PDF actions only when supported.
-
-The current diagnostics cover structural qpdf errors/warnings, encryption, file size, page count and PDF version. No unsupported diagnosis was invented merely to fill the UI.
-
-Evidence:
-
-- richer Doctor staged/clean `32726442308` / `32726666914`
-- final Doctor polish staged/clean `32727012569` / `32727205478`
-- final promoted source `8500dcaae8bddf868a33850da57a9d47918fa70a`
-- exact .NET `10.0.202`
-- 0 warnings, 0 errors
-- all AsantePDF smoke tests passed
-
-The item remains `IMPLEMENTED, NOT ACCEPTED` because Doctor/Inspector still needs hands-on visual/runtime acceptance.
-
-## Master item 22 — Inspector
-
-Status: `IN PROGRESS`.
-
-The existing Inspector already exposes document-level file, page-count, size, PDF version, security and feature information. The next layer is context awareness so the same Inspector becomes useful for the current working selection instead of remaining a static document-details panel.
-
-The first attempted carrier, `dev-patches/260-inspector-context.ps1`, was deliberately rejected by the Windows gate. It assumed an annotation-selection code fragment that does not exist in the canonical source. Windows job `32728036402` stopped during patch application before SDK setup or compilation. A rerun of that historical workflow remains pinned to its original event SHA, so it reproduced the same old carrier failure. No item-22 source was promoted from that attempt.
-
-The failed carrier was removed from the branch. A smaller replacement carrier, `dev-patches/261-inspector-context-safe.ps1`, is now staged. It intentionally limits the first step to stable, source-backed context: current document, selected page, multi-page selection and annotation navigation summary. It adds a small partial `MainWindow.InspectorContext.cs` rather than rewriting the large main window file.
-
-This replacement has **not yet received a Windows gate**, so item 22 remains unaccepted and the clean source baseline remains `8500dcaae8bddf868a33850da57a9d47918fa70a` until a green staged gate and clean promoted rerun exist.
-
-## Windows validation ledger
-
-Important later gates:
-
-- item 13 clean: `97344623846`
-- item 14 staged/clean: `97345750241` / `97346132649`
-- item 15 hardening/clean: `97364231968` / `97364651130`
-- item 16 foundation clean: `97366567224`
-- item 16 OCR clean: `97372254897`
-- item 16 advanced clean: `97374705820`
-- item 17 staged/clean: `97376499301` / `97377277505`
-- item 18 staged/clean: `97400172851` / `97400644796`
-- item 19 Task Center result phase staged/clean: `97403214120` / `97403748273`
-- item 19 foreground staged/clean: `97412436863` / `97413038885`
-- item 19 markup/batch staged/clean: `97414112602` / `97414608852`
-- item 20 staged/clean: `97416112570` / `97416554259`
-- item 21 richer Doctor staged/clean: `32726442308` / `32726666914`
-- item 21 Doctor polish staged/clean: `32727012569` / `32727205478`
-- item 22 first carrier failed at patch application: `32728036402`
-
-The former `MainWindow.DocumentTabs.cs` CS4014 warning was fixed during item 17. Current clean source is compiler-warning-free. GitHub Actions still emits its separate Node-action deprecation notice; that is not a .NET compiler warning.
-
-## Immediate next work
-
-1. validate `261-inspector-context-safe.ps1` on Windows
-2. promote only if the staged compile/smoke gate is green
-3. rerun the promoted ordinary source with no patch carrier
-4. extend Inspector context to text selection and richer annotation details
-5. implement master item 6 split-view comparison
-6. audit master item 23 annotation coverage and editability
-7. audit master item 24 Save / Save As / Save a Copy behavior
-8. continue item 44 context-aware command recalculation
-9. add Settings, Light / Follow Windows themes, first-launch/privacy/recovery polish
-10. reserve the heavyweight installer/installed-copy gate for a release-candidate checkpoint
+1. obtain a clean no-patch Windows compile/smoke run on the current promoted source after the reconciliation commits
+2. rerun the heavyweight RC49 installed-copy release gate on that exact final candidate
+3. retain installer/checksum/release evidence
+4. perform hands-on Windows acceptance for visual quality, typography, overlaps, responsive layout, Light/Dark appearance, 125/150/175/200% scaling, keyboard/screen-reader focus, representative printing/OCR/conversion/security workflows and installed branding
+5. move individual matrix rows to `ACCEPTED` only when their required evidence exists
+6. promote `1.0.0-rc49` to stable `1.0.0` only after all 49 are accepted or explicitly documented not applicable with evidence
 
 ## Product sources of truth
 
-1. `ASANTEPDF_MASTER_UPGRADE_SPEC.md`
-2. `IMPLEMENTATION_MATRIX.md`
-3. `docs/ASANTEPDF-VISUAL-DIRECTION.md`
-4. `design/target-home.svg`
-5. `design/target-document-workspace.svg`
-6. `AGENTS.md`
+1. `MASTER_49_CHECKLIST.md`
+2. `ASANTEPDF_MASTER_UPGRADE_SPEC.md`
+3. `IMPLEMENTATION_MATRIX.md`
+4. `docs/PROJECT_STATE.md`
+5. `docs/MASTER_49_COMPLETION_PLAN.md`
+6. `docs/ASANTEPDF-VISUAL-DIRECTION.md`
+7. `docs/design/target-home.svg`
+8. `docs/design/target-document-workspace.svg`
+9. `AGENTS.md`
 
-## Engineering cadence
+## Non-negotiable acceptance rule
 
-For each coherent batch:
-
-- prefer exactly one staged `dev-patches/*.ps1` carrier
-- Windows-compile x64 Release using exact .NET `10.0.202`
-- run the core smoke suite
-- inspect the staged log and promoted diff/source
-- rerun the promoted ordinary source with no patch carrier
-- update `IMPLEMENTATION_MATRIX.md` and this state file at meaningful checkpoints
-- keep UI requirements unaccepted until hands-on visual/runtime verification
-- reserve full publish/installer/silent-install/installed-copy validation for release candidates
-
-Workflow quirk: multiple independent PowerShell carriers are unsafe because the workflow checks `$LASTEXITCODE` after each script. Prefer one carrier. If one script must invoke another, do it explicitly and avoid mutating tracked carriers in place, or promotion cleanup can fail.
+A compiling application is not a finished application. UI work stays unaccepted until it is actually seen and used on Windows, and release-critical work stays unaccepted until the final installer survives the full installed-copy gate on the same source being considered for release.
