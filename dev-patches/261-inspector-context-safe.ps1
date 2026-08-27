@@ -12,6 +12,13 @@ function Replace-Exact([string]$Path, [string]$Old, [string]$New, [string]$Label
     if (-not $text.Contains($oldN)) { throw "Target not found: $Label" }
     Write-Text $Path ($text.Replace($oldN, $newN))
 }
+function Replace-RegexOnce([string]$Path, [string]$Pattern, [string]$Replacement, [string]$Label) {
+    $text = Normalize ([IO.File]::ReadAllText($Path))
+    $regex = [regex]::new($Pattern, [Text.RegularExpressions.RegexOptions]::Singleline)
+    if (-not $regex.IsMatch($text)) { throw "Target not found: $Label" }
+    $updated = $regex.Replace($text, $Replacement, 1)
+    Write-Text $Path $updated
+}
 
 $xaml = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.xaml'
 Replace-Exact $xaml @'
@@ -56,20 +63,7 @@ Replace-Exact $main @'
 '@ 'command state refreshes inspector'
 
 $text = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.TextSelection.cs'
-Replace-Exact $text @'
-        RefreshDocumentTextSelectionHighlights();
-
-        StatusText.Text = HasDocumentTextSelection ? "PDF text selected. Press Ctrl+C or right-click to copy." : "Ready.";
-
-        e.Handled = true;
-'@ @'
-        RefreshDocumentTextSelectionHighlights();
-
-        StatusText.Text = HasDocumentTextSelection ? "PDF text selected. Press Ctrl+C or right-click to copy." : "Ready.";
-        UpdateCommandStates();
-
-        e.Handled = true;
-'@ 'text selection refreshes inspector'
+Replace-RegexOnce $text '(?m)(StatusText\.Text\s*=\s*HasDocumentTextSelection\s*\?\s*"PDF text selected\. Press Ctrl\+C or right-click to copy\."\s*:\s*"Ready\.";)(\s*)(e\.Handled\s*=\s*true;)' '$1$2UpdateCommandStates();$2$3' 'text selection refreshes inspector'
 
 $inspector = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.InspectorContext.cs'
 $inspectorContent = @'
@@ -177,7 +171,7 @@ public partial class MainWindow
 
     private void AddInspectorField(string label, string value, bool multiline = false)
     {
-        var block = new StackPanel { Margin = new Thickness(0, 0, 0, 7) };
+        var block = new StackPanel { Margin = new Thickness(0, 0,0, 7) };
         block.Children.Add(new TextBlock
         {
             Text = label,
