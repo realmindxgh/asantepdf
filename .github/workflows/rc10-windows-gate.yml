@@ -36,6 +36,7 @@ jobs:
           $patches = Get-ChildItem $patchRoot -Filter '*.ps1' -File | Sort-Object Name
           foreach ($patch in $patches) {
             Write-Host "Applying $($patch.Name)..." -ForegroundColor Cyan
+            $global:LASTEXITCODE = 0
             & $patch.FullName -SourceRoot $env:GITHUB_WORKSPACE
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
@@ -73,7 +74,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          git add -A -- src tests .gitignore
+          git add -A -- src tests installer assets scripts .github VERSION THIRD-PARTY-NOTICES.md .gitignore
           git rm -r dev-patches
 
           if (git diff --cached --quiet) {
