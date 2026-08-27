@@ -145,32 +145,63 @@ internal sealed class AppErrorDialog : Window
 internal sealed class DiagnosticsWindow : Window
 {
     private readonly TextBlock _updateStatus = new();
+    private readonly TextBlock _engineStatus = new();
+    private readonly TextBox _engineInfo = new();
     private UpdateInfo? _availableUpdate;
 
     public DiagnosticsWindow()
     {
         Title = "About & Diagnostics — AsantePDF";
-        Width = 720;
-        Height = 610;
+        Width = 760;
+        Height = 780;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (Brush)Application.Current.Resources["AppBackground"];
         Foreground = (Brush)Application.Current.Resources["PrimaryTextBrush"];
 
         var version = UpdateService.CurrentVersion;
+        var assembly = Assembly.GetEntryAssembly() ?? typeof(DiagnosticsWindow).Assembly;
+        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? assembly.GetName().Version?.ToString()
+            ?? version.ToString();
+        var fileVersion = FileVersionInfo.GetVersionInfo(assembly.Location).FileVersion ?? "Unknown";
         var root = new StackPanel { Margin = new Thickness(30) };
         root.Children.Add(new TextBlock { Text = "AsantePDF", FontSize = 30, FontWeight = FontWeights.SemiBold });
         root.Children.Add(new TextBlock { Text = $"Version {version}  •  Completely free  •  Local-first", Foreground = (Brush)Application.Current.Resources["MutedTextBrush"], Margin = new Thickness(0, 5, 0, 20) });
 
         var info = new StringBuilder();
+        info.AppendLine("Product: AsantePDF PDF Toolkit");
         info.AppendLine($"Version: {version}");
+        info.AppendLine($"Build / informational version: {informationalVersion}");
+        info.AppendLine($"Executable file version: {fileVersion}");
+        info.AppendLine("Product rights: AsantePDF contributors; third-party components retain their own copyrights and licenses.");
         info.AppendLine($"Operating system: {Environment.OSVersion}");
         info.AppendLine($"Runtime: {Environment.Version}");
         info.AppendLine($"Process architecture: {System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}");
         info.AppendLine($"64-bit process: {Environment.Is64BitProcess}");
         info.AppendLine($"Install/base folder: {AppContext.BaseDirectory}");
         info.AppendLine($"Logs: {App.LogDirectory}");
-        var box = new TextBox { Text = info.ToString(), IsReadOnly = true, FontFamily = new FontFamily("Consolas"), FontSize = 12, Height = 245, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        var box = new TextBox { Text = info.ToString(), IsReadOnly = true, FontFamily = new FontFamily("Consolas"), FontSize = 12, Height = 205, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         root.Children.Add(box);
+
+        root.Children.Add(new TextBlock { Text = "Bundled/local engines", FontSize = 17, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 16, 0, 5) });
+        _engineStatus.Text = "Reading engine versions…";
+        _engineStatus.Foreground = (Brush)Application.Current.Resources["MutedTextBrush"];
+        root.Children.Add(_engineStatus);
+        _engineInfo.IsReadOnly = true;
+        _engineInfo.FontFamily = new FontFamily("Consolas");
+        _engineInfo.FontSize = 12;
+        _engineInfo.Height = 125;
+        _engineInfo.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+        _engineInfo.Margin = new Thickness(0, 7, 0, 0);
+        root.Children.Add(_engineInfo);
+
+        root.Children.Add(new TextBlock
+        {
+            Text = "Third-party notices and licenses are included with AsantePDF as THIRD-PARTY-NOTICES.md. Bundled engines may also carry their upstream legal files inside their engine folders.",
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
+            Margin = new Thickness(0, 12, 0, 0)
+        });
 
         _updateStatus.Text = "Update status has not been checked.";
         _updateStatus.TextWrapping = TextWrapping.Wrap;
@@ -183,6 +214,7 @@ internal sealed class DiagnosticsWindow : Window
         var install = new Button { Content = "Download & install update", Style = (Style)FindResource("PrimaryButtonStyle"), IsEnabled = false };
         var release = new Button { Content = "View release page", Style = (Style)FindResource("FlatButtonStyle"), IsEnabled = false };
         var logs = new Button { Content = "Open logs folder", Style = (Style)FindResource("FlatButtonStyle") };
+        var notices = new Button { Content = "Third-party notices", Style = (Style)FindResource("FlatButtonStyle") };
         var copy = new Button { Content = "Copy diagnostics", Style = (Style)FindResource("FlatButtonStyle") };
 
         release.Click += (_, _) => { if (_availableUpdate is not null) UpdateService.OpenRelease(_availableUpdate); };
@@ -214,10 +246,12 @@ internal sealed class DiagnosticsWindow : Window
             }
         };
         logs.Click += (_, _) => { Directory.CreateDirectory(App.LogDirectory); Process.Start(new ProcessStartInfo(App.LogDirectory) { UseShellExecute = true }); };
-        copy.Click += (_, _) => Clipboard.SetText(info.ToString());
-        actions.Children.Add(check); actions.Children.Add(install); actions.Children.Add(release); actions.Children.Add(logs); actions.Children.Add(copy);
+        notices.Click += (_, _) => OpenThirdPartyNotices();
+        copy.Click += (_, _) => Clipboard.SetText(info.ToString() + Environment.NewLine + _engineInfo.Text);
+        actions.Children.Add(check); actions.Children.Add(install); actions.Children.Add(release); actions.Children.Add(logs); actions.Children.Add(notices); actions.Children.Add(copy);
         root.Children.Add(actions);
-        Content = root;
+        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        Loaded += async (_, _) => await LoadEngineInformationAsync();
 
         async Task CheckUpdatesAsync()
         {
@@ -258,5 +292,92 @@ internal sealed class DiagnosticsWindow : Window
                 check.IsEnabled = true;
             }
         }
+    }
+
+    private async Task LoadEngineInformationAsync()
+    {
+        try
+        {
+            var text = await Task.Run(BuildEngineInformation);
+            _engineInfo.Text = text;
+            _engineStatus.Text = "Engine information loaded from this installation.";
+        }
+        catch (Exception ex)
+        {
+            App.Log("Could not read engine diagnostics: " + ex);
+            _engineStatus.Text = "Some engine version information could not be read.";
+            _engineInfo.Text = ex.Message;
+        }
+    }
+
+    private static string BuildEngineInformation()
+    {
+        var result = new StringBuilder();
+        var pdfiumAssembly = typeof(PDFiumCore.fpdfview).Assembly;
+        var pdfiumVersion = pdfiumAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? pdfiumAssembly.GetName().Version?.ToString()
+            ?? "Unknown";
+        result.AppendLine($"PDFium / PDFiumCore: {pdfiumVersion}");
+
+        var manifest = Path.Combine(AppContext.BaseDirectory, "engines", "ENGINE-VERSIONS.txt");
+        if (File.Exists(manifest))
+        {
+            foreach (var line in File.ReadLines(manifest).Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("Generated:", StringComparison.OrdinalIgnoreCase)))
+                result.AppendLine(line.Trim());
+        }
+        else
+        {
+            result.AppendLine("qpdf: " + ProbeExecutable(QpdfLocator.Resolve(), "--version"));
+            result.AppendLine("Tesseract OCR: " + ProbeExecutable(Path.Combine(AppContext.BaseDirectory, "engines", "tesseract", "tesseract.exe"), "--version"));
+            var soffice = Path.Combine(AppContext.BaseDirectory, "engines", "libreoffice", "program", "soffice.com");
+            if (!File.Exists(soffice)) soffice = Path.Combine(AppContext.BaseDirectory, "engines", "libreoffice", "program", "soffice.exe");
+            result.AppendLine("LibreOffice: " + ProbeExecutable(soffice, "--headless", "--version"));
+        }
+        result.AppendLine($".NET runtime: {Environment.Version}");
+        return result.ToString().TrimEnd();
+    }
+
+    private static string ProbeExecutable(string executable, params string[] arguments)
+    {
+        try
+        {
+            if ((executable.Contains(Path.DirectorySeparatorChar) || executable.Contains(Path.AltDirectorySeparatorChar)) && !File.Exists(executable))
+                return "Not present in this installation";
+            var start = new ProcessStartInfo(executable)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            foreach (var argument in arguments) start.ArgumentList.Add(argument);
+            using var process = Process.Start(start);
+            if (process is null) return "Could not start";
+            if (!process.WaitForExit(4000))
+            {
+                try { process.Kill(true); } catch { }
+                return "Version probe timed out";
+            }
+            var output = (process.StandardOutput.ReadToEnd() + Environment.NewLine + process.StandardError.ReadToEnd())
+                .Replace("\r\n", "\n")
+                .Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .FirstOrDefault();
+            return process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output) ? output : $"Unavailable (exit {process.ExitCode})";
+        }
+        catch (Exception ex)
+        {
+            return "Unavailable: " + ex.Message;
+        }
+    }
+
+    private void OpenThirdPartyNotices()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "THIRD-PARTY-NOTICES.md");
+        if (!File.Exists(path))
+        {
+            MessageBox.Show(this, "Third-party notices were not found beside this application build.", "Third-party notices", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
 }

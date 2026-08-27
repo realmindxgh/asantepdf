@@ -32,4 +32,7 @@
     <Compile Remove="Preview\**\*.cs" />
     <Compile Remove="ViewModels\**\*.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

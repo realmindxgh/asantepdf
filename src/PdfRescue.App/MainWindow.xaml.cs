@@ -2171,9 +2171,10 @@ public partial class MainWindow : Window
             FileName = suggestedName,
             AddExtension = true,
             DefaultExt = defaultExtension,
-            OverwritePrompt = true
+            OverwritePrompt = false
         };
-        return dialog.ShowDialog(this) == true ? dialog.FileName : null;
+        if (dialog.ShowDialog(this) != true) return null;
+        return OutputPathPolicy.Resolve(this, dialog.FileName);
     }
 
     private string? AskSavePath(string title, string suggestedName)
@@ -2185,9 +2186,10 @@ public partial class MainWindow : Window
             FileName = suggestedName,
             AddExtension = true,
             DefaultExt = ".pdf",
-            OverwritePrompt = true
+            OverwritePrompt = false
         };
-        return dialog.ShowDialog(this) == true ? dialog.FileName : null;
+        if (dialog.ShowDialog(this) != true) return null;
+        return OutputPathPolicy.Resolve(this, dialog.FileName);
     }
 
     private string? PromptText(string title, string label, string initial = "")

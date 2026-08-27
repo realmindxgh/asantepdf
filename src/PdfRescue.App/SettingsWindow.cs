@@ -17,6 +17,7 @@ public sealed class SettingsWindow : Window
     private readonly TextBox _ocrLanguage = new();
     private readonly TextBox _outputFolder = new();
     private readonly TextBox _outputPattern = new();
+    private readonly ComboBox _existingOutput = new();
     private readonly CheckBox _recovery = new() { Content = "Keep crash-recovery state separate from originals" };
     private readonly CheckBox _updates = new() { Content = "Check for updates when requested" };
 
@@ -45,6 +46,8 @@ public sealed class SettingsWindow : Window
         _ocrLanguage.Text = preferences.DefaultOcrLanguage;
         _outputFolder.Text = preferences.DefaultOutputFolder;
         _outputPattern.Text = preferences.OutputNamePattern;
+        _existingOutput.ItemsSource = Enum.GetValues<ExistingOutputBehavior>();
+        _existingOutput.SelectedItem = preferences.ExistingOutput;
         _recovery.IsChecked = preferences.RecoveryEnabled;
         _updates.IsChecked = preferences.CheckForUpdates;
 
@@ -89,6 +92,8 @@ public sealed class SettingsWindow : Window
         folderPanel.Children.Add(_outputFolder);
         AddField(content, "Default output folder", folderPanel, "Leave blank to choose each time.");
         AddField(content, "Output naming pattern", _outputPattern, "Use {name} and {operation} placeholders.");
+        AddField(content, "If an output file already exists", _existingOutput,
+            "CreateUniqueCopy never replaces an existing result. AskBeforeReplace requires an explicit confirmation before replacing an output file.");
 
         AddSection(content, "Updates");
         content.Children.Add(_updates);
@@ -136,6 +141,9 @@ public sealed class SettingsWindow : Window
             DefaultOcrLanguage = _ocrLanguage.Text,
             DefaultOutputFolder = _outputFolder.Text,
             OutputNamePattern = _outputPattern.Text,
+            ExistingOutput = _existingOutput.SelectedItem is ExistingOutputBehavior existingOutput
+                ? existingOutput
+                : ExistingOutputBehavior.CreateUniqueCopy,
             RecoveryEnabled = _recovery.IsChecked == true,
             CheckForUpdates = _updates.IsChecked == true,
             FirstLaunchCompleted = AppSettingsService.Current.Preferences.FirstLaunchCompleted

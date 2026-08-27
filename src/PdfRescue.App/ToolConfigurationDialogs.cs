@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
+using PdfRescue.App.Services;
 using PdfRescue.Core.Models;
 
 namespace PdfRescue.App;
@@ -227,10 +228,38 @@ internal static partial class ToolConfigurationDialogs
             BorderThickness = new Thickness(1),
             BorderBrush = BrushResource("BorderBrushSoft", Brushes.DimGray),
             Background = BrushResource("PanelBackground", Brushes.Black),
-            Padding = new Thickness(6)
+            Padding = new Thickness(6),
+            AllowDrop = true
         };
         body.Children.Add(list);
-        var orderHint = MutedText("Top to bottom is the final PDF page order.");
+
+        void MergeDragOver(object? _, DragEventArgs e)
+        {
+            var paths = e.Data.GetDataPresent(DataFormats.FileDrop)
+                ? e.Data.GetData(DataFormats.FileDrop) as string[] ?? Array.Empty<string>()
+                : Array.Empty<string>();
+            e.Effects = paths.Any(path => File.Exists(path) && string.Equals(Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase))
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        void MergeDrop(object? _, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+            var before = files.Count;
+            foreach (var path in e.Data.GetData(DataFormats.FileDrop) as string[] ?? Array.Empty<string>()) AddPdf(files, path);
+            if (files.Count > before) list.SelectedIndex = files.Count - 1;
+            e.Handled = true;
+        }
+
+        window.AllowDrop = true;
+        window.DragOver += MergeDragOver;
+        window.Drop += MergeDrop;
+        list.DragOver += MergeDragOver;
+        list.Drop += MergeDrop;
+
+        var orderHint = MutedText("Drop PDFs here or use Add PDFs. Top to bottom is the final PDF page order.");
         orderHint.Margin = new Thickness(0, 6, 0, 0);
         body.Children.Add(orderHint);
 
@@ -380,7 +409,7 @@ internal static partial class ToolConfigurationDialogs
                 Filter = kind == OcrOutputKind.SearchablePdf ? "PDF files (*.pdf)|*.pdf" : "Text files (*.txt)|*.txt",
                 AddExtension = true,
                 DefaultExt = extension,
-                OverwritePrompt = true,
+                OverwritePrompt = false,
                 FileName = Path.GetFileName(outputBox.Text)
             };
             var directory = Path.GetDirectoryName(outputBox.Text);
@@ -596,7 +625,7 @@ internal static partial class ToolConfigurationDialogs
                 Filter = filter,
                 AddExtension = true,
                 DefaultExt = defaultExtension,
-                OverwritePrompt = true,
+                OverwritePrompt = false,
                 FileName = string.IsNullOrWhiteSpace(current) ? "output" + defaultExtension : Path.GetFileName(current)
             };
             var directory = string.IsNullOrWhiteSpace(current) ? null : Path.GetDirectoryName(current);
@@ -641,7 +670,7 @@ internal static partial class ToolConfigurationDialogs
             if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) path += extension;
             var directory = Path.GetDirectoryName(path);
             if (string.IsNullOrWhiteSpace(directory)) throw new InvalidDataException("The output folder is invalid.");
-            return path;
+            return OutputPathPolicy.Resolve(owner, path);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or InvalidDataException)
         {

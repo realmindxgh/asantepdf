@@ -19,6 +19,12 @@ public enum DefaultPageViewMode
     TwoPage
 }
 
+public enum ExistingOutputBehavior
+{
+    AskBeforeReplace,
+    CreateUniqueCopy
+}
+
 public sealed record AppPreferences
 {
     public AppThemeMode Theme { get; init; } = AppThemeMode.Dark;
@@ -30,6 +36,7 @@ public sealed record AppPreferences
     public string DefaultOcrLanguage { get; init; } = "eng";
     public string DefaultOutputFolder { get; init; } = string.Empty;
     public string OutputNamePattern { get; init; } = "{name}-{operation}";
+    public ExistingOutputBehavior ExistingOutput { get; init; } = ExistingOutputBehavior.CreateUniqueCopy;
     public bool RecoveryEnabled { get; init; } = true;
     public bool CheckForUpdates { get; init; } = true;
     public bool FirstLaunchCompleted { get; init; }
