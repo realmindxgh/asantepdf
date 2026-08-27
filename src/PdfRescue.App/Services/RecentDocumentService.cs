@@ -346,6 +346,35 @@ public sealed class RecentDocumentService
         }
     }
 
+    public void ClearHistory()
+    {
+        lock (_sync)
+        {
+            var state = LoadStateCore();
+            state.Documents.Clear();
+            SaveStateCore(state);
+        }
+    }
+
+    public void ClearLastSession()
+    {
+        lock (_sync)
+        {
+            var state = LoadStateCore();
+            state.LastSession = null;
+            SaveStateCore(state);
+        }
+    }
+
+    public void ClearThumbnailCache()
+    {
+        try
+        {
+            if (Directory.Exists(ThumbnailDirectory)) Directory.Delete(ThumbnailDirectory, true);
+        }
+        catch (Exception ex) { App.Log("Could not clear recent thumbnail cache: " + ex.Message); }
+    }
+
     public void SetViewMode(RecentViewMode viewMode)
     {
         lock (_sync)

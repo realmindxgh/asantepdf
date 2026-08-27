@@ -26,6 +26,7 @@ public partial class MainWindow
     {
         if (_productShellInitialized) return;
         _productShellInitialized = true;
+        InitializeAppearanceAndSettings();
 
         _homeContent = EmptyPanel.Child;
         _backgroundTasks = new BackgroundTaskQueueService(_taskCenterService);
@@ -344,7 +345,8 @@ public partial class MainWindow
         if (_currentPdf is null || Pages.Count == 0) return;
         var page = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 1;
 
-        if (!string.Equals(_lastRecentRecordedPath, _currentPdf, StringComparison.OrdinalIgnoreCase))
+        var preferences = AppSettingsService.Current.Preferences;
+        if (preferences.TrackRecentFiles && !string.Equals(_lastRecentRecordedPath, _currentPdf, StringComparison.OrdinalIgnoreCase))
         {
             _recentDocuments.RecordOpened(_currentPdf, page, _previewWidth);
             _lastRecentRecordedPath = _currentPdf;
@@ -366,17 +368,31 @@ public partial class MainWindow
     {
         if (_currentPdf is null || Pages.Count == 0) return;
         var page = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 1;
-        _recentDocuments.UpdatePosition(_currentPdf, page, _previewWidth);
+        var preferences = AppSettingsService.Current.Preferences;
+        if (preferences.TrackRecentFiles)
+            _recentDocuments.UpdatePosition(_currentPdf, page, _previewWidth);
         CaptureActiveDocumentTabState();
-        _recentDocuments.SaveLastSession(BuildWorkspaceSessionDocuments(), GetActiveDocumentTabIndex());
+        if (preferences.ReopenLastSession)
+            _recentDocuments.SaveLastSession(BuildWorkspaceSessionDocuments(), GetActiveDocumentTabIndex());
+        else
+            _recentDocuments.ClearLastSession();
         RefreshResumeCommandState();
     }
 
     private void RefreshResumeCommandState()
     {
         if (ResumeSessionButton is null) return;
-        var session = _recentDocuments.GetLastSession();
-        ResumeSessionButton.IsEnabled = session is not null && session.Documents.Any(document => File.Exists(document.Path));
+        var preferences = AppSettingsService.Current.Preferences;
+        var session = preferences.ReopenLastSession ? _recentDocuments.GetLastSession() : null;
+        var available = session?.Documents.Where(document => File.Exists(document.Path)).ToArray() ?? [];
+        var hasSession = available.Length > 0;
+        ResumeSessionButton.IsEnabled = hasSession;
+        ResumeSessionButton.Visibility = hasSession ? Visibility.Visible : Visibility.Collapsed;
+        ResumeSessionButton.ToolTip = hasSession
+            ? available.Length == 1
+                ? $"Restore {Path.GetFileName(available[0].Path)} at page {available[0].PageNumber:N0}"
+                : $"Restore {available.Length:N0} PDFs from the previous session"
+            : null;
     }
 
     private async Task OpenRecentFromLibraryAsync(string path)

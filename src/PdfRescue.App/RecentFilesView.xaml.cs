@@ -61,7 +61,8 @@ public partial class RecentFilesView : UserControl
         var token = _thumbnailCts.Token;
         var generation = ++_refreshGeneration;
 
-        _allItems = service.LoadItems().ToList();
+        var appPreferences = AppSettingsService.Current.Preferences;
+        _allItems = appPreferences.TrackRecentFiles ? service.LoadItems().ToList() : [];
         _viewMode = service.PreferredView;
         _sortMode = service.PreferredSort;
 
@@ -78,6 +79,7 @@ public partial class RecentFilesView : UserControl
         RefreshVisibleItems();
         RefreshResumeState();
 
+        if (!appPreferences.ShowRecentThumbnails) return;
         foreach (var item in _allItems.Where(item => item.Available))
         {
             try
@@ -170,7 +172,7 @@ public partial class RecentFilesView : UserControl
 
     private void RefreshResumeState()
     {
-        var session = _service?.GetLastSession();
+        var session = AppSettingsService.Current.Preferences.ReopenLastSession ? _service?.GetLastSession() : null;
         ResumeSessionButton.Visibility = session is not null && session.Documents.Any(document => File.Exists(document.Path))
             ? Visibility.Visible
             : Visibility.Collapsed;

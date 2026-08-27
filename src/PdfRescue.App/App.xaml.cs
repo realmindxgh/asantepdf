@@ -36,6 +36,12 @@ public partial class App : Application
         try
         {
             base.OnStartup(e);
+            AppearanceService.Apply(AppSettingsService.Current.Preferences.Theme);
+            EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
+                new RoutedEventHandler((sender, _) =>
+                {
+                    if (sender is Window loadedWindow) AppearanceService.ApplyToWindow(loadedWindow);
+                }));
 
             if (e.Args.Length >= 3 && string.Equals(e.Args[0], "--selftest-conversions", StringComparison.OrdinalIgnoreCase))
             {

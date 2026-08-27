@@ -182,7 +182,8 @@ public partial class MainWindow : Window
         if (!opened || _currentPdf is null) return;
 
         await SynchronizeDocumentTabAfterOpenAsync(_currentPdf);
-        AddRecentDocument(_currentPdf);
+        if (AppSettingsService.Current.Preferences.TrackRecentFiles)
+            AddRecentDocument(_currentPdf);
         UpdateCommandStates();
         StartThumbnailRendering(_documentGeneration);
     }

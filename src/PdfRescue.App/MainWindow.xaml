@@ -23,12 +23,20 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
-                    <Border Width="28" Height="28" CornerRadius="7" Background="#113661" Margin="0,0,10,0">
-                        <TextBlock Text="A" Foreground="#5EB4FF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <Grid Width="28" Height="28" Margin="0,0,10,0" ToolTip="AsantePDF">
+                        <Border Background="#111111" CornerRadius="6" />
+                        <Grid Margin="4">
+                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                            <Border Grid.Row="0" Background="#CE1126" CornerRadius="2,2,0,0" />
+                            <Border Grid.Row="1" Background="#FCD116" />
+                            <Border Grid.Row="2" Background="#006B3F" CornerRadius="0,0,2,2" />
+                            <Path Grid.RowSpan="3" Data="M 5,17 L 9,3 L 13,17 M 7,11 L 11,11" Stroke="#111111" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            <Path Grid.RowSpan="3" Data="M 14,1 L 19,6 L 14,6 Z" Fill="#FFFFFF" Opacity="0.88" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                        </Grid>
+                    </Grid>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock FontSize="17" FontWeight="SemiBold">
-                            <Run Text="Asante" /><Run Text="PDF" Foreground="#2D8CFF" />
+                            <Run Text="Asante" /><Run Text="PDF" Foreground="#FCD116" />
                         </TextBlock>
                         <TextBlock Text="PDF Toolkit" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,-2,0,0" />
                     </StackPanel>
@@ -45,7 +53,10 @@
                 </Border>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
                     <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Help"><TextBlock Text="?" FontSize="17" /></Button>
-                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Settings" IsEnabled="False"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" /></Button>
+                    <Button x:Name="ThemeToggleButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" Click="ThemeToggle_Click" ToolTip="Switch theme">
+                        <TextBlock x:Name="ThemeToggleGlyph" Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
+                    </Button>
+                    <Button x:Name="SettingsButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Settings" Click="Settings_Click"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" /></Button>
                     <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MinimizeWindow_Click" ToolTip="Minimize"><TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" /></Button>
                     <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MaximizeWindow_Click" ToolTip="Maximize"><TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets" /></Button>
                     <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="CloseWindow_Click" ToolTip="Close"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" /></Button>
@@ -645,7 +656,7 @@
                                     <TextBlock Text="Welcome to AsantePDF" FontSize="28" FontWeight="SemiBold" />
                                     <TextBlock Text="Your all-in-one, local-first PDF productivity toolkit" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,5,0,0" />
                                 </StackPanel>
-                                <Button x:Name="ResumeSessionButton" Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Click="ResumeLastSession_Click" IsEnabled="False" ToolTip="Restore the last available document, page and zoom position" Padding="16,9">
+                                <Button x:Name="ResumeSessionButton" Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Click="ResumeLastSession_Click" IsEnabled="False" Visibility="Collapsed" Padding="16,9">
                                     <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" Foreground="#4D9BFF"/><TextBlock Text="Resume Last Session" Margin="8,0,0,0"/></StackPanel>
                                 </Button>
                             </Grid>
