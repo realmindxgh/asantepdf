@@ -1638,15 +1638,8 @@ public partial class MainWindow : Window
 
     private void About_Click(object sender, RoutedEventArgs e)
     {
-        var version = typeof(MainWindow).Assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-            .InformationalVersion?
-            .Split('+', 2)[0]
-            ?? "1.0";
-
-        MessageBox.Show(this,
-            $"AsantePDF\nLocal-first PDF workspace for Windows\n\nVersion {version}\nRealMindX Education Ltd",
-            "About AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
+        var dialog = new DiagnosticsWindow { Owner = this };
+        dialog.ShowDialog();
     }
 
     private void CancelOperation_Click(object sender, RoutedEventArgs e)
@@ -1692,7 +1685,7 @@ public partial class MainWindow : Window
             _taskCenterService.Fail(_activeTaskCenterItem, ex);
             App.Log($"Operation failed [{status}]: {ex}");
             StatusText.Text = "Operation failed.";
-            MessageBox.Show(this, ex.Message, "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Error);
+            AppErrorDialog.Show(this, "AsantePDF operation failed", $"{status} could not be completed. Your source file was left unchanged unless the operation had already completed successfully.", ex);
             return false;
         }
         finally
@@ -1809,6 +1802,7 @@ public partial class MainWindow : Window
         CompareTabsButton.IsEnabled = available && DocumentTabs.Count >= 2;
         UpdateDocumentTitleDirtyIndicator();
         UpdateInspectorContext();
+        if (_productShellInitialized) PersistWorkspacePosition();
     }
 
     private bool HasUnsavedLayoutChanges()

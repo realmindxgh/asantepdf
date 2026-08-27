@@ -14,6 +14,7 @@ public partial class App : Application
 
     public static string StartupLogPath => Path.Combine(LogDirectory, "startup.log");
     public static string WindowReadyPath => Path.Combine(LogDirectory, "window-ready.flag");
+    public static bool StartedWithPdfArgument { get; private set; }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -73,6 +74,10 @@ public partial class App : Application
                 return;
             }
 
+            var pdfArgument = e.Args.FirstOrDefault(a =>
+                a.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && File.Exists(a));
+            StartedWithPdfArgument = pdfArgument is not null;
+
             var window = new MainWindow();
             MainWindow = window;
             window.Loaded += (_, _) =>
@@ -89,19 +94,18 @@ public partial class App : Application
             };
             window.Show();
 
-            var pdfArgument = e.Args.FirstOrDefault(a =>
-                a.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && File.Exists(a));
             if (pdfArgument is not null)
                 _ = window.OpenPdfFromCommandLineAsync(pdfArgument);
         }
         catch (Exception ex)
         {
             Log("Fatal startup exception: " + ex);
-            MessageBox.Show(
-                "AsantePDF could not start. A diagnostic log was written to:\n\n" + StartupLogPath,
-                "AsantePDF",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            try { AppErrorDialog.Show(null, "AsantePDF could not start", "Startup failed before the main workspace became available. A diagnostic log has been preserved.", ex); }
+            catch
+            {
+                MessageBox.Show("AsantePDF could not start. Diagnostic log:\n\n" + StartupLogPath,
+                    "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             Shutdown(-1);
         }
     }
@@ -219,11 +223,12 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Log("Dispatcher exception: " + e.Exception);
-        MessageBox.Show(
-            "AsantePDF encountered an unexpected error. Details were written to:\n\n" + StartupLogPath,
-            "AsantePDF",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        try { AppErrorDialog.Show(Current?.MainWindow, "AsantePDF encountered an unexpected error", "The application caught an unexpected interface error and preserved diagnostic details.", e.Exception); }
+        catch
+        {
+            MessageBox.Show("AsantePDF encountered an unexpected error. Diagnostic log:\n\n" + StartupLogPath,
+                "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
         e.Handled = true;
     }
 

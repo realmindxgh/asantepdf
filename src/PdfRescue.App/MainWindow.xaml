@@ -52,7 +52,7 @@
                     </Grid>
                 </Border>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
-                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Help"><TextBlock Text="?" FontSize="17" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="About, diagnostics and updates" Click="About_Click"><TextBlock Text="?" FontSize="17" /></Button>
                     <Button x:Name="ThemeToggleButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" Click="ThemeToggle_Click" ToolTip="Switch theme">
                         <TextBlock x:Name="ThemeToggleGlyph" Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
                     </Button>

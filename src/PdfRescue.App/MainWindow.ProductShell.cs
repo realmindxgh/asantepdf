@@ -38,6 +38,7 @@ public partial class MainWindow
         InitializeDocumentOutline();
         InitializeDocumentTextSelection();
         InitializeDocumentNavigationMetadata();
+        _pendingRecoverySnapshot = RecoverySnapshotService.Current.BeginSession();
 
         _recentFilesView = new RecentFilesView();
         _recentFilesView.SetService(_recentDocuments);
@@ -61,6 +62,7 @@ public partial class MainWindow
         Closing += ProductShell_Closing;
         Closed += async (_, _) =>
         {
+            RecoverySnapshotService.Current.MarkCleanShutdown();
             if (_backgroundTasks is not null)
                 await _backgroundTasks.DisposeAsync();
         };
@@ -68,6 +70,8 @@ public partial class MainWindow
         LoadHomeRecents();
         RefreshResumeCommandState();
         RefreshProductShellMode();
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(async () =>
+            await OfferStartupRecoveryAndOnboardingAsync()));
     }
 
     private void RefreshProductShellMode()
@@ -376,6 +380,7 @@ public partial class MainWindow
             _recentDocuments.SaveLastSession(BuildWorkspaceSessionDocuments(), GetActiveDocumentTabIndex());
         else
             _recentDocuments.ClearLastSession();
+        SaveRecoverySnapshot();
         RefreshResumeCommandState();
     }
 
