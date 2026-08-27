@@ -78,6 +78,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitializeWindowWorkAreaBehavior();
         PagesList.ItemsSource = Pages;
 
         var runner = new ExternalProcessRunner();

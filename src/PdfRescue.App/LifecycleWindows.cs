@@ -14,35 +14,59 @@ internal sealed class FirstLaunchWindow : Window
     public FirstLaunchWindow()
     {
         Title = "Welcome to AsantePDF";
-        Width = 650;
-        Height = 520;
-        MinWidth = 560;
-        ResizeMode = ResizeMode.NoResize;
+        Width = 700;
+        Height = Math.Min(640, Math.Max(500, SystemParameters.WorkArea.Height - 80));
+        MinWidth = 600;
+        MinHeight = 500;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (Brush)Application.Current.Resources["AppBackground"];
         Foreground = (Brush)Application.Current.Resources["PrimaryTextBrush"];
 
-        var root = new StackPanel { Margin = new Thickness(34) };
-        root.Children.Add(new TextBlock { Text = "Welcome to AsantePDF", FontSize = 30, FontWeight = FontWeights.SemiBold });
-        root.Children.Add(new TextBlock
+        var root = new Grid { Margin = new Thickness(30, 26, 30, 24) };
+        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        var content = new StackPanel { Margin = new Thickness(0, 0, 8, 0) };
+        content.Children.Add(new TextBlock { Text = "Welcome to AsantePDF", FontSize = 30, FontWeight = FontWeights.SemiBold });
+        content.Children.Add(new TextBlock
         {
             Text = "A free, local-first PDF workspace built for real document work.",
             FontSize = 15,
             Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
-            Margin = new Thickness(0, 7, 0, 26)
+            Margin = new Thickness(0, 7, 0, 24)
         });
-        AddCard(root, "Free means free", "There is no Premium tier, subscription, feature lock or usage limit in AsantePDF.");
-        AddCard(root, "Your files stay local", "Normal viewing, editing, OCR, conversion and PDF processing happen on this computer.");
-        AddCard(root, "Start from Home", "Open a PDF, drag one into the window, or choose a standalone tool without opening a document first.");
-        AddCard(root, "Your workspace can recover", "AsantePDF can remember normal sessions and separately keep a local crash-recovery snapshot for unsaved page-layout work.");
+        AddCard(content, "Free means free", "There is no Premium tier, subscription, feature lock or usage limit in AsantePDF.");
+        AddCard(content, "Your files stay local", "Normal viewing, editing, OCR, conversion and PDF processing happen on this computer.");
+        AddCard(content, "Start from Home", "Open a PDF, drag one into the window, or choose a standalone tool without opening a document first.");
+        AddCard(content, "Your workspace can recover", "AsantePDF can remember normal sessions and separately keep a local crash-recovery snapshot for unsaved page-layout work.");
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 24, 0, 0) };
-        var settings = new Button { Content = "You can change themes and privacy in Settings", IsEnabled = false, Style = (Style)FindResource("FlatButtonStyle"), Margin = new Thickness(0, 0, 10, 0) };
+        var scroll = new ScrollViewer
+        {
+            Content = content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+        };
+        root.Children.Add(scroll);
+
+        var footer = new Grid { Margin = new Thickness(0, 18, 0, 0) };
+        footer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var settingsNote = new TextBlock
+        {
+            Text = "Themes, privacy, recovery and defaults are available in Settings.",
+            Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 18, 0)
+        };
+        footer.Children.Add(settingsNote);
         var start = new Button { Content = "Start using AsantePDF", IsDefault = true, Style = (Style)FindResource("PrimaryButtonStyle"), Padding = new Thickness(18, 9, 18, 9) };
         start.Click += (_, _) => { DialogResult = true; Close(); };
-        buttons.Children.Add(settings);
-        buttons.Children.Add(start);
-        root.Children.Add(buttons);
+        Grid.SetColumn(start, 1);
+        footer.Children.Add(start);
+        Grid.SetRow(footer, 1);
+        root.Children.Add(footer);
         Content = root;
     }
 

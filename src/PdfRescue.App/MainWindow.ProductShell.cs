@@ -112,6 +112,7 @@ public partial class MainWindow
 
     private void HomeNav_Click(object sender, RoutedEventArgs e)
     {
+        CloseTaskCenterDrawer();
         PersistWorkspacePosition(immediate: true);
         ShowHomeContent();
         _recentFilesView?.SetPinnedOnly(false);
@@ -157,9 +158,21 @@ public partial class MainWindow
     private void TaskCenterNav_Click(object sender, RoutedEventArgs e)
     {
         PersistWorkspacePosition(immediate: true);
-        if (_taskCenterView is null) return;
-        EmptyPanel.Child = _taskCenterView;
-        EmptyPanel.Visibility = Visibility.Visible;
+        if (_taskCenterView is null || TaskCenterDrawer is null || TaskCenterHost is null) return;
+        TaskCenterHost.Content = _taskCenterView;
+        TaskCenterDrawer.Visibility = TaskCenterDrawer.Visibility == Visibility.Visible
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+    }
+
+    private void TaskCenterClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (TaskCenterDrawer is not null) TaskCenterDrawer.Visibility = Visibility.Collapsed;
+    }
+
+    private void CloseTaskCenterDrawer()
+    {
+        if (TaskCenterDrawer is not null) TaskCenterDrawer.Visibility = Visibility.Collapsed;
     }
 
     private async void ResumeLastSession_Click(object sender, RoutedEventArgs e)
@@ -170,6 +183,7 @@ public partial class MainWindow
 
     private void DocumentNav_Click(object sender, RoutedEventArgs e)
     {
+        CloseTaskCenterDrawer();
         if (_currentPdf is null) return;
         EmptyPanel.Visibility = Visibility.Collapsed;
         ApplyPageViewVisibility();
