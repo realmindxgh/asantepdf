@@ -67,10 +67,10 @@ jobs:
           $command = Join-Path $appKey 'shell\open\command'
           if (-not (Test-Path $appKey)) { throw 'AsantePDF Open With registration is missing.' }
           if (-not (Test-Path $supported)) { throw 'AsantePDF SupportedTypes registration is missing.' }
-          $pdfValue = (Get-ItemProperty -Path $supported -Name '.pdf' -ErrorAction Stop).'.pdf'
-          if ($null -eq $pdfValue) { throw '.pdf is not registered under AsantePDF SupportedTypes.' }
-          $open = (Get-ItemProperty -Path $command -Name '(default)' -ErrorAction Stop).'(default)'
-          if ($open -notmatch 'AsantePDF\.exe') { throw "Open command is incorrect: $open" }
+          $supportedKey = Get-Item -Path $supported -ErrorAction Stop
+          if (-not ($supportedKey.GetValueNames() -contains '.pdf')) { throw '.pdf is not registered under AsantePDF SupportedTypes.' }
+          $open = (Get-Item -Path $command -ErrorAction Stop).GetValue('')
+          if ([string]::IsNullOrWhiteSpace($open) -or $open -notmatch 'AsantePDF\.exe') { throw "Open command is incorrect: $open" }
           $startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\AsantePDF.lnk'
           if (-not (Test-Path $startMenu)) { throw 'AsantePDF Start Menu shortcut is missing.' }
 
