@@ -13,7 +13,7 @@
     <PublishSingleFile>false</PublishSingleFile>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Version>1.0.0</Version>
-    <InformationalVersion>1.0.0-rc10</InformationalVersion>
+    <InformationalVersion>1.0.0-rc49</InformationalVersion>
     <Product>AsantePDF</Product>
     <Title>AsantePDF</Title>
     <Description>Local-first PDF toolkit for Windows</Description>
