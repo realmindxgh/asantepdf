@@ -1,7 +1,7 @@
 #define MyAppName "AsantePDF"
 #define MyAppVersion "1.0.0"
 #ifndef MyAppDisplayVersion
-  #define MyAppDisplayVersion "1.0.0-rc10"
+  #define MyAppDisplayVersion "1.0.0-rc49"
 #endif
 #define MyAppPublisher "RealMindX Education Ltd"
 #define MyAppExeName "AsantePDF.exe"
