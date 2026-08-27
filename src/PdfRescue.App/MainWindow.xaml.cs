@@ -1965,14 +1965,22 @@ public partial class MainWindow : Window
     private void Window_DragOver(object sender, DragEventArgs e)
     {
         var pdfs = GetDroppedPdfs(e.Data);
-        if (pdfs.Length == 0) return;
+        var images = GetDroppedImages(e.Data);
+        if (pdfs.Length == 0 && images.Length == 0) return;
         e.Effects = DragDropEffects.Copy;
         e.Handled = true;
     }
 
     private async void Window_Drop(object sender, DragEventArgs e)
     {
+        var images = GetDroppedImages(e.Data);
         var pdfs = GetDroppedPdfs(e.Data);
+        if (images.Length > 0 && pdfs.Length == 0)
+        {
+            e.Handled = true;
+            await CreatePdfFromDroppedImagesAsync(images);
+            return;
+        }
         if (pdfs.Length == 0) return;
         e.Handled = true;
 
