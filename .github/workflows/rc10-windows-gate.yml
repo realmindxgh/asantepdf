@@ -1,83 +1,53 @@
-name: AsantePDF RC10 Windows Gate
+name: AsantePDF Development Windows Gate
 
 on:
-  push:
-    paths:
-      - 'release-trigger*.txt'
   pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: asantepdf-development-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  build-test-install:
+  windows-build:
+    if: github.head_ref == 'development/master-upgrade-v2'
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
 
     steps:
-      - name: Check out transfer repository
+      - name: Check out master-upgrade branch
         uses: actions/checkout@v4
+        with:
+          ref: development/master-upgrade-v2
+          fetch-depth: 0
 
-      - name: Reconstruct verified RC10 build payload
+      - name: Apply staged development patches
         shell: pwsh
         run: |
-          $parts = Get-ChildItem "$env:GITHUB_WORKSPACE\compact" -Filter 'part-*' -File | Sort-Object Name
-          if ($parts.Count -ne 8) { throw "Expected 8 compact payload chunks, got $($parts.Count)." }
-
-          $base64 = ($parts | ForEach-Object { (Get-Content $_.FullName -Raw).Trim() }) -join ''
-          $bytes = [Convert]::FromBase64String($base64)
-          $archive = Join-Path $env:RUNNER_TEMP 'AsantePDF-RC10-compact.tar.gz'
-          [IO.File]::WriteAllBytes($archive, $bytes)
-
-          $expected = '5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486'
-          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actual -ne $expected) { throw "RC10 payload SHA256 mismatch. Expected $expected, got $actual." }
-
-          $source = Join-Path $env:GITHUB_WORKSPACE 'srcdrop'
-          New-Item -ItemType Directory -Force -Path $source | Out-Null
-          tar -xzf $archive -C $source
-          if ($LASTEXITCODE -ne 0) { throw "tar extraction failed with exit code $LASTEXITCODE." }
-
-          foreach ($required in @(
-            'AsantePDF.sln',
-            'VERSION',
-            'global.json',
-            'installer\AsantePDF.iss',
-            'scripts\verify-installed-release.ps1',
-            'scripts\write-release-receipt.ps1',
-            'scripts\stage-release-engines.ps1',
-            'scripts\New-SamplePdf.ps1',
-            'src\PdfRescue.App\Services\ImagePdfBuilder.cs'
-          )) {
-            if (-not (Test-Path (Join-Path $source $required))) { throw "Required RC10 source path is missing: $required" }
+          $patchRoot = Join-Path $env:GITHUB_WORKSPACE 'dev-patches'
+          if (-not (Test-Path $patchRoot)) {
+            Write-Host 'No staged development patches. Building branch as committed.' -ForegroundColor Cyan
+            exit 0
           }
 
-          $version = (Get-Content (Join-Path $source 'VERSION') -Raw).Trim()
-          if ($version -ne '1.0.0-rc10') { throw "Unexpected release version: $version" }
-          "RC10 compact payload SHA256: $actual" | Set-Content (Join-Path $source 'RC10-BUILD-PAYLOAD-SHA256.txt') -Encoding ASCII
-          Write-Host "Verified RC10 compact payload: $actual" -ForegroundColor Green
-
-      - name: Apply Windows-gate corrections
-        shell: pwsh
-        run: |
-          $patchRoot = Join-Path $env:GITHUB_WORKSPACE 'windows-patches'
-          $source = Join-Path $env:GITHUB_WORKSPACE 'srcdrop'
-          Copy-Item (Join-Path $patchRoot 'PdfFormService.cs') (Join-Path $source 'src\PdfRescue.App\Services\PdfFormService.cs') -Force
-          Copy-Item (Join-Path $patchRoot 'stage-release-engines.ps1') (Join-Path $source 'scripts\stage-release-engines.ps1') -Force
-          Copy-Item (Join-Path $patchRoot 'publish-release.ps1') (Join-Path $source 'scripts\publish-release.ps1') -Force
-          Copy-Item (Join-Path $patchRoot 'AsantePDF.sln') (Join-Path $source 'AsantePDF.sln') -Force
-          & (Join-Path $patchRoot 'compile-fixes.ps1') -SourceRoot $source
-          Write-Host 'Applied RC10 Windows-gate corrections.' -ForegroundColor Green
+          $patches = Get-ChildItem $patchRoot -Filter '*.ps1' -File | Sort-Object Name
+          foreach ($patch in $patches) {
+            Write-Host "Applying $($patch.Name)..." -ForegroundColor Cyan
+            $global:LASTEXITCODE = 0
+            & $patch.FullName -SourceRoot $env:GITHUB_WORKSPACE
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Set up exact .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.202'
 
-      - name: Compile RC10 on Windows before release staging
-        timeout-minutes: 8
+      - name: Restore and compile x64 Release
         shell: pwsh
-        working-directory: srcdrop
         run: |
           $sdk = dotnet --version
           Write-Host "Selected .NET SDK: $sdk"
@@ -87,158 +57,30 @@ jobs:
           dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Install Inno Setup 6.7.1
-        timeout-minutes: 5
+      - name: Run core smoke tests
         shell: pwsh
         run: |
-          choco install innosetup --version 6.7.1 -y --no-progress --limit-output
-          if ($LASTEXITCODE -notin @(0,1641,3010)) { exit $LASTEXITCODE }
-
-      - name: Publish app and run core smoke tests
-        timeout-minutes: 10
-        shell: pwsh
-        working-directory: srcdrop
-        run: |
-          $dist = Join-Path (Get-Location) 'dist'
-          $appOut = Join-Path $dist 'app'
-          $selfTestOut = Join-Path $dist 'selftest-preinstall'
-          Remove-Item $appOut -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item $selfTestOut -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $appOut, $selfTestOut | Out-Null
-
-          Write-Host 'Running core smoke tests...'
           dotnet run --project ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          Write-Host 'Publishing self-contained Windows x64 application...'
-          dotnet publish ./src/PdfRescue.App/PdfRescue.App.csproj -c Release -r win-x64 --self-contained true -p:Platform=x64 -p:PublishReadyToRun=false -o $appOut
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (-not (Test-Path (Join-Path $appOut 'AsantePDF.exe'))) { throw 'Published AsantePDF.exe is missing.' }
-
-          if (Test-Path './THIRD-PARTY-NOTICES.md') {
-            Copy-Item './THIRD-PARTY-NOTICES.md' (Join-Path $appOut 'THIRD-PARTY-NOTICES.md') -Force
-          }
-          Write-Host "Published app ready at $appOut" -ForegroundColor Green
-
-      - name: Stage and validate bundled engines
-        timeout-minutes: 18
+      - name: Commit validated generated changes
         shell: pwsh
-        working-directory: srcdrop
         run: |
-          ./scripts/stage-release-engines.ps1 -Destination './dist/app'
-
-      - name: Prepare VC runtime and release PDF fixture
-        timeout-minutes: 5
-        shell: pwsh
-        working-directory: srcdrop
-        run: |
-          $prereqs = './dist/prereqs'
-          New-Item -ItemType Directory -Force -Path $prereqs | Out-Null
-          $vcRedist = Join-Path $prereqs 'vc_redist.x64.exe'
-          Invoke-WebRequest 'https://aka.ms/vc14/vc_redist.x64.exe' -OutFile $vcRedist
-          if ((Get-Item $vcRedist).Length -lt 5MB) { throw 'Downloaded VC++ redistributable is unexpectedly small.' }
-          $vcHash = (Get-FileHash $vcRedist -Algorithm SHA256).Hash.ToLowerInvariant()
-          Set-Content -Path (Join-Path $prereqs 'VC-REDIST-SHA256.txt') -Value "$vcHash  vc_redist.x64.exe" -Encoding ASCII
-
-          ./scripts/New-SamplePdf.ps1 -OutputPath './dist/release-sample.pdf'
-          & './dist/app/engines/qpdf/qpdf.exe' --check './dist/release-sample.pdf'
-          if ($LASTEXITCODE -notin @(0,3)) { throw 'The generated PDF fixture failed qpdf validation.' }
-          Write-Host 'Prerequisites and release fixture are ready.' -ForegroundColor Green
-
-      - name: Run published-app final candidate self-test
-        timeout-minutes: 12
-        shell: pwsh
-        working-directory: srcdrop
-        run: |
-          $app = (Resolve-Path './dist/app/AsantePDF.exe').Path
-          $sample = (Resolve-Path './dist/release-sample.pdf').Path
-          $out = Join-Path (Get-Location) 'dist/selftest-preinstall'
-          Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $out | Out-Null
-
-          $process = Start-Process -FilePath $app -ArgumentList @('--selftest-final', $sample, $out) -PassThru
-          $deadline = [DateTime]::UtcNow.AddMinutes(10)
-          while (-not $process.HasExited -and [DateTime]::UtcNow -lt $deadline) {
-            Start-Sleep -Seconds 2
-            $process.Refresh()
+          if (-not (Test-Path 'dev-patches')) {
+            Write-Host 'No generated patch changes to commit.' -ForegroundColor Cyan
+            exit 0
           }
 
-          if (-not $process.HasExited) {
-            Write-Host 'Published-app final self-test exceeded 10 minutes. Capturing partial outputs...' -ForegroundColor Yellow
-            Get-ChildItem $out -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-            $startup = Join-Path $env:LOCALAPPDATA 'AsantePDF/Logs/startup.log'
-            if (Test-Path $startup) { Get-Content $startup | Write-Host }
-            try { taskkill /PID $process.Id /T /F | Out-Host } catch { }
-            throw 'Published-app final self-test timed out after 10 minutes.'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git add -A -- src tests installer assets scripts .github VERSION THIRD-PARTY-NOTICES.md .gitignore
+          git rm -r dev-patches
+
+          if (git diff --cached --quiet) {
+            Write-Host 'Patch scripts produced no repository changes.' -ForegroundColor Cyan
+            exit 0
           }
 
-          if ($process.ExitCode -ne 0) {
-            $errorFile = Join-Path $out 'final-candidate-error.txt'
-            if (Test-Path $errorFile) { Get-Content $errorFile | Write-Host }
-            throw "Published app final self-test failed with exit code $($process.ExitCode)."
-          }
-          if (-not (Test-Path (Join-Path $out 'final-candidate-pass.flag'))) { throw 'Published app did not produce final-candidate-pass.flag.' }
-          Write-Host 'Published-app final candidate self-test passed.' -ForegroundColor Green
-
-      - name: Compile production Setup.exe
-        timeout-minutes: 6
-        shell: pwsh
-        working-directory: srcdrop
-        run: |
-          $version = (Get-Content './VERSION' -Raw).Trim()
-          $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
-          $isccPath = if ($iscc) { $iscc.Source } else { Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe' }
-          if (-not (Test-Path $isccPath)) { throw 'Inno Setup compiler (ISCC.exe) was not found.' }
-          & $isccPath "/DMyAppDisplayVersion=$version" './installer/AsantePDF.iss'
-          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE." }
-          if (-not (Test-Path './dist/installer/AsantePDF Setup.exe')) { throw 'Expected installer was not produced.' }
-          Write-Host 'AsantePDF Setup.exe compiled successfully.' -ForegroundColor Green
-
-      - name: Install exact Setup.exe and verify installed copy
-        timeout-minutes: 12
-        shell: pwsh
-        working-directory: srcdrop
-        run: |
-          ./scripts/verify-installed-release.ps1 `
-            -InstallerPath './dist/installer/AsantePDF Setup.exe' `
-            -SamplePdf './dist/release-sample.pdf'
-
-      - name: Write release receipt and checksums
-        timeout-minutes: 5
-        shell: pwsh
-        working-directory: srcdrop
-        run: |
-          ./scripts/write-release-receipt.ps1 `
-            -InstallerPath './dist/installer/AsantePDF Setup.exe'
-
-          $receipt = Get-ChildItem './dist/release-evidence' -Filter 'AsantePDF-*-Release-Receipt.txt' -File | Select-Object -First 1
-          if (-not $receipt) { throw 'Release receipt was not produced.' }
-          Add-Content -Path $receipt.FullName -Value "`nBuild payload SHA256: 5d176420216ea65d3dd6116fec47256948ace5fde5c6e3782916a6d13ecb4486"
-          Copy-Item './RC10-BUILD-PAYLOAD-SHA256.txt' './dist/release-evidence/RC10-BUILD-PAYLOAD-SHA256.txt' -Force
-
-          $zip = './dist/AsantePDF-RC10-Release-Evidence.zip'
-          Remove-Item $zip -Force -ErrorAction SilentlyContinue
-          Compress-Archive -Path './dist/release-evidence/*' -DestinationPath $zip -CompressionLevel Optimal
-
-      - name: Upload AsantePDF Setup.exe
-        uses: actions/upload-artifact@v4
-        with:
-          name: AsantePDF-RC10-Windows-Installer
-          path: srcdrop/dist/installer/AsantePDF Setup.exe
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload verification evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: AsantePDF-RC10-Release-Evidence
-          path: |
-            srcdrop/dist/selftest-preinstall/**
-            srcdrop/dist/selftest-installed/**
-            srcdrop/dist/release-sample.pdf
-            srcdrop/dist/release-evidence/**
-            srcdrop/dist/AsantePDF-RC10-Release-Evidence.zip
-            ${{ runner.temp }}/AsantePDF-RC10-compact.tar.gz
-          if-no-files-found: warn
-          retention-days: 30
+          git commit -m 'Apply Windows-validated AsantePDF development patch'
+          git push origin HEAD:development/master-upgrade-v2
