@@ -179,45 +179,83 @@ internal sealed class DiagnosticsWindow : Window
         root.Children.Add(_updateStatus);
 
         var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Left };
-        var release = new Button { Content = "Open update page", Style = (Style)FindResource("FlatButtonStyle"), IsEnabled = false };
-        release.Click += (_, _) => { if (_availableUpdate is not null) UpdateService.OpenRelease(_availableUpdate); };
         var check = new Button { Content = "Check for updates", Style = (Style)FindResource("PrimaryButtonStyle") };
-        check.Click += async (_, _) => await CheckUpdatesAsync();
+        var install = new Button { Content = "Download & install update", Style = (Style)FindResource("PrimaryButtonStyle"), IsEnabled = false };
+        var release = new Button { Content = "View release page", Style = (Style)FindResource("FlatButtonStyle"), IsEnabled = false };
         var logs = new Button { Content = "Open logs folder", Style = (Style)FindResource("FlatButtonStyle") };
-        logs.Click += (_, _) => { Directory.CreateDirectory(App.LogDirectory); Process.Start(new ProcessStartInfo(App.LogDirectory) { UseShellExecute = true }); };
         var copy = new Button { Content = "Copy diagnostics", Style = (Style)FindResource("FlatButtonStyle") };
+
+        release.Click += (_, _) => { if (_availableUpdate is not null) UpdateService.OpenRelease(_availableUpdate); };
+        check.Click += async (_, _) => await CheckUpdatesAsync();
+        install.Click += async (_, _) =>
+        {
+            if (_availableUpdate?.InstallerUrl is null) return;
+            var choice = MessageBox.Show(this,
+                $"Download AsantePDF {_availableUpdate.Version} and start its Windows installer?\n\nThe installer will be visible and Windows may ask for administrator approval. Your settings and session data are kept outside the application folder and are not removed by an upgrade.",
+                "Install AsantePDF update", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (choice != MessageBoxResult.Yes) return;
+
+            install.IsEnabled = false;
+            check.IsEnabled = false;
+            try
+            {
+                var progress = new Progress<double>(value => _updateStatus.Text = $"Downloading AsantePDF {_availableUpdate.Version}… {value:P0}");
+                var installerPath = await UpdateService.DownloadInstallerAsync(_availableUpdate, progress);
+                _updateStatus.Text = "Download complete. Starting the AsantePDF installer…";
+                UpdateService.LaunchInstaller(installerPath);
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                App.Log("Update download/install failed: " + ex);
+                _updateStatus.Text = "The update was not installed. Your current AsantePDF installation is unchanged.";
+                install.IsEnabled = _availableUpdate?.InstallerUrl is not null;
+                check.IsEnabled = true;
+            }
+        };
+        logs.Click += (_, _) => { Directory.CreateDirectory(App.LogDirectory); Process.Start(new ProcessStartInfo(App.LogDirectory) { UseShellExecute = true }); };
         copy.Click += (_, _) => Clipboard.SetText(info.ToString());
-        actions.Children.Add(check); actions.Children.Add(release); actions.Children.Add(logs); actions.Children.Add(copy);
+        actions.Children.Add(check); actions.Children.Add(install); actions.Children.Add(release); actions.Children.Add(logs); actions.Children.Add(copy);
         root.Children.Add(actions);
         Content = root;
 
         async Task CheckUpdatesAsync()
         {
+            check.IsEnabled = false;
+            install.IsEnabled = false;
+            release.IsEnabled = false;
             _updateStatus.Text = "Checking GitHub Releases…";
             try
             {
                 var update = await UpdateService.CheckAsync();
                 if (update is null)
                 {
-                    _updateStatus.Text = "No release information was returned.";
+                    _availableUpdate = null;
+                    _updateStatus.Text = "No public AsantePDF release has been published yet. This installation is unchanged.";
                     return;
                 }
                 _availableUpdate = update;
+                release.IsEnabled = true;
                 if (UpdateService.IsNewer(update))
                 {
-                    _updateStatus.Text = $"AsantePDF {update.Version} is available. The update page will open in your browser so you can review and install it.";
-                    release.IsEnabled = true;
+                    install.IsEnabled = update.InstallerUrl is not null;
+                    _updateStatus.Text = update.InstallerUrl is not null
+                        ? $"AsantePDF {update.Version} is available. You can review the release or download and start the signed Windows installer from here."
+                        : $"AsantePDF {update.Version} is available, but this release does not expose a Windows installer asset. Open the release page for details.";
                 }
                 else
                 {
                     _updateStatus.Text = $"You are up to date. Latest release: {update.Version}.";
-                    release.IsEnabled = false;
                 }
             }
             catch (Exception ex)
             {
                 App.Log("Update check failed: " + ex);
                 _updateStatus.Text = "Could not check for updates. Your current installation is unchanged.";
+            }
+            finally
+            {
+                check.IsEnabled = true;
             }
         }
     }

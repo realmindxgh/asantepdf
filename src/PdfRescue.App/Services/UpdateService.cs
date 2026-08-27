@@ -1,11 +1,20 @@
 using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 
 namespace PdfRescue.App.Services;
 
-public sealed record UpdateInfo(string Version, string ReleaseUrl, DateTimeOffset? PublishedUtc, string Notes);
+public sealed record UpdateInfo(
+    string Version,
+    string ReleaseUrl,
+    string? InstallerName,
+    string? InstallerUrl,
+    long? InstallerSizeBytes,
+    DateTimeOffset? PublishedUtc,
+    string Notes);
 
 public static class UpdateService
 {
@@ -21,6 +30,7 @@ public static class UpdateService
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseApi);
         using var response = await Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(token);
         using var json = await JsonDocument.ParseAsync(stream, cancellationToken: token);
@@ -32,13 +42,90 @@ public static class UpdateService
         if (root.TryGetProperty("published_at", out var dateNode) && DateTimeOffset.TryParse(dateNode.GetString(), out var parsed))
             published = parsed;
         if (string.IsNullOrWhiteSpace(tag) || string.IsNullOrWhiteSpace(url)) return null;
-        return new UpdateInfo(tag.TrimStart('v', 'V'), url, published, notes);
+
+        string? installerName = null;
+        string? installerUrl = null;
+        long? installerSize = null;
+        if (root.TryGetProperty("assets", out var assetsNode) && assetsNode.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var asset in assetsNode.EnumerateArray())
+            {
+                var name = asset.TryGetProperty("name", out var nameNode) ? nameNode.GetString() : null;
+                var download = asset.TryGetProperty("browser_download_url", out var downloadNode) ? downloadNode.GetString() : null;
+                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(download)) continue;
+                if (!name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!name.Contains("AsantePDF", StringComparison.OrdinalIgnoreCase)) continue;
+
+                installerName = name;
+                installerUrl = download;
+                if (asset.TryGetProperty("size", out var sizeNode) && sizeNode.TryGetInt64(out var bytes))
+                    installerSize = bytes;
+                break;
+            }
+        }
+
+        return new UpdateInfo(tag.TrimStart('v', 'V'), url, installerName, installerUrl, installerSize, published, notes);
     }
 
     public static bool IsNewer(UpdateInfo update) => CompareVersions(update.Version, CurrentVersion) > 0;
 
     public static void OpenRelease(UpdateInfo update) =>
         Process.Start(new ProcessStartInfo(update.ReleaseUrl) { UseShellExecute = true });
+
+    public static async Task<string> DownloadInstallerAsync(
+        UpdateInfo update,
+        IProgress<double>? progress = null,
+        CancellationToken token = default)
+    {
+        if (string.IsNullOrWhiteSpace(update.InstallerUrl))
+            throw new InvalidOperationException("This release does not provide an AsantePDF Windows installer asset.");
+
+        var folder = Path.Combine(Path.GetTempPath(), "AsantePDF", "updates", update.Version);
+        Directory.CreateDirectory(folder);
+        var fileName = Path.GetFileName(string.IsNullOrWhiteSpace(update.InstallerName) ? "AsantePDF Setup.exe" : update.InstallerName);
+        var destination = Path.Combine(folder, fileName);
+        var staged = destination + ".part";
+        try
+        {
+            if (File.Exists(staged)) File.Delete(staged);
+            using var request = new HttpRequestMessage(HttpMethod.Get, update.InstallerUrl);
+            using var response = await Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
+            response.EnsureSuccessStatusCode();
+            var length = response.Content.Headers.ContentLength ?? update.InstallerSizeBytes;
+            await using var input = await response.Content.ReadAsStreamAsync(token);
+            await using var output = new FileStream(staged, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+            var buffer = new byte[81920];
+            long total = 0;
+            while (true)
+            {
+                var read = await input.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
+                if (read == 0) break;
+                await output.WriteAsync(buffer.AsMemory(0, read), token);
+                total += read;
+                if (length is > 0) progress?.Report(Math.Clamp((double)total / length.Value, 0, 1));
+            }
+            await output.FlushAsync(token);
+            token.ThrowIfCancellationRequested();
+            File.Move(staged, destination, true);
+            progress?.Report(1);
+            return destination;
+        }
+        catch
+        {
+            try { if (File.Exists(staged)) File.Delete(staged); } catch { }
+            throw;
+        }
+    }
+
+    public static void LaunchInstaller(string installerPath)
+    {
+        if (!File.Exists(installerPath)) throw new FileNotFoundException("The downloaded AsantePDF installer could not be found.", installerPath);
+        Process.Start(new ProcessStartInfo(installerPath, "/CLOSEAPPLICATIONS /NORESTART")
+        {
+            UseShellExecute = true,
+            Verb = "runas"
+        });
+    }
 
     private static int CompareVersions(string left, string right)
     {
@@ -52,7 +139,7 @@ public static class UpdateService
 
     private static HttpClient CreateClient()
     {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        var client = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("AsantePDF-Windows/1.0");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return client;
