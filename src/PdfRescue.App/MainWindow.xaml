@@ -297,7 +297,7 @@
                             <ColumnDefinition x:Name="PagesSplitterColumn" Width="5" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="5" />
-                            <ColumnDefinition x:Name="InspectorColumn" Width="310" />
+                            <ColumnDefinition x:Name="InspectorColumn" Width="310" MinWidth="260" MaxWidth="460" />
                         </Grid.ColumnDefinitions>
 
                         <Border x:Name="PagesNavigationBorder" Grid.Column="0" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
@@ -476,6 +476,13 @@
                         <Border Grid.Column="4" Background="#0C1723" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1,0,0,0">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Margin="16">
+                                    <Border x:Name="InspectorContextCard" Background="#101F2E" BorderBrush="#243D56" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,0,0,14">
+                                        <StackPanel>
+                                            <TextBlock x:Name="InspectorContextTitle" Text="Document" FontSize="14" FontWeight="SemiBold" />
+                                            <TextBlock x:Name="InspectorContextSummary" Text="Select a page or text range to inspect its context." Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,8" />
+                                            <StackPanel x:Name="InspectorContextContent" />
+                                        </StackPanel>
+                                    </Border>
                                     <TextBlock Text="Document Details" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,14" />
                                     <TextBlock Text="File" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
                                     <TextBlock x:Name="InspectorFile" Text="—" TextWrapping="Wrap" Margin="0,3,0,10" />

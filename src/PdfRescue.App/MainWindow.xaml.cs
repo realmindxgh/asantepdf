@@ -1708,6 +1708,7 @@ public partial class MainWindow : Window
         RedoButton.IsEnabled = available && _redo.Count > 0;
         RedoMenuItem.IsEnabled = available && _redo.Count > 0;
         UpdateDocumentTitleDirtyIndicator();
+        UpdateInspectorContext();
     }
 
     private bool HasUnsavedLayoutChanges()
