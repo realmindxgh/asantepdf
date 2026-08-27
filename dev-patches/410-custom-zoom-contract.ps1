@@ -15,6 +15,7 @@ $appRoot = Join-Path $SourceRoot 'src\PdfRescue.App'
 $xamlPath = Join-Path $appRoot 'MainWindow.xaml'
 $mainPath = Join-Path $appRoot 'MainWindow.xaml.cs'
 $settingsPath = Join-Path $appRoot 'SettingsWindow.cs'
+$accessibilityPath = Join-Path $appRoot 'MainWindow.Accessibility.cs'
 $zoomCodePath = Join-Path $appRoot 'MainWindow.Zoom.cs'
 
 $oldZoomControl = '                                <Button x:Name="ZoomButton" Style="{StaticResource FlatButtonStyle}" Click="ActualSizeShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="100%" MinWidth="66" Padding="7,4" AutomationProperties.Name="Zoom percentage and actual size" AutomationProperties.HelpText="Shows current zoom. Activate to return to 100 percent." />'
@@ -31,6 +32,10 @@ Replace-Exact $settingsPath '        AddField(content, "Default render width", _
 Replace-Exact $settingsPath '        if (!uint.TryParse(_zoom.Text.Trim(), out var width) || width < 320 || width > 4000)' '        if (!double.TryParse(_zoom.Text.Trim().TrimEnd(''%'').Trim(), out var zoomPercent) || zoomPercent < 30 || zoomPercent > 350)'
 Replace-Exact $settingsPath '            MessageBox.Show(this, "Default render width must be between 320 and 4000.", "Settings", MessageBoxButton.OK, MessageBoxImage.Information);' '            MessageBox.Show(this, "Default zoom must be between 30% and 350%.", "Settings", MessageBoxButton.OK, MessageBoxImage.Information);'
 Replace-Exact $settingsPath '        SavedPreferences = new AppPreferences' ('        var width = (uint)Math.Clamp((int)Math.Round(1100d * zoomPercent / 100d), 320, 4000);' + [Environment]::NewLine + [Environment]::NewLine + '        SavedPreferences = new AppPreferences')
+
+Replace-Exact $accessibilityPath '        Name(ZoomButton, "Zoom percentage", "Activate to return to actual size / 100 percent.");' '        SetAutomationMetadata(ZoomPercentBox, "Custom zoom percentage", "Type a percentage from 30 to 350 and press Enter. Use the 1:1 button for 100 percent.");'
+Replace-Exact $accessibilityPath '        Name(' '        SetAutomationMetadata('
+Replace-Exact $accessibilityPath '    private static void Name(DependencyObject element, string name, string? help = null)' '    private static void SetAutomationMetadata(DependencyObject element, string name, string? help = null)'
 
 $zoomCode = @'
 using System.Windows;
