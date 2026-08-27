@@ -249,6 +249,10 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Button x:Name="AddTextButton" Style="{StaticResource RibbonButtonStyle}" Click="AddTextMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="T" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#49D6FF"/><TextBlock Text="Edit Text" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
                                             <Button x:Name="HighlightButton" Style="{StaticResource RibbonButtonStyle}" Click="HighlightMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#F0B93A"/><TextBlock Text="Highlight" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="UnderlineSelectedText_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="U" TextDecorations="Underline" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#49D6FF"/><TextBlock Text="Underline" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="StrikeoutSelectedText_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="S" TextDecorations="Strikethrough" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#EF5C5C"/><TextBlock Text="Strikeout" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="AddNoteAnnotation_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="&#xE8BD;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#FCD116"/><TextBlock Text="Note" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
+                                            <Button Style="{StaticResource RibbonButtonStyle}" Click="AnnotationStyle_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}"><StackPanel><TextBlock Text="●" FontSize="21" HorizontalAlignment="Center" Foreground="#FCD116"/><TextBlock Text="Style" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
                                             <Button x:Name="CropButton" Style="{StaticResource RibbonButtonStyle}" Click="CropMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE7A8;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#D187FF"/><TextBlock Text="Crop" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
                                             <Button x:Name="RedactButton" Style="{StaticResource RibbonButtonStyle}" Click="RedactMarkup_Click" IsEnabled="False"><StackPanel><TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="21" HorizontalAlignment="Center" Foreground="#EF5C8B"/><TextBlock Text="Redact" FontSize="12" Margin="0,5,0,0"/></StackPanel></Button>
                                         </StackPanel>
@@ -481,6 +485,11 @@
                                             <Canvas.ContextMenu>
                                                 <ContextMenu Opened="TextSelectionContextMenu_Opened">
                                                     <MenuItem Header="Copy selected text" InputGestureText="Ctrl+C" Click="CopySelectedDocumentText_Click" />
+                                                    <Separator />
+                                                    <MenuItem Header="Highlight selected text" Click="HighlightSelectedText_Click" />
+                                                    <MenuItem Header="Underline selected text" Click="UnderlineSelectedText_Click" />
+                                                    <MenuItem Header="Strike out selected text" Click="StrikeoutSelectedText_Click" />
+                                                    <MenuItem Header="Annotation color and opacity…" Click="AnnotationStyle_Click" />
                                                 </ContextMenu>
                                             </Canvas.ContextMenu>
                                         </Canvas>

@@ -1076,8 +1076,13 @@ public partial class MainWindow : Window
     private void HighlightMarkup_Click(object sender, RoutedEventArgs e)
     {
         if (_currentPdf is null || Pages.Count == 0) return;
+        if (HasDocumentTextSelection)
+        {
+            HighlightSelectedText_Click(sender, e);
+            return;
+        }
         BeginMarkupMode(MarkupMode.Highlight,
-            "Highlight mode: drag a rectangle over the area to highlight.");
+            "Highlight mode: drag an area to create a native PDF highlight annotation. Select text first for line-accurate markup.");
     }
 
     private void RectangleMarkup_Click(object sender, RoutedEventArgs e)
@@ -1274,8 +1279,9 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save highlighted PDF", SuggestName(source, "highlighted"));
         if (output is null) return;
         var success = await RunPdfOutputOperationAsync("Adding highlight...", "Highlight added.", output, token =>
-            RunAgainstWorkingLayoutAsync((working, ct) =>
-                _markup.AddHighlightAsync(working, output, pageNumber, rect, ct), token));
+            RunAgainstWorkingLayoutAsync((working, ct) => _nativeAnnotations.AddTextMarkupAsync(
+                working, output, pageNumber, [new PdfSearchRect(rect.X, rect.Y, rect.Width, rect.Height)],
+                NativeTextMarkupKind.Highlight, _annotationStyle, string.Empty, ct), token));
         if (success)
             await ShowPdfResultWorkflowAsync(
                 "Highlight complete",
@@ -1292,7 +1298,8 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save PDF with rectangle", SuggestName(source, "rectangle"));
         if (output is null) return;
         var success = await RunPdfOutputOperationAsync("Drawing rectangle...", "Rectangle added.", output, token =>
-            RunAgainstWorkingLayoutAsync((working, ct) => _markup.AddRectangleAsync(working, output, pageNumber, rect, ct), token));
+            RunAgainstWorkingLayoutAsync((working, ct) => _nativeAnnotations.AddShapeAsync(
+                working, output, pageNumber, rect, ellipse: false, _annotationStyle, ct), token));
         if (success)
             await ShowPdfResultWorkflowAsync(
                 "Rectangle complete",
@@ -1309,7 +1316,8 @@ public partial class MainWindow : Window
         var output = AskSavePath("Save PDF with ellipse", SuggestName(source, "ellipse"));
         if (output is null) return;
         var success = await RunPdfOutputOperationAsync("Drawing ellipse...", "Ellipse added.", output, token =>
-            RunAgainstWorkingLayoutAsync((working, ct) => _markup.AddEllipseAsync(working, output, pageNumber, rect, ct), token));
+            RunAgainstWorkingLayoutAsync((working, ct) => _nativeAnnotations.AddShapeAsync(
+                working, output, pageNumber, rect, ellipse: true, _annotationStyle, ct), token));
         if (success)
             await ShowPdfResultWorkflowAsync(
                 "Ellipse complete",

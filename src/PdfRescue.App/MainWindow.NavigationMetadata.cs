@@ -166,7 +166,12 @@ public partial class MainWindow
 
     private void AnnotationsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (AnnotationsList.SelectedItem is not PdfAnnotationItem annotation) return;
+        _selectedPdfAnnotation = AnnotationsList.SelectedItem as PdfAnnotationItem;
+        if (_selectedPdfAnnotation is not PdfAnnotationItem annotation)
+        {
+            UpdateInspectorContext();
+            return;
+        }
         var target = Pages.FirstOrDefault(page => page.SourcePageNumber == annotation.SourcePageNumber);
         if (target is null)
         {
@@ -176,6 +181,7 @@ public partial class MainWindow
         PagesList.SelectedItem = target;
         PagesList.ScrollIntoView(target);
         StatusText.Text = $"Opened {annotation.TypeLabel.ToLowerInvariant()} on page {target.Position:N0}.";
+        UpdateInspectorContext();
     }
 
     private async void SaveAttachment_Click(object sender, RoutedEventArgs e)
@@ -221,6 +227,7 @@ public partial class MainWindow
         _attachmentNavigationCts = null;
         _annotationsLoadedForPath = null;
         _attachmentsLoadedForPath = null;
+        _selectedPdfAnnotation = null;
 
         if (!_productShellInitialized || AnnotationsList is null || AttachmentsList is null) return;
         AnnotationsList.ItemsSource = null;

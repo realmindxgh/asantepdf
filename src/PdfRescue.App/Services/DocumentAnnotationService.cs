@@ -4,7 +4,9 @@ using PDFiumCore;
 namespace PdfRescue.App.Services;
 
 public sealed record PdfAnnotationItem(
+    int Index,
     int SourcePageNumber,
+    int Subtype,
     string TypeLabel,
     string Author,
     string Contents,
@@ -71,7 +73,9 @@ public sealed class DocumentAnnotationService
                             if (!ShouldListSubtype(subtype)) continue;
 
                             results.Add(new PdfAnnotationItem(
+                                annotationIndex,
                                 pageIndex + 1,
+                                subtype,
                                 GetSubtypeLabel(subtype),
                                 ReadString(annotation, "T"),
                                 ReadString(annotation, "Contents"),

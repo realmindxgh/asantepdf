@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using PdfRescue.App.Services;
 
 namespace PdfRescue.App;
 
@@ -44,6 +45,27 @@ public partial class MainWindow
             };
             copy.Click += CopySelectedDocumentText_Click;
             InspectorContextContent.Children.Add(copy);
+            var markup = new WrapPanel { Margin = new Thickness(0, 7, 0, 0) };
+            markup.Children.Add(CreateInspectorAction("Highlight", HighlightSelectedText_Click));
+            markup.Children.Add(CreateInspectorAction("Underline", UnderlineSelectedText_Click));
+            markup.Children.Add(CreateInspectorAction("Strikeout", StrikeoutSelectedText_Click));
+            markup.Children.Add(CreateInspectorAction("Style…", AnnotationStyle_Click));
+            InspectorContextContent.Children.Add(markup);
+            return;
+        }
+
+        if (_selectedPdfAnnotation is PdfAnnotationItem annotation)
+        {
+            InspectorContextTitle.Text = "Annotation";
+            InspectorContextSummary.Text = $"{annotation.TypeLabel} on source page {annotation.SourcePageNumber:N0}";
+            AddInspectorField("Type", annotation.TypeLabel);
+            AddInspectorField("Author", string.IsNullOrWhiteSpace(annotation.Author) ? "Not specified" : annotation.Author);
+            AddInspectorField("Contents", string.IsNullOrWhiteSpace(annotation.Contents) ? "(No comment text)" : annotation.Contents, true);
+            AddInspectorField("Modified", string.IsNullOrWhiteSpace(annotation.Modified) ? "Not specified" : annotation.Modified);
+            var actions = new WrapPanel { Margin = new Thickness(0, 5, 0, 0) };
+            actions.Children.Add(CreateInspectorAction("Edit copy…", EditSelectedAnnotation_Click));
+            actions.Children.Add(CreateInspectorAction("Delete from copy…", DeleteSelectedAnnotation_Click));
+            InspectorContextContent.Children.Add(actions);
             return;
         }
 
