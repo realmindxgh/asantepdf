@@ -2,6 +2,14 @@ param([Parameter(Mandatory=$true)][string]$SourceRoot)
 $ErrorActionPreference = 'Stop'
 
 Add-Type -AssemblyName System.Drawing
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class AsantePdfIconNative {
+    [DllImport("user32.dll", SetLastError=true)]
+    public static extern bool DestroyIcon(IntPtr hIcon);
+}
+'@
 
 function New-RoundedPath([System.Drawing.RectangleF]$Rect, [float]$Radius) {
     $path = [System.Drawing.Drawing2D.GraphicsPath]::new()
@@ -15,7 +23,7 @@ function New-RoundedPath([System.Drawing.RectangleF]$Rect, [float]$Radius) {
     return $path
 }
 
-function New-IdentityPng([int]$Size) {
+function New-IdentityBitmap([int]$Size) {
     $bitmap = [System.Drawing.Bitmap]::new($Size, $Size, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
     $g = [System.Drawing.Graphics]::FromImage($bitmap)
     try {
@@ -32,39 +40,37 @@ function New-IdentityPng([int]$Size) {
         $black = [System.Drawing.Color]::FromArgb(255, 17, 17, 17)
         $paper = [System.Drawing.Color]::FromArgb(255, 247, 249, 250)
 
-        # Three stacked document leaves. Their stepped edges carry Ghana's red/gold/green
-        # without turning the whole application into a flag motif.
-        $backRed = [System.Drawing.RectangleF]::new($s*0.08, $s*0.20, $s*0.68, $s*0.70)
-        $backGold = [System.Drawing.RectangleF]::new($s*0.12, $s*0.14, $s*0.68, $s*0.70)
-        $backGreen = [System.Drawing.RectangleF]::new($s*0.16, $s*0.08, $s*0.68, $s*0.70)
-        foreach ($layer in @(@($backRed,$red), @($backGold,$gold), @($backGreen,$green))) {
+        $layers = @(
+            @([System.Drawing.RectangleF]::new($s*0.08, $s*0.20, $s*0.68, $s*0.70), $red),
+            @([System.Drawing.RectangleF]::new($s*0.12, $s*0.14, $s*0.68, $s*0.70), $gold),
+            @([System.Drawing.RectangleF]::new($s*0.16, $s*0.08, $s*0.68, $s*0.70), $green)
+        )
+        foreach ($layer in $layers) {
             $p = New-RoundedPath $layer[0] $radius
-            try { $b = [System.Drawing.SolidBrush]::new($layer[1]); try { $g.FillPath($b,$p) } finally { $b.Dispose() } } finally { $p.Dispose() }
+            $b = [System.Drawing.SolidBrush]::new($layer[1])
+            try { $g.FillPath($b,$p) } finally { $b.Dispose(); $p.Dispose() }
         }
 
-        # Front black document.
         $front = [System.Drawing.RectangleF]::new($s*0.22, $s*0.12, $s*0.68, $s*0.78)
         $fp = New-RoundedPath $front $radius
-        try { $b = [System.Drawing.SolidBrush]::new($black); try { $g.FillPath($b,$fp) } finally { $b.Dispose() } } finally { $fp.Dispose() }
+        $fb = [System.Drawing.SolidBrush]::new($black)
+        try { $g.FillPath($fb,$fp) } finally { $fb.Dispose(); $fp.Dispose() }
 
-        # Folded corner.
         $fold = [System.Drawing.PointF[]]@(
             [System.Drawing.PointF]::new($s*0.67,$s*0.12),
             [System.Drawing.PointF]::new($s*0.90,$s*0.35),
             [System.Drawing.PointF]::new($s*0.67,$s*0.35)
         )
-        $fb = [System.Drawing.SolidBrush]::new($paper)
-        try { $g.FillPolygon($fb,$fold) } finally { $fb.Dispose() }
+        $paperBrush = [System.Drawing.SolidBrush]::new($paper)
+        try { $g.FillPolygon($paperBrush,$fold) } finally { $paperBrush.Dispose() }
         $foldShadow = [System.Drawing.PointF[]]@(
             [System.Drawing.PointF]::new($s*0.67,$s*0.12),
             [System.Drawing.PointF]::new($s*0.90,$s*0.35),
             [System.Drawing.PointF]::new($s*0.90,$s*0.12)
         )
-        $sb = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(150,0,107,63))
-        try { $g.FillPolygon($sb,$foldShadow) } finally { $sb.Dispose() }
+        $shadowBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(150,0,107,63))
+        try { $g.FillPolygon($shadowBrush,$foldShadow) } finally { $shadowBrush.Dispose() }
 
-        # A built from the three identity colours. At icon size it reads as a clean mark;
-        # at larger sizes it reveals the document/A concept.
         $stroke = [Math]::Max(2.0, $s * 0.075)
         $cap = [System.Drawing.Drawing2D.LineCap]::Round
         $leftPen = [System.Drawing.Pen]::new($red,$stroke)
@@ -78,45 +84,44 @@ function New-IdentityPng([int]$Size) {
             $g.DrawLine($rightPen,$s*0.52,$s*0.38,$s*0.72,$s*0.73)
             $g.DrawLine($barPen,$s*0.42,$s*0.59,$s*0.64,$s*0.59)
         } finally { $leftPen.Dispose(); $rightPen.Dispose(); $barPen.Dispose() }
-
-        $stream = [System.IO.MemoryStream]::new()
-        $bitmap.Save($stream,[System.Drawing.Imaging.ImageFormat]::Png)
-        return $stream.ToArray()
+        return $bitmap
     }
-    finally { $g.Dispose(); $bitmap.Dispose() }
+    finally { $g.Dispose() }
 }
 
-$sizes = @(16,24,32,48,64,128,256)
-$images = foreach ($size in $sizes) { ,(New-IdentityPng $size) }
-$iconPath = Join-Path $SourceRoot 'assets\asantepdf.ico'
-$dir = Split-Path -Parent $iconPath
-[IO.Directory]::CreateDirectory($dir) | Out-Null
-$stream = [IO.MemoryStream]::new()
-$writer = [IO.BinaryWriter]::new($stream)
+$assets = Join-Path $SourceRoot 'assets'
+[IO.Directory]::CreateDirectory($assets) | Out-Null
+$iconPath = Join-Path $assets 'asantepdf.ico'
+$previewPath = Join-Path $assets 'asantepdf-icon-256.png'
+
+# System.Drawing's native HICON serializer produces a conventional ICO resource
+# that Roslyn, Explorer, Inno Setup and the Windows shell all accept reliably.
+$iconBitmap = New-IdentityBitmap 64
+$hIcon = [IntPtr]::Zero
+$icon = $null
+$file = $null
 try {
-    $writer.Write([uint16]0)
-    $writer.Write([uint16]1)
-    $writer.Write([uint16]$sizes.Count)
-    $offset = 6 + (16 * $sizes.Count)
-    for ($i=0; $i -lt $sizes.Count; $i++) {
-        $size = $sizes[$i]
-        $png = $images[$i]
-        $writer.Write([byte]($(if($size -eq 256){0}else{$size})))
-        $writer.Write([byte]($(if($size -eq 256){0}else{$size})))
-        $writer.Write([byte]0)
-        $writer.Write([byte]0)
-        $writer.Write([uint16]1)
-        $writer.Write([uint16]32)
-        $writer.Write([uint32]$png.Length)
-        $writer.Write([uint32]$offset)
-        $offset += $png.Length
-    }
-    foreach ($png in $images) { $writer.Write($png) }
-    $writer.Flush()
-    [IO.File]::WriteAllBytes($iconPath,$stream.ToArray())
+    $hIcon = $iconBitmap.GetHicon()
+    $icon = [System.Drawing.Icon]::FromHandle($hIcon)
+    $file = [IO.File]::Create($iconPath)
+    $icon.Save($file)
 }
-finally { $writer.Dispose(); $stream.Dispose() }
+finally {
+    if ($file) { $file.Dispose() }
+    if ($icon) { $icon.Dispose() }
+    if ($hIcon -ne [IntPtr]::Zero) { [AsantePdfIconNative]::DestroyIcon($hIcon) | Out-Null }
+    $iconBitmap.Dispose()
+}
 
-# Keep a 256px PNG beside the ICO as the canonical identity preview/source asset.
-[IO.File]::WriteAllBytes((Join-Path $SourceRoot 'assets\asantepdf-icon-256.png'), $images[-1])
-Write-Host 'Ghana-inspired multi-resolution AsantePDF Windows icon staged.' -ForegroundColor Green
+$preview = New-IdentityBitmap 256
+try { $preview.Save($previewPath,[System.Drawing.Imaging.ImageFormat]::Png) }
+finally { $preview.Dispose() }
+
+# Validate the ICO through the same Windows API path consumers use before compile.
+$probe = [System.Drawing.Icon]::new($iconPath)
+try {
+    if ($probe.Width -lt 16 -or $probe.Height -lt 16) { throw 'Generated icon dimensions are invalid.' }
+}
+finally { $probe.Dispose() }
+
+Write-Host 'Ghana-inspired compiler-safe AsantePDF Windows icon staged.' -ForegroundColor Green
