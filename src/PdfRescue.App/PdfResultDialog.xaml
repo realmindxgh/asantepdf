@@ -55,6 +55,7 @@
             <Button x:Name="ReplaceCurrentButton" Style="{StaticResource FlatButtonStyle}" Click="ReplaceCurrent_Click"
                     Content="Use Result Here" Padding="13,8" ToolTip="Open the result and close the original tab" />
             <Button x:Name="OpenNewTabButton" Style="{StaticResource PrimaryButtonStyle}" Click="OpenNewTab_Click" Content="Open in New Tab" Padding="16,8" />
+            <Button x:Name="CompareButton" Style="{StaticResource FlatButtonStyle}" Click="Compare_Click" Content="Compare with Original" Padding="13,8" ToolTip="Open the original and result side by side" />
             <Button Style="{StaticResource FlatButtonStyle}" Click="OpenFolder_Click" Content="Open Folder" Padding="13,8" />
             <Button Style="{StaticResource FlatButtonStyle}" Click="SaveCopy_Click" Content="Save As…" Padding="13,8" />
             <Button x:Name="RunAgainButton" Style="{StaticResource FlatButtonStyle}" Click="RunAgain_Click" Content="Run Another" Padding="13,8" />

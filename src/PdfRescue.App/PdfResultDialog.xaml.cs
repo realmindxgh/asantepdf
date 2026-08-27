@@ -10,6 +10,7 @@ public enum PdfResultAction
     ReplaceCurrent,
     OpenFolder,
     SaveCopy,
+    Compare,
     RunAgain
 }
 
@@ -51,6 +52,8 @@ public partial class PdfResultDialog : Window
             ? "Open the result and close the original tab"
             : "The original tab has unsaved changes or is not the active source tab";
         OpenNewTabButton.Content = resultIsPdf ? "Open in New Tab" : "Open Result";
+        CompareButton.Visibility = resultIsPdf ? Visibility.Visible : Visibility.Collapsed;
+        CompareButton.IsEnabled = resultIsPdf && !string.IsNullOrWhiteSpace(originalPath) && File.Exists(originalPath);
         RunAgainButton.IsEnabled = canRunAgain;
     }
 
@@ -60,6 +63,7 @@ public partial class PdfResultDialog : Window
     private void ReplaceCurrent_Click(object sender, RoutedEventArgs e) => Finish(PdfResultAction.ReplaceCurrent);
     private void OpenFolder_Click(object sender, RoutedEventArgs e) => Finish(PdfResultAction.OpenFolder);
     private void SaveCopy_Click(object sender, RoutedEventArgs e) => Finish(PdfResultAction.SaveCopy);
+    private void Compare_Click(object sender, RoutedEventArgs e) => Finish(PdfResultAction.Compare);
     private void RunAgain_Click(object sender, RoutedEventArgs e) => Finish(PdfResultAction.RunAgain);
     private void Close_Click(object sender, RoutedEventArgs e) => Finish(PdfResultAction.Close);
 

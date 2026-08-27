@@ -89,6 +89,10 @@ public partial class MainWindow
             case PdfResultAction.SaveCopy:
                 SaveResultCopy(resultPath);
                 break;
+            case PdfResultAction.Compare:
+                if (resultIsPdf && !string.IsNullOrWhiteSpace(originalPath))
+                    await OpenResultComparisonAsync(originalPath, resultPath);
+                break;
             case PdfResultAction.RunAgain:
                 if (runAgainAction is not null)
                     await InvokeToolOnUiAsync(runAgainAction);
@@ -148,6 +152,10 @@ public partial class MainWindow
                 break;
             case PdfResultAction.SaveCopy:
                 SaveResultCopy(resultPath);
+                break;
+            case PdfResultAction.Compare:
+                if (isPdf && !string.IsNullOrWhiteSpace(sourcePath))
+                    await OpenResultComparisonAsync(sourcePath, resultPath);
                 break;
             case PdfResultAction.RunAgain:
                 await item.RequestRunAgainAsync();
