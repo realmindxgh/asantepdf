@@ -63,6 +63,7 @@ public partial class MainWindow : Window
         Highlight,
         Rectangle,
         Ellipse,
+        Freehand,
         Crop,
         PermanentRedaction,
         SignatureImage
@@ -1134,6 +1135,11 @@ public partial class MainWindow : Window
     private void BeginMarkupMode(MarkupMode mode, string instruction)
     {
         if (_busy || _currentPdf is null || PreviewImage.Source is null) return;
+        if (!IsSinglePageViewActive)
+        {
+            StatusText.Text = "Switch to Single Page view before using canvas editing or freehand annotations.";
+            return;
+        }
         _markupMode = mode;
         _markupDragging = false;
         MarkupSelectionRectangle.Visibility = Visibility.Collapsed;
@@ -1151,6 +1157,7 @@ public partial class MainWindow : Window
         _pendingSignatureImage = null;
         try { MarkupCanvas.ReleaseMouseCapture(); } catch { }
         MarkupSelectionRectangle.Visibility = Visibility.Collapsed;
+        ResetFreehandPreview();
         MarkupCanvas.Visibility = Visibility.Collapsed;
         UpdateDocumentTextSelectionInteractionState();
         if (!string.IsNullOrWhiteSpace(status)) StatusText.Text = status;
@@ -1174,6 +1181,13 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_markupMode == MarkupMode.Freehand)
+        {
+            BeginFreehandStroke(point);
+            e.Handled = true;
+            return;
+        }
+
         _markupStartPoint = point;
         _markupDragging = true;
         MarkupCanvas.CaptureMouse();
@@ -1188,13 +1202,35 @@ public partial class MainWindow : Window
     private void MarkupCanvas_MouseMove(object sender, MouseEventArgs e)
     {
         if (!_markupDragging || _markupMode is MarkupMode.None or MarkupMode.AddText) return;
-        UpdateMarkupSelection(ClampMarkupPoint(e.GetPosition(MarkupCanvas)));
+        var point = ClampMarkupPoint(e.GetPosition(MarkupCanvas));
+        if (_markupMode == MarkupMode.Freehand)
+        {
+            ContinueFreehandStroke(point);
+            return;
+        }
+        UpdateMarkupSelection(point);
     }
 
     private async void MarkupCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         if (!_markupDragging || _markupMode is MarkupMode.None or MarkupMode.AddText) return;
         var current = ClampMarkupPoint(e.GetPosition(MarkupCanvas));
+        if (_markupMode == MarkupMode.Freehand)
+        {
+            ContinueFreehandStroke(current, force: true);
+            _markupDragging = false;
+            try { MarkupCanvas.ReleaseMouseCapture(); } catch { }
+            var inkPage = PagesList.SelectedItem as PdfPageItem;
+            var points = GetNormalizedFreehandPoints();
+            EndMarkupMode();
+            if (inkPage is null || points.Count < 2)
+                StatusText.Text = "The freehand stroke was too short. No change was made.";
+            else
+                await ApplyFreehandAnnotationAsync(inkPage.Position, points);
+            e.Handled = true;
+            return;
+        }
+
         UpdateMarkupSelection(current);
         _markupDragging = false;
         try { MarkupCanvas.ReleaseMouseCapture(); } catch { }

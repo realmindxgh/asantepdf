@@ -17,6 +17,8 @@ public sealed record NativeAnnotationStyle(byte Red, byte Green, byte Blue, byte
     public static NativeAnnotationStyle Yellow { get; } = new(252, 209, 22, 120, 1.5);
 }
 
+public readonly record struct NativeInkPoint(double X, double Y);
+
 public sealed class NativePdfAnnotationService
 {
     private const int AnnotText = 1;
@@ -25,6 +27,7 @@ public sealed class NativePdfAnnotationService
     private const int AnnotHighlight = 9;
     private const int AnnotUnderline = 10;
     private const int AnnotStrikeOut = 12;
+    private const int AnnotInk = 15;
     private const int ColorTypeStroke = 0;
     private const int ColorTypeInterior = 1;
 
@@ -135,6 +138,49 @@ public sealed class NativePdfAnnotationService
             finally { fpdf_annot.FPDFPageCloseAnnot(annotation); }
         }, token);
 
+    public Task AddInkAsync(
+        string inputPath,
+        string outputPath,
+        int pageNumber,
+        IReadOnlyList<NativeInkPoint> points,
+        NativeAnnotationStyle style,
+        CancellationToken token = default) =>
+        MutateAsync(inputPath, outputPath, pageNumber, (page, width, height) =>
+        {
+            var usable = points
+                .Where(point => double.IsFinite(point.X) && double.IsFinite(point.Y))
+                .Select(point => new NativeInkPoint(Math.Clamp(point.X, 0, 1), Math.Clamp(point.Y, 0, 1)))
+                .ToArray();
+            if (usable.Length < 2) throw new InvalidOperationException("Draw a freehand stroke before creating an ink annotation.");
+
+            var annotation = CreateAnnotation(page, AnnotInk);
+            try
+            {
+                var native = usable.Select(point => new NativeFsPointF
+                {
+                    X = (float)(point.X * width),
+                    Y = (float)((1 - point.Y) * height)
+                }).ToArray();
+                var pad = (float)Math.Max(2, style.BorderWidth * 2.5);
+                var rect = new FS_RECTF_
+                {
+                    Left = Math.Max(0, native.Min(point => point.X) - pad),
+                    Right = Math.Min(width, native.Max(point => point.X) + pad),
+                    Bottom = Math.Max(0, native.Min(point => point.Y) - pad),
+                    Top = Math.Min(height, native.Max(point => point.Y) + pad)
+                };
+                if (fpdf_annot.FPDFAnnotSetRect(annotation, rect) == 0)
+                    throw new InvalidDataException("PDFium could not set the ink annotation bounds.");
+
+                SetStrokeColor(annotation, style);
+                fpdf_annot.FPDFAnnotSetBorder(annotation, 0, 0, (float)Math.Max(0.75, style.BorderWidth));
+                if (FPDFAnnotAddInkStroke(annotation.__Instance, native, (UIntPtr)(uint)native.Length) < 0)
+                    throw new InvalidDataException("PDFium could not add the freehand ink stroke.");
+                SetString(annotation, "T", "AsantePDF");
+            }
+            finally { fpdf_annot.FPDFPageCloseAnnot(annotation); }
+        }, token);
+
     public Task UpdateAsync(
         string inputPath,
         string outputPath,
@@ -152,7 +198,7 @@ public sealed class NativePdfAnnotationService
             {
                 SetString(annotation, "Contents", contents.Trim());
                 SetStrokeColor(annotation, style);
-                if (fpdf_annot.FPDFAnnotGetSubtype(annotation) is AnnotSquare or AnnotCircle)
+                if (fpdf_annot.FPDFAnnotGetSubtype(annotation) is AnnotSquare or AnnotCircle or AnnotInk)
                 {
                     fpdf_annot.FPDFAnnotSetBorder(annotation, 0, 0, (float)Math.Max(0.5, style.BorderWidth));
                 }
@@ -261,6 +307,22 @@ public sealed class NativePdfAnnotationService
         for (var i = 0; i < value.Length; i++) buffer[i] = value[i];
         fpdf_annot.FPDFAnnotSetStringValue(annotation, key, ref buffer[0]);
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeFsPointF
+    {
+        public float X;
+        public float Y;
+    }
+
+    // PDFiumCore 153 ships pdfium.dll on Windows. This API is public in the
+    // matching PDFium generation but is not exposed by every generated binding surface.
+    // AsantePDF is x64-only, where the native calling convention is unified.
+    [DllImport("pdfium.dll", EntryPoint = "FPDFAnnot_AddInkStroke", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FPDFAnnotAddInkStroke(
+        IntPtr annotation,
+        [In] NativeFsPointF[] points,
+        UIntPtr pointCount);
 
     private sealed class PdfiumFileWriter : FPDF_FILEWRITE_
     {

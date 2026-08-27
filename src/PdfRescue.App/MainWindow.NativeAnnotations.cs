@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Media;
 using PdfRescue.App.Services;
 
 namespace PdfRescue.App;
@@ -9,6 +10,73 @@ public partial class MainWindow
     private readonly NativePdfAnnotationService _nativeAnnotations = new();
     private NativeAnnotationStyle _annotationStyle = NativeAnnotationStyle.Yellow;
     private PdfAnnotationItem? _selectedPdfAnnotation;
+    private readonly List<Point> _freehandPoints = [];
+
+    private void FreehandMarkup_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentPdf is null || Pages.Count == 0) return;
+        BeginMarkupMode(MarkupMode.Freehand, "Freehand mode: draw on the current page. Release the mouse to create a native PDF ink annotation.");
+    }
+
+    private void BeginFreehandStroke(Point point)
+    {
+        _freehandPoints.Clear();
+        _freehandPoints.Add(point);
+        FreehandPreviewPolyline.Points.Clear();
+        FreehandPreviewPolyline.Points.Add(point);
+        FreehandPreviewPolyline.Stroke = new SolidColorBrush(Color.FromArgb(
+            _annotationStyle.Alpha, _annotationStyle.Red, _annotationStyle.Green, _annotationStyle.Blue));
+        FreehandPreviewPolyline.StrokeThickness = Math.Max(1.5, _annotationStyle.BorderWidth * 1.6);
+        FreehandPreviewPolyline.Visibility = Visibility.Visible;
+        MarkupSelectionRectangle.Visibility = Visibility.Collapsed;
+        _markupDragging = true;
+        MarkupCanvas.CaptureMouse();
+    }
+
+    private void ContinueFreehandStroke(Point point, bool force = false)
+    {
+        if (_freehandPoints.Count > 0 && !force)
+        {
+            var prior = _freehandPoints[^1];
+            var dx = point.X - prior.X;
+            var dy = point.Y - prior.Y;
+            if ((dx * dx) + (dy * dy) < 2.25) return;
+        }
+        _freehandPoints.Add(point);
+        FreehandPreviewPolyline.Points.Add(point);
+    }
+
+    private IReadOnlyList<NativeInkPoint> GetNormalizedFreehandPoints()
+    {
+        var width = Math.Max(1d, MarkupCanvas.ActualWidth);
+        var height = Math.Max(1d, MarkupCanvas.ActualHeight);
+        return _freehandPoints
+            .Select(point => new NativeInkPoint(point.X / width, point.Y / height))
+            .ToArray();
+    }
+
+    private void ResetFreehandPreview()
+    {
+        _freehandPoints.Clear();
+        if (FreehandPreviewPolyline is null) return;
+        FreehandPreviewPolyline.Points.Clear();
+        FreehandPreviewPolyline.Visibility = Visibility.Collapsed;
+    }
+
+    private async Task ApplyFreehandAnnotationAsync(int pageNumber, IReadOnlyList<NativeInkPoint> points)
+    {
+        if (_currentPdf is null || points.Count < 2) return;
+        var source = _currentPdf;
+        var output = AskSavePath("Save PDF with freehand ink", SuggestName(source, "ink"));
+        if (output is null) return;
+        var success = await RunPdfOutputOperationAsync("Adding freehand ink…", "Freehand ink added.", output, token =>
+            RunAgainstWorkingLayoutAsync((working, ct) =>
+                _nativeAnnotations.AddInkAsync(working, output, pageNumber, points, _annotationStyle, ct), token));
+        if (success)
+            await ShowPdfResultWorkflowAsync("Freehand annotation complete",
+                $"Created a copy with a native PDF ink annotation on page {pageNumber:N0}. The source PDF was preserved.",
+                source, output, () => FreehandMarkup_Click(this, new RoutedEventArgs()));
+    }
 
     private IReadOnlyList<PdfSearchRect> SelectedTextAnnotationRects()
     {
