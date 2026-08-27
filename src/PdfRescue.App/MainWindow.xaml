@@ -205,8 +205,17 @@
                                             <Button Style="{StaticResource RibbonButtonStyle}" Click="OpenPdf_Click" ToolTip="Open PDF (Ctrl+O)">
                                                 <StackPanel><TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Open" FontSize="12" Margin="0,5,0,0"/></StackPanel>
                                             </Button>
-                                            <Button x:Name="SaveButton" Style="{StaticResource RibbonButtonStyle}" Click="SaveAs_Click" IsEnabled="False" ToolTip="Save As (Ctrl+Shift+S)">
-                                                <StackPanel><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Save As" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+                                            <Button x:Name="SaveButton" Style="{StaticResource RibbonButtonStyle}" Click="Save_Click" IsEnabled="False" ToolTip="Save (Ctrl+S)">
+                                                <StackPanel><TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Save" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+                                            </Button>
+                                            <Button x:Name="SaveAsButton" Style="{StaticResource RibbonButtonStyle}" Click="SaveAs_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Save As (Ctrl+Shift+S)">
+                                                <StackPanel><TextBlock Text="&#xE792;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Save As" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+                                            </Button>
+                                            <Button x:Name="SaveCopyButton" Style="{StaticResource RibbonButtonStyle}" Click="SaveCopy_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Save a copy without changing this document">
+                                                <StackPanel><TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Save Copy" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+                                            </Button>
+                                            <Button x:Name="PrintButton" Style="{StaticResource RibbonButtonStyle}" Click="Print_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Print (Ctrl+P)">
+                                                <StackPanel><TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" FontSize="22" HorizontalAlignment="Center" Foreground="#4D9BFF"/><TextBlock Text="Print" FontSize="12" Margin="0,5,0,0"/></StackPanel>
                                             </Button>
                                         </StackPanel>
                                         <TextBlock Grid.Row="1" Text="File" HorizontalAlignment="Center" Foreground="#71869D" FontSize="12" />

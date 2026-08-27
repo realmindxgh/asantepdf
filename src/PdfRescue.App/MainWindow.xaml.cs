@@ -403,32 +403,130 @@ public partial class MainWindow : Window
         StatusText.Text = "Redid the page-layout change.";
     }
 
-    private async void SaveAs_Click(object sender, RoutedEventArgs e)
-    {
-        await SaveCurrentLayoutAsync(showSuccessMessage: true);
-    }
+    private async void Save_Click(object sender, RoutedEventArgs e) => await SaveInPlaceAsync(showSuccessMessage: true);
 
-    private async Task<bool> SaveCurrentLayoutAsync(bool showSuccessMessage)
+    private async void SaveAs_Click(object sender, RoutedEventArgs e) => await SaveAsCurrentDocumentAsync(showSuccessMessage: true);
+
+    private async void SaveCopy_Click(object sender, RoutedEventArgs e) => await SaveCopyCurrentLayoutAsync(showSuccessMessage: true);
+
+    private async Task<bool> SaveInPlaceAsync(bool showSuccessMessage)
     {
         if (_currentPdf is null || Pages.Count == 0) return false;
-        var output = AskSavePath("Save PDF As", SuggestName(_currentPdf, "edited"));
-        if (output is null) return false;
+        if (!HasUnsavedLayoutChanges())
+        {
+            if (showSuccessMessage) StatusText.Text = "No unsaved page-layout changes.";
+            return true;
+        }
+
+        var source = _currentPdf;
+        var directory = Path.GetDirectoryName(source)!;
+        var temp = Path.Combine(Path.GetTempPath(), "AsantePDF", "save", Guid.NewGuid().ToString("N") + ".pdf");
+        Directory.CreateDirectory(Path.GetDirectoryName(temp)!);
 
         var saved = await RunPdfOperationAsync("Saving PDF...", "Saved PDF successfully.", async token =>
         {
-            var transforms = Pages.Select(p => new PdfPageTransform(p.SourcePageNumber, p.Rotation)).ToArray();
-            await _operations.ApplyPageLayoutAsync(_currentPdf, transforms, output, token);
+            var transforms = Pages.Select(page => new PdfPageTransform(page.SourcePageNumber, page.Rotation)).ToArray();
+            await _operations.ApplyPageLayoutAsync(source, transforms, temp, token);
+            token.ThrowIfCancellationRequested();
+
+            var staged = Path.Combine(directory, "." + Path.GetFileName(source) + "." + Guid.NewGuid().ToString("N") + ".staged");
+            File.Copy(temp, staged, true);
+            try
+            {
+                if (File.Exists(source)) File.Replace(staged, source, null, true);
+                else File.Move(staged, source);
+            }
+            finally { try { if (File.Exists(staged)) File.Delete(staged); } catch { } }
         });
 
+        try { if (File.Exists(temp)) File.Delete(temp); } catch { }
         if (!saved) return false;
 
-        _savedLayoutBaseline = CaptureLayout();
-        UpdateCommandStates();
-
+        await ReloadCurrentPdfAfterInPlaceSaveAsync(source);
         if (showSuccessMessage)
             MessageBox.Show(this, "Saved successfully.", "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
-
         return true;
+    }
+
+    private async Task ReloadCurrentPdfAfterInPlaceSaveAsync(string source)
+    {
+        _thumbnailCts?.Cancel();
+        _previewCts?.Cancel();
+        await _renderer.OpenAsync(source, _lifetime.Token);
+        _currentPdf = source;
+        ResetDocumentSearchForDocumentChange();
+        ResetDocumentOutlineForDocumentChange();
+        ResetDocumentTextSelectionForDocumentChange();
+        ResetDocumentNavigationMetadataForDocumentChange();
+        _documentGeneration++;
+        _undo.Clear();
+        _redo.Clear();
+        _thumbnailCache.Clear();
+        Pages.Clear();
+        var count = checked((int)_renderer.PageCount);
+        for (var page = 1; page <= count; page++) Pages.Add(new PdfPageItem(page, page));
+        _savedLayoutBaseline = CaptureLayout();
+        PagesList.SelectedIndex = Math.Clamp(PagesList.SelectedIndex, 0, Math.Max(0, Pages.Count - 1));
+        if (PagesList.SelectedItem is PdfPageItem selected) await RenderPreviewAsync(selected);
+        CaptureActiveDocumentTabState();
+        UpdateCommandStates();
+        StartThumbnailRendering(_documentGeneration);
+    }
+
+    private async Task<bool> SaveAsCurrentDocumentAsync(bool showSuccessMessage)
+    {
+        if (_currentPdf is null || Pages.Count == 0) return false;
+        var original = _currentPdf;
+        var output = AskSavePath("Save PDF As", SuggestName(original, "edited"));
+        if (output is null) return false;
+        if (string.Equals(Path.GetFullPath(output), Path.GetFullPath(original), StringComparison.OrdinalIgnoreCase))
+            return await SaveInPlaceAsync(showSuccessMessage);
+
+        var saved = await WriteLayoutCopyAsync(output, "Saving PDF As...");
+        if (!saved) return false;
+
+        var originalTab = _activeDocumentTab;
+        if (originalTab is not null)
+        {
+            _savedLayoutBaseline = CaptureLayout();
+            originalTab.IsDirty = false;
+            CaptureActiveDocumentTabState();
+        }
+        await OpenPdfAsync(output);
+        if (originalTab is not null && DocumentTabs.Contains(originalTab) && !ReferenceEquals(originalTab, _activeDocumentTab))
+            await CloseDocumentTabAsync(originalTab);
+
+        if (showSuccessMessage)
+            MessageBox.Show(this, "Saved As successfully. The new file is now the active document.", "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
+        return true;
+    }
+
+    private async Task<bool> SaveCopyCurrentLayoutAsync(bool showSuccessMessage)
+    {
+        if (_currentPdf is null || Pages.Count == 0) return false;
+        var output = AskSavePath("Save a Copy", SuggestName(_currentPdf, "copy"));
+        if (output is null) return false;
+        if (string.Equals(Path.GetFullPath(output), Path.GetFullPath(_currentPdf), StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(this, "Save a Copy must use a different file. Use Save if you want to update the current PDF.", "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
+            return false;
+        }
+
+        var saved = await WriteLayoutCopyAsync(output, "Saving a copy...");
+        if (saved && showSuccessMessage)
+            MessageBox.Show(this, "Copy saved. Your current document and its unsaved state were left unchanged.", "AsantePDF", MessageBoxButton.OK, MessageBoxImage.Information);
+        return saved;
+    }
+
+    private Task<bool> WriteLayoutCopyAsync(string output, string status)
+    {
+        if (_currentPdf is null) return Task.FromResult(false);
+        var source = _currentPdf;
+        return RunPdfOperationAsync(status, "Saved successfully.", async token =>
+        {
+            var transforms = Pages.Select(page => new PdfPageTransform(page.SourcePageNumber, page.Rotation)).ToArray();
+            await _operations.ApplyPageLayoutAsync(source, transforms, output, token);
+        });
     }
 
     private async void Extract_Click(object sender, RoutedEventArgs e)
@@ -1531,7 +1629,7 @@ public partial class MainWindow : Window
             "Unsaved AsantePDF changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
 
         if (choice == MessageBoxResult.Yes)
-            return await SaveCurrentLayoutAsync(showSuccessMessage: false);
+            return await SaveCopyCurrentLayoutAsync(showSuccessMessage: false);
 
         return choice == MessageBoxResult.No;
     }
@@ -1922,7 +2020,9 @@ public partial class MainWindow : Window
         else if (ctrl && e.Key == Key.O) { OpenPdf_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.F) { FocusDocumentSearch(); e.Handled = true; }
         else if (ctrl && e.Key == Key.C && TryCopySelectedDocumentTextFromKeyboard()) { e.Handled = true; }
+        else if (ctrl && !shift && e.Key == Key.S) { Save_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && shift && e.Key == Key.S) { SaveAs_Click(sender, new RoutedEventArgs()); e.Handled = true; }
+        else if (ctrl && e.Key == Key.P) { Print_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Z) { Undo_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.Y) { Redo_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.A) { SelectAllPages_Click(sender, new RoutedEventArgs()); e.Handled = true; }
@@ -1930,6 +2030,10 @@ public partial class MainWindow : Window
         else if (ctrl && (e.Key == Key.Add || e.Key == Key.OemPlus)) { ZoomIn_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && (e.Key == Key.Subtract || e.Key == Key.OemMinus)) { ZoomOut_Click(sender, new RoutedEventArgs()); e.Handled = true; }
         else if (ctrl && e.Key == Key.D0) { FitWidth_Click(sender, new RoutedEventArgs()); e.Handled = true; }
+        else if (!ctrl && Keyboard.FocusedElement is not TextBox && (e.Key == Key.Left || e.Key == Key.PageUp)) { PreviousPage_Click(sender, new RoutedEventArgs()); e.Handled = true; }
+        else if (!ctrl && Keyboard.FocusedElement is not TextBox && (e.Key == Key.Right || e.Key == Key.PageDown)) { NextPage_Click(sender, new RoutedEventArgs()); e.Handled = true; }
+        else if (!ctrl && Keyboard.FocusedElement is not TextBox && e.Key == Key.Home && Pages.Count > 0) { PagesList.SelectedIndex = 0; PagesList.ScrollIntoView(PagesList.SelectedItem); e.Handled = true; }
+        else if (!ctrl && Keyboard.FocusedElement is not TextBox && e.Key == Key.End && Pages.Count > 0) { PagesList.SelectedIndex = Pages.Count - 1; PagesList.ScrollIntoView(PagesList.SelectedItem); e.Handled = true; }
         else if (e.Key == Key.Delete) { DeletePages_Click(sender, new RoutedEventArgs()); e.Handled = true; }
     }
 
