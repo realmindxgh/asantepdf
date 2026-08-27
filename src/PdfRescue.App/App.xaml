@@ -89,6 +89,13 @@
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="Margin" Value="8,2" />
             <Setter Property="FontSize" Value="14" />
+            <Style.Triggers>
+                <Trigger Property="Tag" Value="Active">
+                    <Setter Property="Background" Value="{StaticResource PanelPressedBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="RibbonButtonStyle" TargetType="Button" BasedOn="{StaticResource FlatButtonStyle}">

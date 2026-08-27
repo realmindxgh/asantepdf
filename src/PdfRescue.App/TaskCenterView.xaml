@@ -19,24 +19,16 @@
             </Button>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="24,0,24,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="190"/>
-            </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Style="{StaticResource PanelCardStyle}" Margin="0,0,8,0" Padding="13"><StackPanel><TextBlock Text="Running" Foreground="{StaticResource MutedTextBrush}" FontSize="11"/><TextBlock x:Name="RunningCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
-            <Border Grid.Column="1" Style="{StaticResource PanelCardStyle}" Margin="0,0,8,0" Padding="13"><StackPanel><TextBlock Text="Queued" Foreground="{StaticResource MutedTextBrush}" FontSize="11"/><TextBlock x:Name="QueuedCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
-            <Border Grid.Column="2" Style="{StaticResource PanelCardStyle}" Margin="0,0,8,0" Padding="13"><StackPanel><TextBlock Text="Completed" Foreground="{StaticResource MutedTextBrush}" FontSize="11"/><TextBlock x:Name="CompletedCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
-            <Border Grid.Column="3" Style="{StaticResource PanelCardStyle}" Margin="0,0,8,0" Padding="13"><StackPanel><TextBlock Text="Failed" Foreground="{StaticResource MutedTextBrush}" FontSize="11"/><TextBlock x:Name="FailedCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
-            <Border Grid.Column="4" Style="{StaticResource PanelCardStyle}" Margin="0,0,8,0" Padding="13"><StackPanel><TextBlock Text="Cancelled" Foreground="{StaticResource MutedTextBrush}" FontSize="11"/><TextBlock x:Name="CancelledCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
-            <ComboBox x:Name="FilterCombo" Grid.Column="5" Height="34" VerticalAlignment="Center" SelectionChanged="FilterCombo_SelectionChanged">
-                <ComboBoxItem Content="All tasks" />
-                <ComboBoxItem Content="Running / queued" />
-                <ComboBoxItem Content="Completed" />
-                <ComboBoxItem Content="Failed" />
-                <ComboBoxItem Content="Cancelled" />
+        <WrapPanel Grid.Row="1" Margin="24,0,24,16">
+            <Border Style="{StaticResource PanelCardStyle}" Width="112" Margin="0,0,8,8" Padding="12"><StackPanel><TextBlock Text="Running" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="RunningCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
+            <Border Style="{StaticResource PanelCardStyle}" Width="112" Margin="0,0,8,8" Padding="12"><StackPanel><TextBlock Text="Queued" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="QueuedCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
+            <Border Style="{StaticResource PanelCardStyle}" Width="112" Margin="0,0,8,8" Padding="12"><StackPanel><TextBlock Text="Completed" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="CompletedCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
+            <Border Style="{StaticResource PanelCardStyle}" Width="112" Margin="0,0,8,8" Padding="12"><StackPanel><TextBlock Text="Failed" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="FailedCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
+            <Border Style="{StaticResource PanelCardStyle}" Width="112" Margin="0,0,8,8" Padding="12"><StackPanel><TextBlock Text="Cancelled" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/><TextBlock x:Name="CancelledCount" Text="0" FontSize="22" FontWeight="SemiBold" Margin="0,4,0,0"/></StackPanel></Border>
+            <ComboBox x:Name="FilterCombo" Width="190" Height="36" Margin="0,8,0,8" VerticalAlignment="Center" SelectionChanged="FilterCombo_SelectionChanged">
+                <ComboBoxItem Content="All tasks" /><ComboBoxItem Content="Running / queued" /><ComboBoxItem Content="Completed" /><ComboBoxItem Content="Failed" /><ComboBoxItem Content="Cancelled" />
             </ComboBox>
-        </Grid>
-
+        </WrapPanel>
         <Grid Grid.Row="2" Margin="24,0,24,24">
             <ListBox x:Name="TaskList" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemContainerStyle>

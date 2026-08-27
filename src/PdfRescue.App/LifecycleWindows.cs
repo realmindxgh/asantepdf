@@ -92,8 +92,10 @@ internal sealed class RecoveryWindow : Window
     {
         Title = "Recover AsantePDF workspace";
         Width = 640;
-        Height = 470;
-        ResizeMode = ResizeMode.NoResize;
+        Height = Math.Min(500, Math.Max(430, SystemParameters.WorkArea.Height - 100));
+        MinHeight = 420;
+        MinWidth = 560;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (Brush)Application.Current.Resources["AppBackground"];
         Foreground = (Brush)Application.Current.Resources["PrimaryTextBrush"];
@@ -177,7 +179,10 @@ internal sealed class DiagnosticsWindow : Window
     {
         Title = "About & Diagnostics — AsantePDF";
         Width = 760;
-        Height = 780;
+        Height = Math.Min(780, Math.Max(560, SystemParameters.WorkArea.Height - 80));
+        MinHeight = 520;
+        MinWidth = 620;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (Brush)Application.Current.Resources["AppBackground"];
         Foreground = (Brush)Application.Current.Resources["PrimaryTextBrush"];

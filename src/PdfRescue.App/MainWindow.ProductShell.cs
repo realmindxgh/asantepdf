@@ -73,6 +73,7 @@ public partial class MainWindow
         LoadHomeRecents();
         RefreshResumeCommandState();
         RefreshProductShellMode();
+        SetPrimaryNavigationState(_currentPdf is null ? HomeNavButton : ActiveDocumentNavButton);
         _ = Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(async () =>
             await OfferStartupRecoveryAndOnboardingAsync()));
     }
@@ -117,6 +118,13 @@ public partial class MainWindow
         ShowHomeContent();
         _recentFilesView?.SetPinnedOnly(false);
         LoadHomeRecents();
+        SetPrimaryNavigationState(HomeNavButton);
+    }
+
+    private void ToolsNav_Click(object sender, RoutedEventArgs e)
+    {
+        HomeNav_Click(sender, e);
+        SetPrimaryNavigationState(ToolsNavButton);
     }
 
     private void HomeRecentNav_Click(object sender, RoutedEventArgs e)
@@ -125,6 +133,7 @@ public partial class MainWindow
         _recentFilesView?.SetPinnedOnly(false);
         LoadHomeRecents();
         HomeRecentSection.BringIntoView();
+        SetPrimaryNavigationState(RecentNavButton);
     }
 
     private void HomeStarredNav_Click(object sender, RoutedEventArgs e)
@@ -133,6 +142,7 @@ public partial class MainWindow
         _recentFilesView?.SetPinnedOnly(true);
         LoadHomeRecents();
         HomeRecentSection.BringIntoView();
+        SetPrimaryNavigationState(StarredNavButton);
     }
 
     private void RefreshTaskCenterIndicator()
@@ -163,6 +173,9 @@ public partial class MainWindow
         TaskCenterDrawer.Visibility = TaskCenterDrawer.Visibility == Visibility.Visible
             ? Visibility.Collapsed
             : Visibility.Visible;
+        SetPrimaryNavigationState(TaskCenterDrawer.Visibility == Visibility.Visible
+            ? TaskCenterNavButton
+            : (_currentPdf is null ? HomeNavButton : ActiveDocumentNavButton));
     }
 
     private void TaskCenterClose_Click(object sender, RoutedEventArgs e)
@@ -175,6 +188,13 @@ public partial class MainWindow
         if (TaskCenterDrawer is not null) TaskCenterDrawer.Visibility = Visibility.Collapsed;
     }
 
+
+    private void SetPrimaryNavigationState(Button active)
+    {
+        if (active is null) return;
+        foreach (var button in new[] { HomeNavButton, RecentNavButton, StarredNavButton, ToolsNavButton, ActiveDocumentNavButton, TaskCenterNavButton })
+            button.Tag = ReferenceEquals(button, active) ? "Active" : null;
+    }
     private async void ResumeLastSession_Click(object sender, RoutedEventArgs e)
     {
         var session = _recentDocuments.GetLastSession();
@@ -187,6 +207,7 @@ public partial class MainWindow
         if (_currentPdf is null) return;
         EmptyPanel.Visibility = Visibility.Collapsed;
         ApplyPageViewVisibility();
+        SetPrimaryNavigationState(ActiveDocumentNavButton);
     }
 
     private async Task<string?> SelectPdfForStandaloneToolAsync(string title)

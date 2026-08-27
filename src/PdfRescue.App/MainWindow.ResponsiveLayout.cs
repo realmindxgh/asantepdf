@@ -14,7 +14,7 @@ public partial class MainWindow
         if (_responsiveLayoutInitialized) return;
         _responsiveLayoutInitialized = true;
         SizeChanged += MainWindow_ResponsiveSizeChanged;
-        Dispatcher.BeginInvoke(new Action(() => UpdateResponsiveInspector(ActualWidth)));
+        Dispatcher.BeginInvoke(new Action(() => UpdateResponsiveLayout(ActualWidth)));
     }
 
     private void CollapseInspector_Click(object sender, RoutedEventArgs e)
@@ -31,8 +31,41 @@ public partial class MainWindow
         SetInspectorCollapsed(false);
     }
 
-    private void MainWindow_ResponsiveSizeChanged(object sender, SizeChangedEventArgs e) =>
-        UpdateResponsiveInspector(e.NewSize.Width);
+    private void MainWindow_ResponsiveSizeChanged(object sender, SizeChangedEventArgs e) => UpdateResponsiveLayout(e.NewSize.Width);
+
+    private void UpdateResponsiveLayout(double width)
+    {
+        UpdateResponsiveInspector(width);
+        UpdateResponsiveShell(width);
+    }
+
+    private void UpdateResponsiveShell(double width)
+    {
+        if (width <= 0) return;
+
+        if (TitleSearchContainer is not null)
+        {
+            TitleSearchContainer.Visibility = width < 980 ? Visibility.Collapsed : Visibility.Visible;
+            TitleSearchContainer.Width = width < 1200 ? 300 : width < 1450 ? 400 : 520;
+        }
+
+        var usable = Math.Max(420, width - 300);
+        if (QuickToolsGrid is not null)
+            QuickToolsGrid.Columns = usable >= 1220 ? 7 : usable >= 980 ? 5 : usable >= 760 ? 4 : 3;
+        if (MoreToolsGrid is not null)
+            MoreToolsGrid.Columns = usable >= 1080 ? 5 : usable >= 820 ? 4 : usable >= 620 ? 3 : 2;
+
+        var showHeroArt = width >= 1180;
+        if (HomeHeroArt is not null) HomeHeroArt.Visibility = showHeroArt ? Visibility.Visible : Visibility.Collapsed;
+        if (HomeHeroArtColumn is not null)
+            HomeHeroArtColumn.Width = showHeroArt ? new GridLength(0.95, GridUnitType.Star) : new GridLength(0);
+
+        if (TaskCenterDrawer is not null)
+        {
+            var productWidth = Math.Max(520, width - 220);
+            TaskCenterDrawer.Width = Math.Clamp(productWidth * 0.68, 520, 720);
+        }
+    }
 
     private void UpdateResponsiveInspector(double width)
     {
@@ -56,8 +89,7 @@ public partial class MainWindow
     {
         if (collapsed)
         {
-            if (InspectorColumn.Width.Value > 0)
-                _lastInspectorWidth = InspectorColumn.Width;
+            if (InspectorColumn.Width.Value > 0) _lastInspectorWidth = InspectorColumn.Width;
             InspectorColumn.Width = new GridLength(0);
             InspectorBorder.Visibility = Visibility.Collapsed;
             InspectorSplitter.Visibility = Visibility.Collapsed;
