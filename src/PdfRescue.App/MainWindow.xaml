@@ -173,7 +173,12 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button x:Name="CompareTabsButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenSplitView_Click" IsEnabled="False" ToolTip="Compare two open PDFs side by side">
+                                    <TextBlock Text="&#xE8A0;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
+                                </Button>
+                                <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
+                            </StackPanel>
                             <TextBlock x:Name="DocumentTitle" Text="No document open" Visibility="Collapsed" />
                             <TextBlock x:Name="DocumentMeta" Visibility="Collapsed" />
                         </Grid>
@@ -466,6 +471,75 @@
                                     </Grid>
                                 </Border>
                             </ScrollViewer>
+
+                            <Grid x:Name="SplitComparisonPanel" Visibility="Collapsed" Background="#0A1520" Panel.ZIndex="15">
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#0D1A28" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="10,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Compare" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                            <ComboBox x:Name="SplitLeftDocumentCombo" Width="210" DisplayMemberPath="DisplayTitle" SelectionChanged="SplitLeftDocumentCombo_SelectionChanged" ToolTip="Left PDF" />
+                                            <TextBlock Text="↔" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="8,0" />
+                                            <ComboBox x:Name="SplitRightDocumentCombo" Width="210" DisplayMemberPath="DisplayTitle" SelectionChanged="SplitRightDocumentCombo_SelectionChanged" ToolTip="Right PDF" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <CheckBox x:Name="SplitLinkedScrollCheck" Content="Linked scroll" VerticalAlignment="Center" Margin="6,0" />
+                                            <CheckBox x:Name="SplitLinkedZoomCheck" Content="Sync zoom" VerticalAlignment="Center" Margin="6,0" Checked="SplitLinkedZoomCheck_Changed" Unchecked="SplitLinkedZoomCheck_Changed" />
+                                            <Button Style="{StaticResource FlatButtonStyle}" Content="Align pages" Click="SplitAlignPages_Click" Padding="10,5" />
+                                            <Button Style="{StaticResource FlatButtonStyle}" Content="Swap" Click="SplitSwap_Click" Padding="10,5" />
+                                            <Button Style="{StaticResource FlatButtonStyle}" Content="Exit" Click="SplitExit_Click" Padding="10,5" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="0">
+                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                        <Border Grid.Row="0" Background="#0F1B29" Padding="8" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
+                                            <Grid>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="‹" Width="32" Padding="0" Click="SplitLeftPrevious_Click" />
+                                                    <TextBox x:Name="SplitLeftPageBox" Width="52" Height="30" Margin="5,0" TextAlignment="Center" KeyDown="SplitLeftPageBox_KeyDown" />
+                                                    <TextBlock x:Name="SplitLeftPageCountText" Text="/ 0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" />
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="›" Width="32" Padding="0" Margin="5,0,0,0" Click="SplitLeftNext_Click" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="−" Width="32" Padding="0" Click="SplitLeftZoomOut_Click" />
+                                                    <TextBlock x:Name="SplitLeftZoomText" Text="100%" Width="58" TextAlignment="Center" VerticalAlignment="Center" />
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="+" Width="32" Padding="0" Click="SplitLeftZoomIn_Click" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                        <ScrollViewer x:Name="SplitLeftScroll" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ScrollChanged="SplitLeftScroll_ScrollChanged">
+                                            <Border Margin="18" Background="White" BorderBrush="#3A4A59" BorderThickness="1" Padding="8" HorizontalAlignment="Center" VerticalAlignment="Top"><Image x:Name="SplitLeftImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" /></Border>
+                                        </ScrollViewer>
+                                    </Grid>
+                                    <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#24364A" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
+                                    <Grid Grid.Column="2">
+                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                        <Border Grid.Row="0" Background="#0F1B29" Padding="8" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
+                                            <Grid>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="‹" Width="32" Padding="0" Click="SplitRightPrevious_Click" />
+                                                    <TextBox x:Name="SplitRightPageBox" Width="52" Height="30" Margin="5,0" TextAlignment="Center" KeyDown="SplitRightPageBox_KeyDown" />
+                                                    <TextBlock x:Name="SplitRightPageCountText" Text="/ 0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" />
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="›" Width="32" Padding="0" Margin="5,0,0,0" Click="SplitRightNext_Click" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="−" Width="32" Padding="0" Click="SplitRightZoomOut_Click" />
+                                                    <TextBlock x:Name="SplitRightZoomText" Text="100%" Width="58" TextAlignment="Center" VerticalAlignment="Center" />
+                                                    <Button Style="{StaticResource FlatButtonStyle}" Content="+" Width="32" Padding="0" Click="SplitRightZoomIn_Click" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                        <ScrollViewer x:Name="SplitRightScroll" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" ScrollChanged="SplitRightScroll_ScrollChanged">
+                                            <Border Margin="18" Background="White" BorderBrush="#3A4A59" BorderThickness="1" Padding="8" HorizontalAlignment="Center" VerticalAlignment="Top"><Image x:Name="SplitRightImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" /></Border>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
                             <Button x:Name="ExpandPagesSidebarButton" Style="{StaticResource FlatButtonStyle}" Content="›" Width="30" Height="38"
                                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Padding="0" Visibility="Collapsed" Panel.ZIndex="10"
                                     Click="ExpandPagesSidebar_Click" ToolTip="Show navigation sidebar" />

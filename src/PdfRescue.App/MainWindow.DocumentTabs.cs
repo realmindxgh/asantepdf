@@ -241,6 +241,8 @@ public partial class MainWindow
         var oldIndex = DocumentTabs.IndexOf(tab);
         RememberClosedDocumentTab(tab);
         DocumentTabs.Remove(tab);
+        if (DocumentTabs.Count < 2 && SplitComparisonPanel.Visibility == Visibility.Visible)
+            ExitSplitViewCore();
 
         if (!active) return true;
 

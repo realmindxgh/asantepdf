@@ -1707,6 +1707,7 @@ public partial class MainWindow : Window
         UndoMenuItem.IsEnabled = available && _undo.Count > 0;
         RedoButton.IsEnabled = available && _redo.Count > 0;
         RedoMenuItem.IsEnabled = available && _redo.Count > 0;
+        CompareTabsButton.IsEnabled = available && DocumentTabs.Count >= 2;
         UpdateDocumentTitleDirtyIndicator();
         UpdateInspectorContext();
     }
