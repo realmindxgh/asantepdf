@@ -1708,7 +1708,7 @@ public partial class MainWindow : Window
             }
 
             if (!await ConfirmDocumentReplacementAsync("closing AsantePDF")) return;
-            if (!ConfirmDiscardInactiveDirtyTabsForExit()) return;
+            if (!await ResolveInactiveDirtyTabsForExitAsync()) return;
 
             _closeAfterConfirmation = true;
             Close();
@@ -1725,11 +1725,11 @@ public partial class MainWindow : Window
 
         var choice = MessageBox.Show(this,
             $"You have unsaved page-layout changes. Save them before {action}?\n\n" +
-            "Yes = Save a copy first\nNo = Discard the unsaved layout changes\nCancel = Stay with this document",
+            "Yes = Save changes to this PDF\nNo = Don't save these changes\nCancel = Stay with this document",
             "Unsaved AsantePDF changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
 
         if (choice == MessageBoxResult.Yes)
-            return await SaveCopyCurrentLayoutAsync(showSuccessMessage: false);
+            return await SaveInPlaceAsync(showSuccessMessage: false);
 
         return choice == MessageBoxResult.No;
     }

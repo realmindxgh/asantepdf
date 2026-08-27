@@ -355,17 +355,35 @@ public partial class MainWindow
     private bool HasInactiveDirtyDocumentTabs() =>
         DocumentTabs.Any(tab => !ReferenceEquals(tab, _activeDocumentTab) && tab.IsDirty);
 
-    private bool ConfirmDiscardInactiveDirtyTabsForExit()
+    private async Task<bool> ResolveInactiveDirtyTabsForExitAsync()
     {
-        var dirty = DocumentTabs.Where(tab => !ReferenceEquals(tab, _activeDocumentTab) && tab.IsDirty).ToArray();
+        var dirty = DocumentTabs
+            .Where(tab => !ReferenceEquals(tab, _activeDocumentTab) && tab.IsDirty)
+            .ToArray();
         if (dirty.Length == 0) return true;
 
-        var names = string.Join("\n", dirty.Take(5).Select(tab => "• " + tab.Name));
-        if (dirty.Length > 5) names += $"\n• and {dirty.Length - 5:N0} more";
-        var choice = MessageBox.Show(this,
-            $"Other open tabs also contain unsaved page-layout changes:\n\n{names}\n\nClose AsantePDF and discard those unsaved tab changes?",
-            "Unsaved AsantePDF tabs", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        return choice == MessageBoxResult.Yes;
+        foreach (var tab in dirty)
+        {
+            if (!DocumentTabs.Contains(tab) || !tab.IsDirty) continue;
+            var choice = MessageBox.Show(this,
+                $"{tab.Name} also has unsaved page-layout changes.\n\n" +
+                "Yes = Save changes to this PDF\nNo = Don't save these changes\nCancel = Stay in AsantePDF",
+                "Unsaved AsantePDF tab", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+
+            if (choice == MessageBoxResult.Cancel) return false;
+            if (choice == MessageBoxResult.No)
+            {
+                DiscardDocumentTabWorkingChanges(tab);
+                continue;
+            }
+
+            await ActivateDocumentTabAsync(tab);
+            if (!ReferenceEquals(_activeDocumentTab, tab)) return false;
+            if (!await SaveInPlaceAsync(showSuccessMessage: false)) return false;
+            CaptureActiveDocumentTabState();
+        }
+
+        return true;
     }
 
     private static DocumentTabLayoutSnapshot ToDocumentTabSnapshot(PageLayoutSnapshot snapshot) => new(

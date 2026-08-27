@@ -69,13 +69,19 @@ Filename: "{app}\{#MyAppExeName}"; Description: "Launch AsantePDF"; Flags: nowai
 [Code]
 function IsVCRuntimeInstalled: Boolean;
 var
-  Installed: Cardinal;
+  Installed, Major: Cardinal;
 begin
-  Result := RegQueryDWordValue(
-    HKLM64,
-    'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64',
-    'Installed',
-    Installed) and (Installed = 1);
+  Result :=
+    RegQueryDWordValue(
+      HKLM64,
+      'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64',
+      'Installed',
+      Installed) and (Installed = 1) and
+    RegQueryDWordValue(
+      HKLM64,
+      'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64',
+      'Major',
+      Major) and (Major >= 14);
 end;
 
 procedure InitializeWizard;

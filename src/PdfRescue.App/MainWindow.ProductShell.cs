@@ -40,6 +40,7 @@ public partial class MainWindow
         InitializeDocumentNavigationMetadata();
         InitializePageViewModes();
         InitializeResponsiveLayout();
+        InitializeAccessibilityMetadata();
         _pendingRecoverySnapshot = RecoverySnapshotService.Current.BeginSession();
 
         _recentFilesView = new RecentFilesView();
