@@ -46,20 +46,20 @@
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <TextBox x:Name="HomeSearchBox" Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0"
+                        <TextBox x:Name="HomeSearchBox" Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0" AutomationProperties.Name="Search recent PDF files" AutomationProperties.HelpText="Search the recent-files list. Shortcut Ctrl+K."
                                  TextChanged="HomeSearchBox_TextChanged" VerticalContentAlignment="Center" ToolTip="Search recent files" />
                         <TextBlock Grid.Column="2" Text="Ctrl+K" Foreground="#6F8399" Margin="8,0,10,0" VerticalAlignment="Center" FontSize="12" />
                     </Grid>
                 </Border>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
-                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="About, diagnostics and updates" Click="About_Click"><TextBlock Text="?" FontSize="17" /></Button>
-                    <Button x:Name="ThemeToggleButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" Click="ThemeToggle_Click" ToolTip="Switch theme">
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="About, diagnostics and updates" Click="About_Click" AutomationProperties.Name="About, diagnostics and updates"><TextBlock Text="?" FontSize="17" /></Button>
+                    <Button x:Name="ThemeToggleButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" Click="ThemeToggle_Click" ToolTip="Switch theme" AutomationProperties.Name="Switch light or dark theme" AutomationProperties.HelpText="Immediately toggles between light and dark appearance.">
                         <TextBlock x:Name="ThemeToggleGlyph" Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
                     </Button>
-                    <Button x:Name="SettingsButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Settings" Click="Settings_Click"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" /></Button>
-                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MinimizeWindow_Click" ToolTip="Minimize"><TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" /></Button>
-                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MaximizeWindow_Click" ToolTip="Maximize"><TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets" /></Button>
-                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="CloseWindow_Click" ToolTip="Close"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" /></Button>
+                    <Button x:Name="SettingsButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="0" ToolTip="Settings" Click="Settings_Click" AutomationProperties.Name="Settings"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MinimizeWindow_Click" ToolTip="Minimize" AutomationProperties.Name="Minimize AsantePDF window"><TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="MaximizeWindow_Click" ToolTip="Maximize" AutomationProperties.Name="Maximize or restore AsantePDF window"><TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets" /></Button>
+                    <Button Style="{StaticResource FlatButtonStyle}" Width="46" Margin="0" Click="CloseWindow_Click" ToolTip="Close" AutomationProperties.Name="Close AsantePDF window"><TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" /></Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -143,7 +143,7 @@
                     <Border Grid.Row="0" Background="#0B1724" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <ListBox x:Name="DocumentTabsList" Grid.Column="0" SelectionMode="Single"
+                            <ListBox x:Name="DocumentTabsList" Grid.Column="0" SelectionMode="Single" AutomationProperties.Name="Open PDF document tabs" AutomationProperties.HelpText="Select a PDF tab. Ctrl+Tab changes tabs and Ctrl+W closes the active tab."
                                      SelectionChanged="DocumentTabsList_SelectionChanged"
                                      PreviewMouseLeftButtonDown="DocumentTabsList_PreviewMouseLeftButtonDown"
                                      PreviewMouseMove="DocumentTabsList_PreviewMouseMove"
@@ -188,16 +188,16 @@
                                                        TextTrimming="CharacterEllipsis" Margin="10,0,4,0" ToolTip="{Binding Path}" />
                                             <Button Grid.Column="1" Style="{StaticResource FlatButtonStyle}" Content="×"
                                                     Click="DocumentTabClose_Click" Width="30" Height="28" Padding="0" Margin="2,0,4,0"
-                                                    ToolTip="Close tab (Ctrl+W)" />
+                                                    ToolTip="Close tab (Ctrl+W)" AutomationProperties.Name="Close this PDF tab" />
                                         </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <Button x:Name="CompareTabsButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenSplitView_Click" IsEnabled="False" ToolTip="Compare two open PDFs side by side">
+                                <Button x:Name="CompareTabsButton" Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenSplitView_Click" IsEnabled="False" ToolTip="Compare two open PDFs side by side" AutomationProperties.Name="Compare two open PDFs side by side">
                                     <TextBlock Text="&#xE8A0;" FontFamily="Segoe MDL2 Assets" FontSize="16" />
                                 </Button>
-                                <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
+                                <Button Style="{StaticResource FlatButtonStyle}" Width="42" Margin="2,3" Click="OpenPdf_Click" ToolTip="Open another PDF" AutomationProperties.Name="Open another PDF"><TextBlock Text="+" FontSize="23" /></Button>
                             </StackPanel>
                             <TextBlock x:Name="DocumentTitle" Text="No document open" Visibility="Collapsed" />
                             <TextBlock x:Name="DocumentMeta" Visibility="Collapsed" />
@@ -301,17 +301,17 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="PreviousPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="‹" FontSize="19"/><TextBlock Text="Previous" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel></Button>
-                                <TextBox x:Name="PageNumberBox" Width="48" Height="30" TextAlignment="Center" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" KeyDown="PageNumberBox_KeyDown" Margin="7,0,4,0" />
+                                <TextBox x:Name="PageNumberBox" Width="48" Height="30" TextAlignment="Center" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" KeyDown="PageNumberBox_KeyDown" Margin="7,0,4,0" AutomationProperties.Name="Current page number" AutomationProperties.HelpText="Enter a page number and press Enter to jump to that page." />
                                 <TextBlock x:Name="PageCountText" Text="/ 0" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="NextPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="Next" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="›" FontSize="19"/></StackPanel></Button>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="ZoomOut_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Width="34" Padding="4">−</Button>
-                                <Button x:Name="ZoomButton" Style="{StaticResource FlatButtonStyle}" Click="ActualSizeShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="100%" MinWidth="66" Padding="7,4" />
+                                <Button x:Name="ZoomButton" Style="{StaticResource FlatButtonStyle}" Click="ActualSizeShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="100%" MinWidth="66" Padding="7,4" AutomationProperties.Name="Zoom percentage and actual size" AutomationProperties.HelpText="Shows current zoom. Activate to return to 100 percent." />
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="ZoomIn_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Width="34" Padding="4">+</Button>
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="FitWidth_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="Fit Width" Margin="12,0,2,0" Padding="10,5" />
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="FitPageShell_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Content="Fit Page" Padding="10,5" />
-                                <ComboBox x:Name="PageViewModeCombo" Width="128" Height="30" Margin="12,0,0,0"
+                                <ComboBox x:Name="PageViewModeCombo" Width="128" Height="30" Margin="12,0,0,0" AutomationProperties.Name="PDF viewing mode" AutomationProperties.HelpText="Choose Single Page, Continuous, or Two Page view."
                                           SelectionChanged="PageViewModeCombo_SelectionChanged"
                                           IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" ToolTip="Document viewing mode">
                                     <ComboBoxItem Content="Single Page" />
@@ -321,7 +321,7 @@
                             </StackPanel>
                             <Border Grid.Column="2" Background="#101D2A" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="7" Padding="4">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBox x:Name="DocumentSearchBox" Width="205" Height="29" VerticalContentAlignment="Center"
+                                    <TextBox x:Name="DocumentSearchBox" Width="205" Height="29" VerticalContentAlignment="Center" AutomationProperties.Name="Search active PDF" AutomationProperties.HelpText="Type text and press Enter. Shortcut Ctrl+F."
                                              ToolTip="Search the active PDF (Ctrl+F)" KeyDown="DocumentSearchBox_KeyDown" />
                                     <Button x:Name="SearchPreviousButton" Style="{StaticResource FlatButtonStyle}" Content="‹" Width="30" Height="29"
                                             Padding="3" IsEnabled="False" ToolTip="Previous match" Click="SearchPrevious_Click" />
@@ -368,9 +368,9 @@
                                     <Button Grid.Column="4" Style="{StaticResource FlatButtonStyle}" Click="PageModeAttachments_Click" Padding="4" ToolTip="Attachments" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}">
                                         <TextBlock Text="&#xE723;" FontFamily="Segoe MDL2 Assets" />
                                     </Button>
-                                    <Button Grid.Column="5" Style="{StaticResource FlatButtonStyle}" Click="CollapsePagesSidebar_Click" Content="‹" Padding="0" Margin="2,0,0,0" ToolTip="Collapse navigation sidebar" />
+                                    <Button Grid.Column="5" Style="{StaticResource FlatButtonStyle}" Click="CollapsePagesSidebar_Click" Content="‹" Padding="0" Margin="2,0,0,0" ToolTip="Collapse navigation sidebar" AutomationProperties.Name="Collapse document navigation sidebar" />
                                 </Grid>
-                                <ListBox x:Name="PagesList" Grid.Row="1" SelectionMode="Extended" SelectionChanged="PagesList_SelectionChanged"
+                                <ListBox x:Name="PagesList" Grid.Row="1" SelectionMode="Extended" SelectionChanged="PagesList_SelectionChanged" AutomationProperties.Name="PDF page thumbnails" AutomationProperties.HelpText="Select, multi-select, reorder, rotate, duplicate, extract or delete PDF pages."
                                          AllowDrop="True" PreviewMouseLeftButtonDown="PagesList_PreviewMouseLeftButtonDown"
                                          PreviewMouseMove="PagesList_PreviewMouseMove" DragOver="PagesList_DragOver" Drop="PagesList_Drop">
                                     <ListBox.ItemTemplate>
@@ -405,7 +405,7 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                                 <Grid x:Name="BookmarksPanel" Grid.Row="1" Visibility="Collapsed">
-                                    <TreeView x:Name="OutlineTree" Background="Transparent" BorderThickness="0" Margin="6"
+                                    <TreeView x:Name="OutlineTree" Background="Transparent" BorderThickness="0" Margin="6" AutomationProperties.Name="PDF bookmarks and outline"
                                               SelectedItemChanged="OutlineTree_SelectedItemChanged"
                                               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <TreeView.ItemContainerStyle>
@@ -432,7 +432,7 @@
                                                IsHitTestVisible="False" />
                                 </Grid>
                                 <Grid x:Name="SearchResultsPanel" Grid.Row="1" Visibility="Collapsed">
-                                    <ListBox x:Name="SearchResultsList" Background="Transparent" BorderThickness="0" Margin="6"
+                                    <ListBox x:Name="SearchResultsList" Background="Transparent" BorderThickness="0" Margin="6" AutomationProperties.Name="PDF search results"
                                              SelectionChanged="SearchResultsList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
@@ -450,7 +450,7 @@
                                                HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="190" Margin="18" />
                                 </Grid>
                                 <Grid x:Name="AnnotationsPanel" Grid.Row="1" Visibility="Collapsed">
-                                    <ListBox x:Name="AnnotationsList" Background="Transparent" BorderThickness="0" Margin="6"
+                                    <ListBox x:Name="AnnotationsList" Background="Transparent" BorderThickness="0" Margin="6" AutomationProperties.Name="PDF comments and annotations"
                                              SelectionChanged="AnnotationsList_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
@@ -474,7 +474,7 @@
                                 </Grid>
                                 <Grid x:Name="AttachmentsPanel" Grid.Row="1" Visibility="Collapsed">
                                     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                    <ListBox x:Name="AttachmentsList" Grid.Row="0" Background="Transparent" BorderThickness="0" Margin="6"
+                                    <ListBox x:Name="AttachmentsList" Grid.Row="0" Background="Transparent" BorderThickness="0" Margin="6" AutomationProperties.Name="Embedded PDF attachments"
                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
@@ -501,7 +501,7 @@
                                       ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Cursor="SizeWE" />
 
                         <Grid Grid.Column="2" Background="#111C28">
-                            <ScrollViewer x:Name="PreviewScroll" Visibility="Collapsed" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer x:Name="PreviewScroll" Visibility="Collapsed" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Single-page PDF document view">
                                 <ScrollViewer.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Fit width" Click="FitWidth_Click" />
@@ -516,9 +516,9 @@
                                 </ScrollViewer.ContextMenu>
                                 <Border Margin="28" Background="#FFFFFF" BorderBrush="#3A4A59" BorderThickness="1" Padding="12" HorizontalAlignment="Center" VerticalAlignment="Top">
                                     <Grid>
-                                        <Image x:Name="PreviewImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
+                                        <Image x:Name="PreviewImage" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="Current rendered PDF page" />
                                         <Canvas x:Name="SearchHighlightCanvas" Background="Transparent" Visibility="Collapsed" IsHitTestVisible="False" />
-                                        <Canvas x:Name="TextSelectionCanvas" Background="Transparent" Visibility="Collapsed" IsHitTestVisible="False" Focusable="True" Cursor="IBeam"
+                                        <Canvas x:Name="TextSelectionCanvas" Background="Transparent" Visibility="Collapsed" IsHitTestVisible="False" Focusable="True" Cursor="IBeam" AutomationProperties.Name="Selectable PDF text layer" AutomationProperties.HelpText="Drag across text to select it, then press Ctrl+C or use annotation commands."
                                                 MouseLeftButtonDown="TextSelectionCanvas_MouseLeftButtonDown"
                                                 MouseMove="TextSelectionCanvas_MouseMove"
                                                 MouseLeftButtonUp="TextSelectionCanvas_MouseLeftButtonUp">
@@ -533,7 +533,7 @@
                                                 </ContextMenu>
                                             </Canvas.ContextMenu>
                                         </Canvas>
-                                        <Canvas x:Name="MarkupCanvas" Background="Transparent" Visibility="Collapsed" Cursor="Cross"
+                                        <Canvas x:Name="MarkupCanvas" Background="Transparent" Visibility="Collapsed" Cursor="Cross" AutomationProperties.Name="PDF annotation and editing canvas"
                                                 MouseLeftButtonDown="MarkupCanvas_MouseLeftButtonDown" MouseMove="MarkupCanvas_MouseMove" MouseLeftButtonUp="MarkupCanvas_MouseLeftButtonUp">
                                             <Rectangle x:Name="MarkupSelectionRectangle" Visibility="Collapsed" Stroke="#2D7DFF" StrokeThickness="2" StrokeDashArray="4,3" Fill="#332D7DFF" />
                                             <Polyline x:Name="FreehandPreviewPolyline" Visibility="Collapsed" Stroke="#38C986" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" IsHitTestVisible="False" />
@@ -542,7 +542,7 @@
                                 </Border>
                             </ScrollViewer>
 
-                            <ListBox x:Name="ContinuousPagesList" Visibility="Collapsed" Background="Transparent" BorderThickness="0"
+                            <ListBox x:Name="ContinuousPagesList" Visibility="Collapsed" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Continuous PDF reading view"
                                      SelectionMode="Single" SelectionChanged="ContinuousPagesList_SelectionChanged"
                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
                                      VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
