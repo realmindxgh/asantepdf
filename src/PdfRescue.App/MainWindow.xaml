@@ -88,7 +88,7 @@
                         <Button x:Name="ToolsNavButton" Style="{StaticResource NavButtonStyle}" Click="ToolsNav_Click">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Tools"/></StackPanel>
                         </Button>
-                        <Button Style="{StaticResource NavButtonStyle}" Click="HomeDoctor_Click">
+                        <Button x:Name="DoctorNavButton" Style="{StaticResource NavButtonStyle}" Click="HomeDoctor_Click">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE83D;" FontFamily="Segoe MDL2 Assets" Width="28"/><TextBlock Text="Document Doctor"/></StackPanel>
                         </Button>
                         <Separator Margin="16,14" Background="{StaticResource BorderBrushSoft}" />

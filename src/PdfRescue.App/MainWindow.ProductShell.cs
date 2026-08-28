@@ -181,18 +181,20 @@ public partial class MainWindow
     private void TaskCenterClose_Click(object sender, RoutedEventArgs e)
     {
         if (TaskCenterDrawer is not null) TaskCenterDrawer.Visibility = Visibility.Collapsed;
+        SetPrimaryNavigationState(_currentPdf is null ? HomeNavButton : ActiveDocumentNavButton);
     }
 
     private void CloseTaskCenterDrawer()
     {
         if (TaskCenterDrawer is not null) TaskCenterDrawer.Visibility = Visibility.Collapsed;
+        SetPrimaryNavigationState(_currentPdf is null ? HomeNavButton : ActiveDocumentNavButton);
     }
 
 
     private void SetPrimaryNavigationState(Button active)
     {
         if (active is null) return;
-        foreach (var button in new[] { HomeNavButton, RecentNavButton, StarredNavButton, ToolsNavButton, ActiveDocumentNavButton, TaskCenterNavButton })
+        foreach (var button in new[] { HomeNavButton, RecentNavButton, StarredNavButton, ToolsNavButton, DoctorNavButton, ActiveDocumentNavButton, TaskCenterNavButton })
             button.Tag = ReferenceEquals(button, active) ? "Active" : null;
     }
     private async void ResumeLastSession_Click(object sender, RoutedEventArgs e)
@@ -243,8 +245,17 @@ public partial class MainWindow
 
     private async void HomeDoctor_Click(object sender, RoutedEventArgs e)
     {
+        CloseTaskCenterDrawer();
+        var fallback = _currentPdf is null ? HomeNavButton : ActiveDocumentNavButton;
         if (await SelectPdfForStandaloneToolAsync("Choose a PDF to inspect") is not null)
+        {
+            SetPrimaryNavigationState(DoctorNavButton);
             Doctor_Click(sender, e);
+        }
+        else
+        {
+            SetPrimaryNavigationState(fallback);
+        }
     }
 
     private async void HomeSplit_Click(object sender, RoutedEventArgs e)
