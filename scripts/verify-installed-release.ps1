@@ -19,24 +19,56 @@ if ($install.ExitCode -notin @(0,3010)) { throw "Installer failed with exit code
 $installedExe = Join-Path $env:ProgramFiles 'AsantePDF\AsantePDF.exe'
 if (-not (Test-Path $installedExe)) { throw "Installed application not found: $installedExe" }
 
-$logDir = Join-Path $env:LOCALAPPDATA 'AsantePDF\Logs'
-$readyFlag = Join-Path $logDir 'window-ready.flag'
-Remove-Item $readyFlag -Force -ErrorAction SilentlyContinue
+$settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
+New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
+@{
+    theme = 'Light'
+    defaultRenderWidth = 1100
+    defaultPageView = 'SinglePage'
+    reopenLastSession = $false
+    trackRecentFiles = $false
+    showRecentThumbnails = $false
+    defaultOcrLanguage = 'eng'
+    defaultOutputFolder = ''
+    outputNamePattern = '{name}-{operation}'
+    existingOutput = 'CreateUniqueCopy'
+    recoveryEnabled = $false
+    checkForUpdates = $false
+    firstLaunchCompleted = $true
+} | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
 
-Write-Host 'Launching the installed copy and checking the WPF ready flag...' -ForegroundColor Cyan
-$app = Start-Process -FilePath $installedExe -PassThru
+$logDir = Join-Path $settingsRoot 'Logs'
+$readyFlag = Join-Path $logDir 'window-ready.flag'
+$startupLog = Join-Path $logDir 'startup.log'
+Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+
+Write-Host 'Launching the installed copy in Light mode, opening a PDF, and checking that the normal UI remains alive...' -ForegroundColor Cyan
+$app = Start-Process -FilePath $installedExe -ArgumentList @($sample) -PassThru
 $ready = $false
-for ($i = 0; $i -lt 60; $i++) {
+$opened = $false
+for ($i = 0; $i -lt 80; $i++) {
     Start-Sleep -Milliseconds 500
-    if (Test-Path $readyFlag) { $ready = $true; break }
-    if ($app.HasExited) { break }
+    $app.Refresh()
+    if (Test-Path $readyFlag) { $ready = $true }
+    if (Test-Path $startupLog) {
+        $log = Get-Content $startupLog -Raw
+        if ($log -match 'Opened PDF:') { $opened = $true }
+    }
+    if ($app.HasExited -or ($ready -and $opened)) { break }
 }
-if (-not $ready) {
-    if (Test-Path (Join-Path $logDir 'startup.log')) { Get-Content (Join-Path $logDir 'startup.log') | Write-Host }
+if (-not $ready -or -not $opened -or $app.HasExited) {
+    if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
     try { if (-not $app.HasExited) { $app.Kill() } } catch { }
-    throw 'Installed AsantePDF did not reach its main-window ready state.'
+    throw "Installed AsantePDF failed the normal Light-mode PDF-open UI regression. Ready=$ready Opened=$opened Exited=$($app.HasExited)."
 }
-try { if (-not $app.HasExited) { $app.Kill() } } catch { }
+Start-Sleep -Seconds 3
+$app.Refresh()
+if ($app.HasExited) {
+    if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+    throw "Installed AsantePDF opened the PDF but then exited unexpectedly with code $($app.ExitCode)."
+}
+try { $app.Kill() } catch { }
 
 Remove-Item $OutputDirectory -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null

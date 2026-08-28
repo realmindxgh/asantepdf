@@ -378,6 +378,7 @@ public partial class MainWindow
 
     private void ProductShell_PagesSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_loadingDocument) return;
         if (PageNumberBox is null || PageCountText is null) return;
         var current = PagesList.SelectedIndex >= 0 ? PagesList.SelectedIndex + 1 : 0;
         PageNumberBox.Text = current == 0 ? string.Empty : current.ToString();

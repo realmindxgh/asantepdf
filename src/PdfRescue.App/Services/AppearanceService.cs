@@ -28,7 +28,7 @@ public static class AppearanceService
     private static readonly ThemeColors Dark = new(
         "#09131F", "#08111C", "#101C2A", "#162333", "#263B50", "#304B64", "#36506A", "#F3F7FC", "#B7C5D4");
     private static readonly ThemeColors Light = new(
-        "#F4F7FA", "#FFFFFF", "#F7F9FB", "#FFFFFF", "#E4EBF2", "#D4E0EA", "#AEBFCE", "#17212B", "#53687B");
+        "#EEF3F8", "#F8FAFC", "#F5F8FB", "#FFFFFF", "#DCE6F0", "#C9D8E6", "#8EA3B7", "#0F172A", "#3F556B");
 
     private static readonly string[] ThemeBrushKeys =
     [
@@ -41,9 +41,9 @@ public static class AppearanceService
 
     private static readonly Dictionary<string, string> DarkToLight = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["#09131F"] = "#F4F7FA", ["#08111C"] = "#FFFFFF", ["#101C2A"] = "#F7F9FB",
-        ["#162333"] = "#FFFFFF", ["#263B50"] = "#E4EBF2", ["#304B64"] = "#D4E0EA",
-        ["#36506A"] = "#AEBFCE", ["#F3F7FC"] = "#17212B", ["#B7C5D4"] = "#53687B",
+        ["#09131F"] = "#EEF3F8", ["#08111C"] = "#F8FAFC", ["#101C2A"] = "#F5F8FB",
+        ["#162333"] = "#FFFFFF", ["#263B50"] = "#DCE6F0", ["#304B64"] = "#C9D8E6",
+        ["#36506A"] = "#8EA3B7", ["#F3F7FC"] = "#0F172A", ["#B7C5D4"] = "#3F556B",
         ["#08121E"] = "#FFFFFF", ["#0D1A28"] = "#F5F7FA", ["#0D1926"] = "#FFFFFF",
         ["#0E1C2B"] = "#F7F9FB", ["#0B1724"] = "#F1F4F7", ["#132236"] = "#E6EDF5",
         ["#13202E"] = "#FFFFFF", ["#0F1B29"] = "#F7F9FB", ["#111C28"] = "#EEF2F6",
@@ -52,10 +52,12 @@ public static class AppearanceService
         ["#24364A"] = "#CBD5DF", ["#0A1520"] = "#EEF2F6", ["#0A1420"] = "#EEF2F6",
         ["#0E1B29"] = "#F1F4F7", ["#17283A"] = "#FFFFFF", ["#102A45"] = "#DCE7F2",
         ["#35506B"] = "#B8C6D4", ["#122131"] = "#FFFFFF", ["#29425B"] = "#B8C6D4",
-        ["#3A4A59"] = "#A8B7C6", ["#41566C"] = "#8092A3", ["#53677C"] = "#6D7F90",
-        ["#54708A"] = "#5B7288", ["#6282A1"] = "#58748D", ["#698096"] = "#596F84",
-        ["#6F8399"] = "#637588", ["#71869D"] = "#607488", ["#73879D"] = "#607488",
-        ["#7E92A8"] = "#62778C", ["#7192B1"] = "#536F88", ["#7990A7"] = "#5E7489"
+        ["#3A4A59"] = "#52677A", ["#41566C"] = "#4A6074", ["#53677C"] = "#455B70",
+        ["#54708A"] = "#405970", ["#6282A1"] = "#46617B", ["#698096"] = "#435D75",
+        ["#6F8399"] = "#40586F", ["#71869D"] = "#3E576E", ["#73879D"] = "#3E576E",
+        ["#7E92A8"] = "#425C73", ["#7192B1"] = "#3B5871", ["#7990A7"] = "#3F5B73",
+        ["#80B9FF"] = "#185D9C", ["#4D9BFF"] = "#155DA8", ["#627B94"] = "#455F77",
+        ["#7890A8"] = "#405A72"
     };
 
     public static bool IsLight { get; private set; }

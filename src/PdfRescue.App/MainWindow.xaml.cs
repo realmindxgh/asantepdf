@@ -146,14 +146,22 @@ public partial class MainWindow : Window
             _undo.Clear();
             _redo.Clear();
             _thumbnailCache.Clear();
-            Pages.Clear();
 
             var count = checked((int)_renderer.PageCount);
             if (count < 1)
                 throw new InvalidDataException("This PDF contains no pages.");
 
-            for (var i = 1; i <= count; i++)
-                Pages.Add(new PdfPageItem(i, i));
+            _loadingDocument = true;
+            try
+            {
+                Pages.Clear();
+                for (var i = 1; i <= count; i++)
+                    Pages.Add(new PdfPageItem(i, i));
+            }
+            finally
+            {
+                _loadingDocument = false;
+            }
 
             _savedLayoutBaseline = CaptureLayout();
 
@@ -175,10 +183,17 @@ public partial class MainWindow : Window
             EmptyPanel.Visibility = Visibility.Collapsed;
             PreviewScroll.Visibility = Visibility.Visible;
 
-            PagesList.SelectedIndex = 0;
-            await RenderPreviewAsync(Pages[0]);
+            _loadingDocument = true;
+            try
+            {
+                PagesList.SelectedIndex = 0;
+            }
+            finally
+            {
+                _loadingDocument = false;
+            }
             StatusText.Text = "PDF opened locally. Changes remain non-destructive until Save As.";
-            App.Log($"Opened PDF: {fi.Name}, {count} pages.");
+            App.Log($"Opened PDF model: {fi.Name}, {count} pages. Foreground render pending.");
         });
 
         if (!opened || _currentPdf is null) return;
@@ -187,8 +202,10 @@ public partial class MainWindow : Window
         if (AppSettingsService.Current.Preferences.TrackRecentFiles)
             AddRecentDocument(_currentPdf);
         UpdateCommandStates();
-        StartThumbnailRendering(_documentGeneration);
+        App.Log("Open PDF foreground view refresh started.");
         await RefreshActivePageViewAsync();
+        App.Log("Opened PDF: foreground view refresh completed.");
+        StartThumbnailRendering(_documentGeneration);
     }
 
     private async void PagesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -473,8 +490,10 @@ public partial class MainWindow : Window
         if (PagesList.SelectedItem is PdfPageItem selected) await RenderSelectedPageForActiveViewAsync(selected);
         CaptureActiveDocumentTabState();
         UpdateCommandStates();
-        StartThumbnailRendering(_documentGeneration);
+        App.Log("Open PDF foreground view refresh started.");
         await RefreshActivePageViewAsync();
+        App.Log("Opened PDF: foreground view refresh completed.");
+        StartThumbnailRendering(_documentGeneration);
     }
 
     private async Task<bool> SaveAsCurrentDocumentAsync(bool showSuccessMessage)

@@ -30,6 +30,7 @@ public partial class MainWindow
     private DefaultPageViewMode _activePageViewMode = DefaultPageViewMode.SinglePage;
     private int _pageViewGeneration;
     private bool _syncingPageViewSelection;
+    private bool _loadingDocument;
 
     private bool IsSinglePageViewActive => _activePageViewMode == DefaultPageViewMode.SinglePage;
 
@@ -39,6 +40,7 @@ public partial class MainWindow
         ContinuousPagesList.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(ContinuousPagesList_ScrollChanged));
         Pages.CollectionChanged += (_, _) =>
         {
+            if (_loadingDocument) return;
             if (_activePageViewMode == DefaultPageViewMode.Continuous) RebuildContinuousPageItems();
             else if (_activePageViewMode == DefaultPageViewMode.TwoPage && _currentPdf is not null) _ = RenderTwoPageAsync();
         };
@@ -120,6 +122,7 @@ public partial class MainWindow
 
     private async Task RefreshActivePageViewAsync(bool forceRerender = false)
     {
+        if (_loadingDocument) return;
         if (_currentPdf is null || Pages.Count == 0) { ApplyPageViewVisibility(); return; }
         ApplyPageViewVisibility();
         switch (_activePageViewMode)
@@ -146,7 +149,7 @@ public partial class MainWindow
 
     private async Task RenderSelectedPageForActiveViewAsync(PdfPageItem page)
     {
-        if (_currentPdf is null) return;
+        if (_loadingDocument || _currentPdf is null) return;
         switch (_activePageViewMode)
         {
             case DefaultPageViewMode.Continuous:
