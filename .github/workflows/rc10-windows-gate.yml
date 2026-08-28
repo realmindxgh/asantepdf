@@ -63,6 +63,73 @@ jobs:
           dotnet run --project ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Verify normal Light-mode UI can open a PDF and stay alive
+        shell: pwsh
+        run: |
+          $sampleDir = Join-Path $env:GITHUB_WORKSPACE 'var'
+          New-Item -ItemType Directory -Force -Path $sampleDir | Out-Null
+          $sample = Join-Path $sampleDir 'ui-open-sample.pdf'
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample
+
+          $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
+          New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
+          @{
+            theme = 'Light'
+            defaultRenderWidth = 1100
+            defaultPageView = 'SinglePage'
+            reopenLastSession = $false
+            trackRecentFiles = $false
+            showRecentThumbnails = $false
+            defaultOcrLanguage = 'eng'
+            defaultOutputFolder = ''
+            outputNamePattern = '{name}-{operation}'
+            existingOutput = 'CreateUniqueCopy'
+            recoveryEnabled = $false
+            checkForUpdates = $false
+            firstLaunchCompleted = $true
+          } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
+
+          $logDir = Join-Path $settingsRoot 'Logs'
+          Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+          $startupLog = Join-Path $logDir 'startup.log'
+
+          $appExe = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
+            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
+            Sort-Object FullName |
+            Select-Object -First 1
+          if (-not $appExe) { throw 'Could not find the Release AsantePDF executable for UI-open regression testing.' }
+
+          Write-Host "Launching normal UI from $($appExe.FullName) with $sample" -ForegroundColor Cyan
+          $app = Start-Process -FilePath $appExe.FullName -ArgumentList @($sample) -PassThru
+          $opened = $false
+          for ($i = 0; $i -lt 80; $i++) {
+            Start-Sleep -Milliseconds 250
+            $app.Refresh()
+            if ($app.HasExited) {
+              if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+              throw "AsantePDF exited while opening a PDF in normal Light-mode UI. Exit code: $($app.ExitCode)"
+            }
+            if (Test-Path $startupLog) {
+              $log = Get-Content $startupLog -Raw
+              if ($log -match 'Opened PDF:') { $opened = $true; break }
+            }
+          }
+          if (-not $opened) {
+            if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+            try { if (-not $app.HasExited) { $app.Kill() } } catch { }
+            throw 'Normal UI did not report a successfully opened PDF within 20 seconds.'
+          }
+
+          Start-Sleep -Seconds 3
+          $app.Refresh()
+          if ($app.HasExited) {
+            if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+            throw "AsantePDF opened the PDF but then exited unexpectedly. Exit code: $($app.ExitCode)"
+          }
+          try { $app.Kill() } catch { }
+          Write-Host 'Normal Light-mode UI PDF-open regression passed.' -ForegroundColor Green
+
       - name: Commit validated generated changes
         shell: pwsh
         run: |
