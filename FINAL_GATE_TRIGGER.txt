@@ -1,0 +1,1 @@
+Run the full AsantePDF 1.0.0-rc49 installed-copy release gate after the Windows-validated hands-on UX acceptance repair batches, including theme, taskbar, Task Center, responsive layout, contrast, icon, navigation, DPI and card-lift fixes.
