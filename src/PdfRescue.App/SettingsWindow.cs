@@ -27,10 +27,11 @@ public sealed class SettingsWindow : Window
     {
         _recentDocuments = recentDocuments;
         Title = "AsantePDF Settings";
-        Width = 650;
-        Height = 760;
-        MinWidth = 560;
-        MinHeight = 620;
+        Width = Math.Min(650, Math.Max(560, SystemParameters.WorkArea.Width - 80));
+        Height = Math.Min(760, Math.Max(540, SystemParameters.WorkArea.Height - 80));
+        MinWidth = 520;
+        MinHeight = 500;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (System.Windows.Media.Brush)Application.Current.Resources["AppBackground"];
         Foreground = (System.Windows.Media.Brush)Application.Current.Resources["PrimaryTextBrush"];
@@ -112,7 +113,7 @@ public sealed class SettingsWindow : Window
         panel.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 7, 0, 4) });
         panel.Children.Add(control);
         if (!string.IsNullOrWhiteSpace(help))
-            panel.Children.Add(new TextBlock { Text = help, Foreground = (System.Windows.Media.Brush)Application.Current.Resources["MutedTextBrush"], FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 4) });
+            panel.Children.Add(new TextBlock { Text = help, Foreground = (System.Windows.Media.Brush)Application.Current.Resources["MutedTextBrush"], FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 4) });
     }
 
     private Button ActionButton(string label, RoutedEventHandler handler)

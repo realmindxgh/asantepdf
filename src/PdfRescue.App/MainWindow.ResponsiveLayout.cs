@@ -65,6 +65,21 @@ public partial class MainWindow
             var productWidth = Math.Max(520, width - 220);
             TaskCenterDrawer.Width = Math.Clamp(productWidth * 0.68, 520, 720);
         }
+
+        var compactNavigation = width < 1120;
+        if (PreviousPageLabel is not null) PreviousPageLabel.Visibility = compactNavigation ? Visibility.Collapsed : Visibility.Visible;
+        if (NextPageLabel is not null) NextPageLabel.Visibility = compactNavigation ? Visibility.Collapsed : Visibility.Visible;
+        if (PageViewModeCombo is not null) PageViewModeCombo.Width = width < 1120 ? 108 : width < 1320 ? 118 : 128;
+        if (DocumentSearchBox is not null) DocumentSearchBox.Width = width < 1040 ? 118 : width < 1280 ? 155 : 205;
+        if (DocumentSearchContainer is not null) DocumentSearchContainer.Margin = width < 1040 ? new Thickness(4, 0, 0, 0) : new Thickness(0);
+    }
+
+    private void RibbonScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        if (RibbonScrollViewer is null) return;
+        var step = e.Delta > 0 ? -240 : 240;
+        RibbonScrollViewer.ScrollToHorizontalOffset(Math.Max(0, RibbonScrollViewer.HorizontalOffset + step));
+        e.Handled = true;
     }
 
     private void UpdateResponsiveInspector(double width)

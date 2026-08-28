@@ -32,9 +32,11 @@ internal sealed class PrintOptionsWindow : Window
         _selectedPages = selectedPages.Where(page => page >= 1 && page <= _pageCount).Distinct().OrderBy(page => page).ToArray();
 
         Title = "Print AsantePDF document";
-        Width = 520;
-        Height = 470;
-        ResizeMode = ResizeMode.NoResize;
+        Width = Math.Min(520, Math.Max(460, SystemParameters.WorkArea.Width - 80));
+        Height = Math.Min(470, Math.Max(420, SystemParameters.WorkArea.Height - 100));
+        MinWidth = 440;
+        MinHeight = 390;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (System.Windows.Media.Brush)Application.Current.Resources["AppBackground"];
         Foreground = (System.Windows.Media.Brush)Application.Current.Resources["PrimaryTextBrush"];
@@ -61,7 +63,7 @@ internal sealed class PrintOptionsWindow : Window
         var next = new Button { Content = "Choose Printer", Style = (Style)FindResource("PrimaryButtonStyle"), Padding = new Thickness(16, 8, 16, 8) };
         next.Click += Next_Click;
         buttons.Children.Add(cancel); buttons.Children.Add(next); content.Children.Add(buttons);
-        Content = content;
+        Content = new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         Loaded += (_, _) => PdfRescue.App.Services.AppearanceService.ApplyToWindow(this);
     }
 
@@ -97,7 +99,7 @@ internal sealed class PrintOptionsWindow : Window
     {
         panel.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 4) });
         panel.Children.Add(control);
-        if (!string.IsNullOrWhiteSpace(help)) panel.Children.Add(new TextBlock { Text = help, FontSize = 11, Foreground = (System.Windows.Media.Brush)Application.Current.Resources["MutedTextBrush"], Margin = new Thickness(0, 3, 0, 0) });
+        if (!string.IsNullOrWhiteSpace(help)) panel.Children.Add(new TextBlock { Text = help, FontSize = 12, Foreground = (System.Windows.Media.Brush)Application.Current.Resources["MutedTextBrush"], Margin = new Thickness(0, 3, 0, 0) });
     }
 
     private static string FormatPages(IEnumerable<int> pages) => string.Join(", ", pages.Take(6)) + (pages.Count() > 6 ? "…" : string.Empty);

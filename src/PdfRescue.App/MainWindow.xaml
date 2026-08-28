@@ -108,7 +108,7 @@
                                 <Border x:Name="TaskCenterActiveBadge" Grid.Column="2" MinWidth="24" Height="22" Margin="10,0,0,0"
                                         Padding="6,0" CornerRadius="11" Background="#1F63A8" Visibility="Collapsed"
                                         VerticalAlignment="Center" ToolTip="Running and queued tasks">
-                                    <TextBlock x:Name="TaskCenterActiveCountText" Text="0" Foreground="White" FontSize="11" FontWeight="SemiBold"
+                                    <TextBlock x:Name="TaskCenterActiveCountText" Text="0" Foreground="White" FontSize="12" FontWeight="SemiBold"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </Grid>
@@ -206,7 +206,7 @@
 
                     <!-- Grouped command ribbon -->
                     <Border Grid.Row="1" Background="#0F1B29" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <ScrollViewer x:Name="RibbonScrollViewer" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Disabled" PreviewMouseWheel="RibbonScrollViewer_PreviewMouseWheel" ToolTip="Scroll horizontally to see more commands">
                             <StackPanel Orientation="Horizontal" Margin="10,8">
                                 <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="8" Margin="4,0" Background="#13202E">
                                     <Grid Margin="5"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
@@ -300,10 +300,10 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Style="{StaticResource FlatButtonStyle}" Click="PreviousPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="‹" FontSize="19"/><TextBlock Text="Previous" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel></Button>
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="PreviousPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="‹" FontSize="19"/><TextBlock x:Name="PreviousPageLabel" Text="Previous" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel></Button>
                                 <TextBox x:Name="PageNumberBox" Width="48" Height="30" TextAlignment="Center" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" KeyDown="PageNumberBox_KeyDown" Margin="7,0,4,0" AutomationProperties.Name="Current page number" AutomationProperties.HelpText="Enter a page number and press Enter to jump to that page." />
                                 <TextBlock x:Name="PageCountText" Text="/ 0" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
-                                <Button Style="{StaticResource FlatButtonStyle}" Click="NextPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock Text="Next" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="›" FontSize="19"/></StackPanel></Button>
+                                <Button Style="{StaticResource FlatButtonStyle}" Click="NextPage_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Padding="9,5"><StackPanel Orientation="Horizontal"><TextBlock x:Name="NextPageLabel" Text="Next" Margin="0,0,5,0" VerticalAlignment="Center"/><TextBlock Text="›" FontSize="19"/></StackPanel></Button>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Button Style="{StaticResource FlatButtonStyle}" Click="ZoomOut_Click" IsEnabled="{Binding IsEnabled, ElementName=SaveButton}" Width="34" Padding="4">−</Button>
@@ -320,7 +320,7 @@
                                     <ComboBoxItem Content="Two Page" />
                                 </ComboBox>
                             </StackPanel>
-                            <Border Grid.Column="2" Background="{StaticResource PanelRaisedBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="7" Padding="4">
+                            <Border x:Name="DocumentSearchContainer" Grid.Column="2" Background="{StaticResource PanelRaisedBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="7" Padding="4">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBox x:Name="DocumentSearchBox" Width="205" Height="29" VerticalContentAlignment="Center" AutomationProperties.Name="Search active PDF" AutomationProperties.HelpText="Type text and press Enter. Shortcut Ctrl+F."
                                              ToolTip="Search the active PDF (Ctrl+F)" KeyDown="DocumentSearchBox_KeyDown" />
@@ -907,9 +907,9 @@
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="StatusText" Text="Ready" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
-                    <TextBlock Text="  |  " Foreground="#41566C" />
+                    <TextBlock Text="  |  " Foreground="{StaticResource MutedTextBrush}" />
                     <TextBlock x:Name="PageStatusText" Text="No document" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
-                    <TextBlock Text="  |  " Foreground="#41566C" />
+                    <TextBlock Text="  |  " Foreground="{StaticResource MutedTextBrush}" />
                     <TextBlock x:Name="ZoomStatusText" Text="100%" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
                     <TextBlock Text="  |  Processed locally" FontSize="12" Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>

@@ -130,8 +130,11 @@ internal sealed class AppErrorDialog : Window
     private AppErrorDialog(string title, string message, string technicalDetails)
     {
         Title = title;
-        Width = 680;
-        Height = 510;
+        Width = Math.Min(680, Math.Max(560, SystemParameters.WorkArea.Width - 80));
+        Height = Math.Min(510, Math.Max(420, SystemParameters.WorkArea.Height - 100));
+        MinWidth = 520;
+        MinHeight = 400;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = (Brush)Application.Current.Resources["AppBackground"];
         Foreground = (Brush)Application.Current.Resources["PrimaryTextBrush"];
