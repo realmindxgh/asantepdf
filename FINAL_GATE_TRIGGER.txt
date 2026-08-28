@@ -1,0 +1,1 @@
+Run the full AsantePDF 1.0.0-rc49 installed-copy release gate after the second hands-on acceptance repair. This candidate must pass the normal Light-mode desktop UI PDF-open survival regression as well as engine, installer, registration and uninstall checks.
