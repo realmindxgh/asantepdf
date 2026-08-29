@@ -37,10 +37,20 @@ $keyReplacement = @'
 '@.Replace("`r`n", "`n").TrimEnd()
 if (-not $appearance.Contains($keyAnchor)) { throw 'ThemeBrushKeys anchor not found.' }
 $appearance = $appearance.Replace($keyAnchor, $keyReplacement)
+$applyAnchor = '        SetBrush("MutedTextBrush", colors.Muted);'
+if (-not $appearance.Contains($applyAnchor)) { throw 'Theme Apply anchor not found.' }
+if (-not $appearance.Contains('SetBrush("IconChipTextBrush", "#FFFFFF")')) {
+    $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n        SetBrush(\"IconChipTextBrush\", \"#FFFFFF\");")
+}
 Write-Lf $appearancePath $appearance
 
 $mainPath = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.xaml'
 $main = Read-Lf $mainPath
+
+# Home tool badges use a live semantic brush that is explicitly pinned to white in every
+# theme. This keeps glyphs and letter badges crisp on the deliberately deep card colors.
+if (-not $main.Contains('{StaticResource IconChipTextBrush}')) { throw 'Home tool badge foreground anchor not found.' }
+$main = $main.Replace('{StaticResource IconChipTextBrush}', '{DynamicResource IconChipTextBrush}')
 
 # Late-created document surfaces must use semantic resources directly. The legacy mapper
 # runs at theme application time and cannot rescue controls materialized later by templates.
@@ -82,4 +92,4 @@ foreach ($pair in $foregroundMap.GetEnumerator()) {
 $main = $main.Replace('BorderBrush="#4D9BFF" BorderThickness="2"', 'BorderBrush="{DynamicResource CommandBlueBrush}" BorderThickness="2"')
 Write-Lf $mainPath $main
 
-Write-Host 'Converted late-created workspace cards and ribbon command colors to semantic cross-theme resources.' -ForegroundColor Green
+Write-Host 'Converted workspace colors and pinned Home tool badge glyphs to white.' -ForegroundColor Green
