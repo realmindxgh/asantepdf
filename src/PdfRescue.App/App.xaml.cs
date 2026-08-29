@@ -82,7 +82,7 @@ public partial class App : Application
                 // before the whole-shell Light/Dark audit can run. Self-tests own their
                 // lifetime explicitly and call Shutdown(...) with a meaningful exit code.
                 ShutdownMode = ShutdownMode.OnExplicitShutdown;
-                _ = RunThemeRuntimeSelfTestAsync(e.Args[1]);
+                _ = RunThemeRuntimeSelfTestAsync(e.Args[1], e.Args.Length >= 3 ? e.Args[2] : null);
                 return;
             }
 
@@ -210,12 +210,12 @@ public partial class App : Application
         }
     }
 
-    private async Task RunThemeRuntimeSelfTestAsync(string outputDirectory)
+    private async Task RunThemeRuntimeSelfTestAsync(string outputDirectory, string? samplePdf)
     {
         try
         {
             Log("Theme runtime self-test started.");
-            await ThemeRuntimeSelfTest.RunAsync(outputDirectory);
+            await ThemeRuntimeSelfTest.RunAsync(outputDirectory, samplePdf);
             Log("Theme runtime self-test passed.");
             Shutdown(0);
         }

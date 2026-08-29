@@ -11,11 +11,12 @@ public static class ThemeRuntimeSelfTest
 {
     private const double SevereContrastFloor = 3.0;
 
-    public static async Task RunAsync(string outputDirectory)
+    public static async Task RunAsync(string outputDirectory, string? samplePdf = null)
     {
         Directory.CreateDirectory(outputDirectory);
         await VerifyRecentFilesControlsAsync(outputDirectory);
-        await VerifyWholeShellAsync(outputDirectory);
+        await VerifySettingsAndTaskCenterAsync(outputDirectory);
+        await VerifyWholeShellAsync(outputDirectory, samplePdf);
         File.WriteAllText(Path.Combine(outputDirectory, "theme-runtime-pass.flag"), DateTimeOffset.Now.ToString("O"));
     }
 
@@ -53,7 +54,16 @@ public static class ThemeRuntimeSelfTest
             AssertBrush(resume.Foreground, "#0F172A", "Light Resume text");
             AssertBrush(sort.Background, "#FFFFFF", "Light sort background");
             AssertBrush(sort.Foreground, "#0F172A", "Light sort text");
-            Capture(host, Path.Combine(outputDirectory, "recent-light.png"));
+            Capture(host, Path.Combine(outputDirectory, "recent-grid-light.png"));
+
+            list.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await RenderCycleAsync();
+            Capture(host, Path.Combine(outputDirectory, "recent-list-light.png"));
+            compact.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await RenderCycleAsync();
+            Capture(host, Path.Combine(outputDirectory, "recent-compact-light.png"));
+            grid.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await RenderCycleAsync();
 
             AppearanceService.Apply(AppThemeMode.Dark);
             AppearanceService.ApplyToWindow(host);
@@ -65,7 +75,13 @@ public static class ThemeRuntimeSelfTest
             AssertBrush(resume.Foreground, "#F3F7FC", "Dark Resume text");
             AssertBrush(sort.Background, "#162333", "Dark sort background");
             AssertBrush(sort.Foreground, "#F3F7FC", "Dark sort text");
-            Capture(host, Path.Combine(outputDirectory, "recent-dark.png"));
+            Capture(host, Path.Combine(outputDirectory, "recent-grid-dark.png"));
+            list.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await RenderCycleAsync();
+            Capture(host, Path.Combine(outputDirectory, "recent-list-dark.png"));
+            compact.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await RenderCycleAsync();
+            Capture(host, Path.Combine(outputDirectory, "recent-compact-dark.png"));
         }
         finally
         {
@@ -73,7 +89,70 @@ public static class ThemeRuntimeSelfTest
         }
     }
 
-    private static async Task VerifyWholeShellAsync(string outputDirectory)
+    private static async Task VerifySettingsAndTaskCenterAsync(string outputDirectory)
+    {
+        var recentService = new RecentDocumentService();
+        var settings = new SettingsWindow(AppSettingsService.Current.Preferences, recentService)
+        {
+            ShowInTaskbar = false,
+            Left = -12000,
+            Top = -12000
+        };
+
+        try
+        {
+            settings.Show();
+            await RenderCycleAsync();
+            AppearanceService.Apply(AppThemeMode.Light);
+            AppearanceService.ApplyToWindow(settings);
+            await RenderCycleAsync();
+            WriteContrastReport(settings, Path.Combine(outputDirectory, "contrast-settings-light.txt"), "Settings Light");
+            Capture(settings, Path.Combine(outputDirectory, "settings-light.png"));
+
+            AppearanceService.Apply(AppThemeMode.Dark);
+            AppearanceService.ApplyToWindow(settings);
+            await RenderCycleAsync();
+            WriteContrastReport(settings, Path.Combine(outputDirectory, "contrast-settings-dark.txt"), "Settings Dark");
+            Capture(settings, Path.Combine(outputDirectory, "settings-dark.png"));
+        }
+        finally
+        {
+            settings.Close();
+        }
+
+        var taskHost = new Window
+        {
+            Width = 1040,
+            Height = 760,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None,
+            Left = -12000,
+            Top = -12000,
+            Content = new TaskCenterView(new TaskCenterService())
+        };
+
+        try
+        {
+            taskHost.Show();
+            await RenderCycleAsync();
+            AppearanceService.Apply(AppThemeMode.Light);
+            AppearanceService.ApplyToWindow(taskHost);
+            await RenderCycleAsync();
+            WriteContrastReport(taskHost, Path.Combine(outputDirectory, "contrast-task-center-light.txt"), "Task Center Light");
+            Capture(taskHost, Path.Combine(outputDirectory, "task-center-light.png"));
+
+            AppearanceService.Apply(AppThemeMode.Dark);
+            AppearanceService.ApplyToWindow(taskHost);
+            await RenderCycleAsync();
+            WriteContrastReport(taskHost, Path.Combine(outputDirectory, "contrast-task-center-dark.txt"), "Task Center Dark");
+            Capture(taskHost, Path.Combine(outputDirectory, "task-center-dark.png"));
+        }
+        finally
+        {
+            taskHost.Close();
+        }
+    }
+    private static async Task VerifyWholeShellAsync(string outputDirectory, string? samplePdf)
     {
         var window = new MainWindow
         {
@@ -132,6 +211,28 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Quick Tools", isLight: false);
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-dark-roundtrip.txt"), "Dark round-trip");
             Capture(window, Path.Combine(outputDirectory, "home-dark-roundtrip.png"));
+
+            if (!string.IsNullOrWhiteSpace(samplePdf) && File.Exists(samplePdf))
+            {
+                AppearanceService.Apply(AppThemeMode.Light);
+                AppearanceService.ApplyToWindow(window);
+                await window.OpenPdfFromCommandLineAsync(samplePdf);
+                await RenderCycleAsync();
+                WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-workspace-light.txt"), "Workspace Light");
+                Capture(window, Path.Combine(outputDirectory, "workspace-light.png"));
+
+                AppearanceService.Apply(AppThemeMode.Dark);
+                AppearanceService.ApplyToWindow(window);
+                await RenderCycleAsync();
+                WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-workspace-dark.txt"), "Workspace Dark");
+                Capture(window, Path.Combine(outputDirectory, "workspace-dark.png"));
+
+                AppearanceService.Apply(AppThemeMode.Light);
+                AppearanceService.ApplyToWindow(window);
+                await RenderCycleAsync();
+                WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-workspace-light-roundtrip.txt"), "Workspace Light round-trip");
+                Capture(window, Path.Combine(outputDirectory, "workspace-light-roundtrip.png"));
+            }
         }
         finally
         {
