@@ -38,9 +38,10 @@ $keyReplacement = @'
 if (-not $appearance.Contains($keyAnchor)) { throw 'ThemeBrushKeys anchor not found.' }
 $appearance = $appearance.Replace($keyAnchor, $keyReplacement)
 $applyAnchor = '        SetBrush("MutedTextBrush", colors.Muted);'
+$chipLine = '        SetBrush("IconChipTextBrush", "#FFFFFF");'
 if (-not $appearance.Contains($applyAnchor)) { throw 'Theme Apply anchor not found.' }
-if (-not $appearance.Contains('SetBrush("IconChipTextBrush", "#FFFFFF")')) {
-    $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n        SetBrush(\"IconChipTextBrush\", \"#FFFFFF\");")
+if (-not $appearance.Contains($chipLine)) {
+    $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n" + $chipLine)
 }
 Write-Lf $appearancePath $appearance
 
