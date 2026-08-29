@@ -38,14 +38,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Generate representative PDF corpus
-        id: corpus
         shell: pwsh
         run: |
           $corpus = Join-Path $env:GITHUB_WORKSPACE 'var\regression-corpus'
           & .\scripts\New-PdfRegressionCorpus.ps1 -OutputDirectory $corpus
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-Content (Join-Path $corpus 'CORPUS-MANIFEST.txt') | Write-Host
-          "path=$corpus" >> $env:GITHUB_OUTPUT
 
       - name: Locate application
         id: app
@@ -60,7 +58,7 @@ jobs:
       - name: Open every corpus shape in Light and Dark
         shell: pwsh
         run: |
-          $corpus = '${{ steps.corpus.outputs.path }}'
+          $corpus = Join-Path $env:GITHUB_WORKSPACE 'var\regression-corpus'
           $appExe = '${{ steps.app.outputs.path }}'
           $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
           $logDir = Join-Path $settingsRoot 'Logs'
