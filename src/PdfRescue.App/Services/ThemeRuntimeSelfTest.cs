@@ -109,6 +109,29 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Quick Tools", isLight: false);
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-dark.txt"), "Dark");
             Capture(window, Path.Combine(outputDirectory, "home-dark.png"));
+
+            // The installed acceptance failure appeared after live theme switching, so
+            // startup-only tests are insufficient. Exercise a full round trip on the
+            // same visual tree and assert that no control remembers the previous theme.
+            AppearanceService.Apply(AppThemeMode.Light);
+            AppearanceService.ApplyToWindow(window);
+            await RenderCycleAsync();
+            AssertBrush(window.Background, "#EEF3F8", "Round-trip Light MainWindow background");
+            AssertThemeText(window, "Welcome to AsantePDF", isLight: true);
+            AssertThemeText(window, "Get started with AsantePDF", isLight: true);
+            AssertThemeText(window, "Quick Tools", isLight: true);
+            WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-light-roundtrip.txt"), "Light round-trip");
+            Capture(window, Path.Combine(outputDirectory, "home-light-roundtrip.png"));
+
+            AppearanceService.Apply(AppThemeMode.Dark);
+            AppearanceService.ApplyToWindow(window);
+            await RenderCycleAsync();
+            AssertBrush(window.Background, "#09131F", "Round-trip Dark MainWindow background");
+            AssertThemeText(window, "Welcome to AsantePDF", isLight: false);
+            AssertThemeText(window, "Get started with AsantePDF", isLight: false);
+            AssertThemeText(window, "Quick Tools", isLight: false);
+            WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-dark-roundtrip.txt"), "Dark round-trip");
+            Capture(window, Path.Combine(outputDirectory, "home-dark-roundtrip.png"));
         }
         finally
         {

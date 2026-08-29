@@ -31,6 +31,8 @@
         <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Color.Accent}" presentationOptions:Freeze="False" />
         <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource Color.Danger}" presentationOptions:Freeze="False" />
         <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Color.Success}" presentationOptions:Freeze="False" />
+        <!-- Fixed foreground for text/glyphs placed on saturated tool-category chips. -->
+        <SolidColorBrush x:Key="IconChipTextBrush" Color="#FFFFFF" />
 
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI" />

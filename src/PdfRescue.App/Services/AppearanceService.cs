@@ -36,7 +36,7 @@ public static class AppearanceService
     [
         "AppBackground", "SidebarBackground", "PanelBackground", "PanelRaisedBrush", "PanelHoverBrush",
         "PanelPressedBrush", "BorderBrushSoft", "PrimaryTextBrush", "MutedTextBrush", "AccentBrush",
-        "DangerBrush", "SuccessBrush"
+        "DangerBrush", "SuccessBrush", "IconChipTextBrush"
     ];
 
     // Transitional mapping for legacy literal colours still present in a few composed

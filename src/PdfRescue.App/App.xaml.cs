@@ -76,6 +76,12 @@ public partial class App : Application
 
             if (e.Args.Length >= 2 && string.Equals(e.Args[0], "--selftest-theme", StringComparison.OrdinalIgnoreCase))
             {
+                // ThemeRuntimeSelfTest intentionally creates and closes several windows.
+                // With the product default OnMainWindowClose policy, the first hidden host
+                // becomes Application.MainWindow and closing it terminates the process
+                // before the whole-shell Light/Dark audit can run. Self-tests own their
+                // lifetime explicitly and call Shutdown(...) with a meaningful exit code.
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 _ = RunThemeRuntimeSelfTestAsync(e.Args[1]);
                 return;
             }
