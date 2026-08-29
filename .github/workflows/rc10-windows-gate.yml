@@ -3,17 +3,20 @@ name: AsantePDF Development Windows Gate
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - 'development/master-upgrade-v2'
 
 permissions:
   contents: write
 
 concurrency:
-  group: asantepdf-development-${{ github.event.pull_request.number }}
+  group: asantepdf-development-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   windows-build:
-    if: github.head_ref == 'development/master-upgrade-v2'
+    if: github.head_ref == 'development/master-upgrade-v2' || github.ref == 'refs/heads/development/master-upgrade-v2'
     runs-on: windows-latest
     timeout-minutes: 15
 
