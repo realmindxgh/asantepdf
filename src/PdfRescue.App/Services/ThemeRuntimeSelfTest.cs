@@ -251,6 +251,7 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Welcome to AsantePDF", isLight: true);
             AssertThemeText(window, "Get started with AsantePDF", isLight: true);
             AssertThemeText(window, "Quick Tools", isLight: true);
+            AssertHomeToolBadgesWhite(window, "Light Home tool badges");
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-light.txt"), "Light");
             Capture(window, Path.Combine(outputDirectory, "home-light.png"));
 
@@ -261,6 +262,7 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Welcome to AsantePDF", isLight: false);
             AssertThemeText(window, "Get started with AsantePDF", isLight: false);
             AssertThemeText(window, "Quick Tools", isLight: false);
+            AssertHomeToolBadgesWhite(window, "Dark Home tool badges");
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-dark.txt"), "Dark");
             Capture(window, Path.Combine(outputDirectory, "home-dark.png"));
 
@@ -274,6 +276,7 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Welcome to AsantePDF", isLight: true);
             AssertThemeText(window, "Get started with AsantePDF", isLight: true);
             AssertThemeText(window, "Quick Tools", isLight: true);
+            AssertHomeToolBadgesWhite(window, "Light Home tool badges");
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-light-roundtrip.txt"), "Light round-trip");
             Capture(window, Path.Combine(outputDirectory, "home-light-roundtrip.png"));
 
@@ -284,6 +287,7 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Welcome to AsantePDF", isLight: false);
             AssertThemeText(window, "Get started with AsantePDF", isLight: false);
             AssertThemeText(window, "Quick Tools", isLight: false);
+            AssertHomeToolBadgesWhite(window, "Dark Home tool badges");
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-dark-roundtrip.txt"), "Dark round-trip");
             Capture(window, Path.Combine(outputDirectory, "home-dark-roundtrip.png"));
             await VerifyResponsiveMatrixAsync(window, outputDirectory, "home");
@@ -395,6 +399,22 @@ public static class ThemeRuntimeSelfTest
         await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
     }
 
+    private static void AssertHomeToolBadgesWhite(DependencyObject root, string label)
+    {
+        var badges = Descendants(root)
+            .OfType<Border>()
+            .Where(border => Math.Abs(border.Width - 44) < 0.1 && Math.Abs(border.Height - 44) < 0.1)
+            .Select(border => border.Child as TextBlock)
+            .Where(text => text is not null && text.IsVisible)
+            .Cast<TextBlock>()
+            .ToList();
+
+        if (badges.Count < 20)
+            throw new InvalidOperationException($"{label}: expected at least 20 visible Home tool badges, found {badges.Count}.");
+
+        foreach (var badge in badges)
+            AssertBrush(badge.Foreground, "#FFFFFF", $"{label} '{badge.Text}' foreground");
+    }
     private static void AssertThemeText(DependencyObject root, string text, bool isLight)
     {
         var block = Descendants(root)
