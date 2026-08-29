@@ -108,6 +108,12 @@ jobs:
           Copy-Item '.\dist\installer\AsantePDF Setup.exe' $package -Force
           Copy-Item '.\dist\release-evidence\*' $package -Force
           Copy-Item '.\dist\app\engines\ENGINE-VERSIONS.txt' $package -Force
+          if (Test-Path '.\dist\selftest-installed') {
+            Copy-Item '.\dist\selftest-installed' (Join-Path $package 'installed-evidence') -Recurse -Force
+          }
+          if (Test-Path '.\dist\installed-regression-corpus\CORPUS-MANIFEST.txt') {
+            Copy-Item '.\dist\installed-regression-corpus\CORPUS-MANIFEST.txt' (Join-Path $package 'INSTALLED-CORPUS-MANIFEST.txt') -Force
+          }
           $hash = (Get-FileHash '.\dist\installer\AsantePDF Setup.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
           Set-Content -Path (Join-Path $package 'INSTALLER-SHA256.txt') -Value "$hash  AsantePDF Setup.exe" -Encoding ASCII
 
