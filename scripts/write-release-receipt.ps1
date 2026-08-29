@@ -20,7 +20,14 @@ if ($Version -match '-rc(?<number>[0-9]+)$') {
 $installer = (Resolve-Path $InstallerPath).Path
 $appExe = Join-Path $root 'dist\app\AsantePDF.exe'
 $preinstallFlag = Join-Path $root 'dist\selftest-preinstall\final-candidate-pass.flag'
-$installedFlag = Join-Path $root 'dist\selftest-installed\final-candidate-pass.flag'
+$installedFlagCandidates = @(
+    (Join-Path $root 'dist\selftest-installed\final-selftest\final-candidate-pass.flag'),
+    (Join-Path $root 'dist\selftest-installed\final-candidate-pass.flag')
+)
+$installedFlag = $installedFlagCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $installedFlag) {
+    $installedFlag = $installedFlagCandidates[0]
+}
 
 foreach ($required in @($installer, $appExe, $preinstallFlag, $installedFlag)) {
     if (-not (Test-Path $required)) {
@@ -68,11 +75,12 @@ Validated gate:
 - Inno Setup installer compilation
 - silent installation of the exact generated AsantePDF Setup.exe
 - launch and verification of the installed Program Files copy
+- installed-copy Light/Dark visual, DPI, representative-PDF and restart/Resume acceptance
 - installed-copy final candidate functional self-test
 
 Evidence flags:
 - selftest-preinstall/final-candidate-pass.flag = pass
-- selftest-installed/final-candidate-pass.flag = pass
+- selftest-installed/final-selftest/final-candidate-pass.flag = pass
 "@
 
 $receiptPath = Join-Path $OutputDirectory "AsantePDF-$releaseLabel-Release-Receipt.txt"
