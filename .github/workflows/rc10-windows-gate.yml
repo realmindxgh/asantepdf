@@ -159,7 +159,7 @@ jobs:
             Write-TestSettings $theme
             Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
             New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-            Write-Host "Starting $label: $theme, $expectedPages pages" -ForegroundColor Cyan
+            Write-Host "Starting ${label}: $theme, $expectedPages pages" -ForegroundColor Cyan
             $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @($pdf) -PassThru
             $ready = $false
             $opened = $false
