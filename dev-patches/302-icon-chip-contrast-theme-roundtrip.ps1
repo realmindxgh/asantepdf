@@ -9,7 +9,11 @@ $appXaml = Read-Lf $appXamlPath
 $anchor = '        <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Color.Success}" presentationOptions:Freeze="False" />'
 if (-not $appXaml.Contains($anchor)) { throw 'Could not locate semantic brush anchor in App.xaml.' }
 if (-not $appXaml.Contains('x:Key="IconChipTextBrush"')) {
-    $appXaml = $appXaml.Replace($anchor, $anchor + "`n        <!-- Fixed foreground for text/glyphs placed on saturated tool-category chips. -->`n        <SolidColorBrush x:Key=\"IconChipTextBrush\" Color=\"#FFFFFF\" />")
+    $brushBlock = @'
+        <!-- Fixed foreground for text/glyphs placed on saturated tool-category chips. -->
+        <SolidColorBrush x:Key="IconChipTextBrush" Color="#FFFFFF" />
+'@
+    $appXaml = $appXaml.Replace($anchor, $anchor + "`n" + $brushBlock.TrimEnd())
 }
 Write-Lf $appXamlPath $appXaml
 
