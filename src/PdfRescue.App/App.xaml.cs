@@ -74,6 +74,19 @@ public partial class App : Application
                 return;
             }
 
+            if (e.Args.Length >= 4 && string.Equals(e.Args[0], "--selftest-lifecycle-seed", StringComparison.OrdinalIgnoreCase))
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                _ = LifecycleRestartSelfTest.RunAndShutdownAsync(true, e.Args[1], e.Args[2], e.Args[3]);
+                return;
+            }
+
+            if (e.Args.Length >= 4 && string.Equals(e.Args[0], "--selftest-lifecycle-verify", StringComparison.OrdinalIgnoreCase))
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                _ = LifecycleRestartSelfTest.RunAndShutdownAsync(false, e.Args[1], e.Args[2], e.Args[3]);
+                return;
+            }
             if (e.Args.Length >= 2 && string.Equals(e.Args[0], "--selftest-theme", StringComparison.OrdinalIgnoreCase))
             {
                 // ThemeRuntimeSelfTest intentionally creates and closes several windows.

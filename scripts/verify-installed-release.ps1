@@ -116,6 +116,32 @@ foreach ($theme in @('Light','Dark')) {
     }
 }
 
+# Prove lifecycle persistence across two distinct executions of the exact Program Files EXE.
+# Seed runs the real first-launch dialog, real theme toggle, opens two tabs and closes cleanly.
+# Verify starts a fresh process, proves onboarding does not recur, then uses the real Recent
+# Resume/Grid/List/Compact controls to restore the two-tab page-3 session.
+$lifecycleOutput = Join-Path $OutputDirectory 'lifecycle-restart'
+Remove-Item $lifecycleOutput -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $lifecycleOutput | Out-Null
+$lifecycleSecond = Join-Path $corpus 'research-like-18.pdf'
+Write-Host 'Running installed first-launch/session seed through the real Program Files EXE...' -ForegroundColor Cyan
+$lifecycleSeed = Start-Process -FilePath $installedExe `
+    -ArgumentList @('--selftest-lifecycle-seed', $sample, $lifecycleSecond, $lifecycleOutput) -Wait -PassThru
+if ($lifecycleSeed.ExitCode -ne 0 -or -not (Test-Path (Join-Path $lifecycleOutput 'lifecycle-seed-pass.flag'))) {
+    $lifecycleError = Join-Path $lifecycleOutput 'lifecycle-restart-error.txt'
+    if (Test-Path $lifecycleError) { Get-Content $lifecycleError | Write-Host }
+    throw "Installed lifecycle seed failed with exit code $($lifecycleSeed.ExitCode)."
+}
+
+Write-Host 'Restarting installed AsantePDF to verify onboarding, settings, Recent and Resume persistence...' -ForegroundColor Cyan
+$lifecycleVerify = Start-Process -FilePath $installedExe `
+    -ArgumentList @('--selftest-lifecycle-verify', $sample, $lifecycleSecond, $lifecycleOutput) -Wait -PassThru
+if ($lifecycleVerify.ExitCode -ne 0 -or -not (Test-Path (Join-Path $lifecycleOutput 'lifecycle-verify-pass.flag'))) {
+    $lifecycleError = Join-Path $lifecycleOutput 'lifecycle-restart-error.txt'
+    if (Test-Path $lifecycleError) { Get-Content $lifecycleError | Write-Host }
+    throw "Installed lifecycle restart verification failed with exit code $($lifecycleVerify.ExitCode)."
+}
+
 $finalOutput = Join-Path $OutputDirectory 'final-selftest'
 Remove-Item $finalOutput -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $finalOutput | Out-Null
