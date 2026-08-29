@@ -10,15 +10,18 @@ $anchor = '        <SolidColorBrush x:Key="IconChipTextBrush" Color="#FFFFFF" />
 if (-not $app.Contains($anchor)) { throw 'IconChipTextBrush anchor not found.' }
 if (-not $app.Contains('x:Key="CommandCyanBrush"')) {
 $resources = @'
-        <SolidColorBrush x:Key="CommandBlueBrush" Color="#4D9BFF" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandCyanBrush" Color="#49D6FF" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandGoldBrush" Color="#FCD116" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandGreenBrush" Color="#38C986" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandPurpleBrush" Color="#D187FF" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandOrangeBrush" Color="#EF7D45" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandTealBrush" Color="#34C5C3" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandLimeBrush" Color="#6FD15C" presentationOptions:Freeze="False" />
-        <SolidColorBrush x:Key="CommandDangerBrush" Color="#FF6B72" presentationOptions:Freeze="False" />
+        <!-- Command colors are intentionally stable across themes. Each one clears the
+             3:1 non-body contrast floor against both white and the dark raised surface,
+             avoiding another stateful palette that can drift during live switching. -->
+        <SolidColorBrush x:Key="CommandBlueBrush" Color="#2D7DFF" />
+        <SolidColorBrush x:Key="CommandCyanBrush" Color="#007A99" />
+        <SolidColorBrush x:Key="CommandGoldBrush" Color="#B45309" />
+        <SolidColorBrush x:Key="CommandGreenBrush" Color="#16825D" />
+        <SolidColorBrush x:Key="CommandPurpleBrush" Color="#8B5CF6" />
+        <SolidColorBrush x:Key="CommandOrangeBrush" Color="#B45309" />
+        <SolidColorBrush x:Key="CommandTealBrush" Color="#087A68" />
+        <SolidColorBrush x:Key="CommandLimeBrush" Color="#497C19" />
+        <SolidColorBrush x:Key="CommandDangerBrush" Color="#D94B55" />
 '@
     $app = $app.Replace($anchor, $anchor + "`n" + $resources.TrimEnd())
 }
@@ -34,22 +37,6 @@ $keyReplacement = @'
 '@.Replace("`r`n", "`n").TrimEnd()
 if (-not $appearance.Contains($keyAnchor)) { throw 'ThemeBrushKeys anchor not found.' }
 $appearance = $appearance.Replace($keyAnchor, $keyReplacement)
-$applyAnchor = '        SetBrush("MutedTextBrush", colors.Muted);'
-if (-not $appearance.Contains($applyAnchor)) { throw 'Appearance Apply anchor not found.' }
-if (-not $appearance.Contains('SetBrush("CommandCyanBrush"')) {
-$commandApply = @'
-        SetBrush("CommandBlueBrush", IsLight ? "#155DA8" : "#4D9BFF");
-        SetBrush("CommandCyanBrush", IsLight ? "#006A8A" : "#49D6FF");
-        SetBrush("CommandGoldBrush", IsLight ? "#7A5900" : "#FCD116");
-        SetBrush("CommandGreenBrush", IsLight ? "#147B4A" : "#38C986");
-        SetBrush("CommandPurpleBrush", IsLight ? "#7040A0" : "#D187FF");
-        SetBrush("CommandOrangeBrush", IsLight ? "#9A3F10" : "#EF7D45");
-        SetBrush("CommandTealBrush", IsLight ? "#0B6F6E" : "#34C5C3");
-        SetBrush("CommandLimeBrush", IsLight ? "#357A25" : "#6FD15C");
-        SetBrush("CommandDangerBrush", IsLight ? "#B4232E" : "#FF6B72");
-'@
-    $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n" + $commandApply.Replace("`r`n", "`n").TrimEnd())
-}
 Write-Lf $appearancePath $appearance
 
 $mainPath = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.xaml'
@@ -71,7 +58,7 @@ foreach ($pair in $replacements.GetEnumerator()) {
     $main = $main.Replace($pair.Key, $pair.Value)
 }
 
-# Ribbon glyphs retain category distinction while receiving accessible Light/Dark variants.
+# Ribbon glyphs retain category distinction with colors chosen to remain readable in both themes.
 $foregroundMap = [ordered]@{
     'Foreground="#4D9BFF"' = 'Foreground="{DynamicResource CommandBlueBrush}"'
     'Foreground="#49D6FF"' = 'Foreground="{DynamicResource CommandCyanBrush}"'
@@ -95,4 +82,4 @@ foreach ($pair in $foregroundMap.GetEnumerator()) {
 $main = $main.Replace('BorderBrush="#4D9BFF" BorderThickness="2"', 'BorderBrush="{DynamicResource CommandBlueBrush}" BorderThickness="2"')
 Write-Lf $mainPath $main
 
-Write-Host 'Converted late-created workspace cards and ribbon command colours to semantic Light/Dark resources.' -ForegroundColor Green
+Write-Host 'Converted late-created workspace cards and ribbon command colors to semantic cross-theme resources.' -ForegroundColor Green
