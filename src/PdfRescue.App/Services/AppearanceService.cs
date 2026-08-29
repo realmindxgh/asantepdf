@@ -1,12 +1,19 @@
 using Microsoft.Win32;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace PdfRescue.App.Services;
 
+/// <summary>
+/// Owns AsantePDF's semantic colour palette. Theme resources are updated in place so
+/// DynamicResource consumers and existing brush references change together. A small,
+/// symmetric legacy-colour mapper remains only for old hard-coded surfaces while they
+/// are being retired. It never caches a control's current colour as its "original"
+/// theme, which avoids mixed Light/Dark states for controls created after startup.
+/// </summary>
 public static class AppearanceService
 {
     private sealed record ThemeColors(
@@ -20,11 +27,6 @@ public static class AppearanceService
         string Text,
         string Muted);
 
-    private sealed class OriginalBrushes
-    {
-        public Dictionary<string, Color> Colors { get; } = new(StringComparer.Ordinal);
-    }
-
     private static readonly ThemeColors Dark = new(
         "#09131F", "#08111C", "#101C2A", "#162333", "#263B50", "#304B64", "#36506A", "#F3F7FC", "#B7C5D4");
     private static readonly ThemeColors Light = new(
@@ -37,8 +39,9 @@ public static class AppearanceService
         "DangerBrush", "SuccessBrush"
     ];
 
-    private static readonly ConditionalWeakTable<DependencyObject, OriginalBrushes> OriginalTreeBrushes = new();
-
+    // Transitional mapping for legacy literal colours still present in a few composed
+    // controls. The mapping is deliberately symmetric. Dark -> Light and Light -> Dark
+    // always derive from the colour that is on the element now, not from cached history.
     private static readonly Dictionary<string, string> DarkToLight = new(StringComparer.OrdinalIgnoreCase)
     {
         ["#09131F"] = "#EEF3F8", ["#08111C"] = "#F8FAFC", ["#101C2A"] = "#F5F8FB",
@@ -58,6 +61,22 @@ public static class AppearanceService
         ["#7E92A8"] = "#425C73", ["#7192B1"] = "#3B5871", ["#7990A7"] = "#3F5B73",
         ["#80B9FF"] = "#185D9C", ["#4D9BFF"] = "#155DA8", ["#627B94"] = "#455F77",
         ["#7890A8"] = "#405A72"
+    };
+
+    private static readonly Dictionary<string, string> LightToDark = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["#EEF3F8"] = "#09131F", ["#F8FAFC"] = "#08111C", ["#F5F8FB"] = "#101C2A",
+        ["#FFFFFF"] = "#162333", ["#DCE6F0"] = "#263B50", ["#C9D8E6"] = "#304B64",
+        ["#8EA3B7"] = "#36506A", ["#0F172A"] = "#F3F7FC", ["#3F556B"] = "#B7C5D4",
+        ["#F5F7FA"] = "#0D1A28", ["#F7F9FB"] = "#0E1C2B", ["#F1F4F7"] = "#0B1724",
+        ["#E6EDF5"] = "#132236", ["#EEF2F6"] = "#111C28", ["#D7E0E8"] = "#172738",
+        ["#C2CED9"] = "#243D56", ["#C7D3DE"] = "#24415F", ["#CBD5DF"] = "#24364A",
+        ["#DCE7F2"] = "#102A45", ["#B8C6D4"] = "#29425B", ["#52677A"] = "#3A4A59",
+        ["#4A6074"] = "#41566C", ["#455B70"] = "#53677C", ["#405970"] = "#54708A",
+        ["#46617B"] = "#6282A1", ["#435D75"] = "#698096", ["#40586F"] = "#6F8399",
+        ["#3E576E"] = "#71869D", ["#425C73"] = "#7E92A8", ["#3B5871"] = "#7192B1",
+        ["#3F5B73"] = "#7990A7", ["#185D9C"] = "#80B9FF", ["#155DA8"] = "#4D9BFF",
+        ["#455F77"] = "#627B94", ["#405A72"] = "#7890A8"
     };
 
     public static bool IsLight { get; private set; }
@@ -89,8 +108,21 @@ public static class AppearanceService
             return;
         }
 
+        // Keep the top-level shell on the semantic resources. The brush objects are
+        // mutated in place by Apply(), so even already-loaded windows switch atomically.
         window.Background = ResourceBrush("AppBackground");
-        ApplyTree(window, IsLight);
+        window.Foreground = ResourceBrush("PrimaryTextBrush");
+        ApplyLegacyTree(window);
+    }
+
+    public static void ApplyToElement(DependencyObject root)
+    {
+        if (root is DispatcherObject dispatcherObject && !dispatcherObject.Dispatcher.CheckAccess())
+        {
+            dispatcherObject.Dispatcher.Invoke(() => ApplyToElement(root));
+            return;
+        }
+        ApplyLegacyTree(root);
     }
 
     private static bool WindowsUsesLightTheme()
@@ -109,17 +141,16 @@ public static class AppearanceService
     private static void SetBrush(string key, string value)
     {
         var color = (Color)ColorConverter.ConvertFromString(value)!;
-        if (Application.Current.Resources[key] is SolidColorBrush brush)
+        if (Application.Current.Resources[key] is SolidColorBrush brush && !brush.IsFrozen)
         {
-            if (brush.IsFrozen)
-                Application.Current.Resources[key] = new SolidColorBrush(color);
-            else
-                brush.Color = color;
+            brush.Color = color;
+            return;
         }
-        else
-        {
-            Application.Current.Resources[key] = new SolidColorBrush(color);
-        }
+
+        // WPF may freeze application-level Freezables while loading resources. This is
+        // safe because the theme contract requires every semantic palette consumer to
+        // use DynamicResource, so replacing a frozen resource is observed immediately.
+        Application.Current.Resources[key] = new SolidColorBrush(color);
     }
 
     private static Brush ResourceBrush(string key) =>
@@ -134,58 +165,51 @@ public static class AppearanceService
         return false;
     }
 
-    private static Brush ThemeTreeBrush(DependencyObject owner, string slot, SolidColorBrush brush, bool light)
-    {
-        if (IsLiveThemeResourceBrush(brush)) return brush;
-
-        var originals = OriginalTreeBrushes.GetOrCreateValue(owner);
-        if (!originals.Colors.TryGetValue(slot, out var original))
-        {
-            original = brush.Color;
-            originals.Colors[slot] = original;
-        }
-
-        if (!light) return new SolidColorBrush(original);
-        return DarkToLight.TryGetValue(ToRgbKey(original), out var mapped)
-            ? new SolidColorBrush((Color)ColorConverter.ConvertFromString(mapped)!)
-            : new SolidColorBrush(original);
-    }
-
     private static string ToRgbKey(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
-    private static void ApplyTree(DependencyObject root, bool light)
+    private static Brush MapLegacyBrush(SolidColorBrush brush)
+    {
+        if (IsLiveThemeResourceBrush(brush)) return brush;
+        var key = ToRgbKey(brush.Color);
+        var map = IsLight ? DarkToLight : LightToDark;
+        return map.TryGetValue(key, out var mapped)
+            ? new SolidColorBrush((Color)ColorConverter.ConvertFromString(mapped)!)
+            : brush;
+    }
+
+    private static void ApplyLegacyTree(DependencyObject root)
     {
         switch (root)
         {
             case Panel panel when panel.Background is SolidColorBrush panelBrush:
-                panel.Background = ThemeTreeBrush(panel, "Background", panelBrush, light);
+                panel.Background = MapLegacyBrush(panelBrush);
                 break;
             case Border border:
                 if (border.Background is SolidColorBrush background)
-                    border.Background = ThemeTreeBrush(border, "Background", background, light);
+                    border.Background = MapLegacyBrush(background);
                 if (border.BorderBrush is SolidColorBrush borderBrush)
-                    border.BorderBrush = ThemeTreeBrush(border, "BorderBrush", borderBrush, light);
+                    border.BorderBrush = MapLegacyBrush(borderBrush);
                 break;
             case Control control:
                 if (control.Background is SolidColorBrush controlBackground)
-                    control.Background = ThemeTreeBrush(control, "Background", controlBackground, light);
+                    control.Background = MapLegacyBrush(controlBackground);
                 if (control.Foreground is SolidColorBrush controlForeground)
-                    control.Foreground = ThemeTreeBrush(control, "Foreground", controlForeground, light);
+                    control.Foreground = MapLegacyBrush(controlForeground);
                 if (control.BorderBrush is SolidColorBrush controlBorder)
-                    control.BorderBrush = ThemeTreeBrush(control, "BorderBrush", controlBorder, light);
+                    control.BorderBrush = MapLegacyBrush(controlBorder);
                 break;
             case TextBlock text when text.Foreground is SolidColorBrush textBrush:
-                text.Foreground = ThemeTreeBrush(text, "Foreground", textBrush, light);
+                text.Foreground = MapLegacyBrush(textBrush);
                 break;
             case Shape shape:
                 if (shape.Fill is SolidColorBrush fill)
-                    shape.Fill = ThemeTreeBrush(shape, "Fill", fill, light);
+                    shape.Fill = MapLegacyBrush(fill);
                 if (shape.Stroke is SolidColorBrush stroke)
-                    shape.Stroke = ThemeTreeBrush(shape, "Stroke", stroke, light);
+                    shape.Stroke = MapLegacyBrush(stroke);
                 break;
         }
 
         var count = VisualTreeHelper.GetChildrenCount(root);
-        for (var i = 0; i < count; i++) ApplyTree(VisualTreeHelper.GetChild(root, i), light);
+        for (var i = 0; i < count; i++) ApplyLegacyTree(VisualTreeHelper.GetChild(root, i));
     }
 }

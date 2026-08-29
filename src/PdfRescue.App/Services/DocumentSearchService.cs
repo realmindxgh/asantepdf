@@ -56,7 +56,7 @@ public sealed class DocumentSearchService
         // Creating the production renderer initializes PDFium through the same
         // guarded runtime path used by the preview engine. No document is opened
         // on this anchor renderer.
-        using var runtimeAnchor = PdfRendererFactory.CreateProduction();
+        using var nativeGate = PdfiumNativeGate.Enter(token);
         token.ThrowIfCancellationRequested();
 
         var document = fpdfview.FPDF_LoadDocument(path, string.Empty);

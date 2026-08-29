@@ -74,6 +74,12 @@ public partial class App : Application
                 return;
             }
 
+            if (e.Args.Length >= 2 && string.Equals(e.Args[0], "--selftest-theme", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = RunThemeRuntimeSelfTestAsync(e.Args[1]);
+                return;
+            }
+
             var pdfArgument = e.Args.FirstOrDefault(a =>
                 a.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && File.Exists(a));
             StartedWithPdfArgument = pdfArgument is not null;
@@ -195,6 +201,28 @@ public partial class App : Application
             }
             catch { }
             Shutdown(5);
+        }
+    }
+
+    private async Task RunThemeRuntimeSelfTestAsync(string outputDirectory)
+    {
+        try
+        {
+            Log("Theme runtime self-test started.");
+            await ThemeRuntimeSelfTest.RunAsync(outputDirectory);
+            Log("Theme runtime self-test passed.");
+            Shutdown(0);
+        }
+        catch (Exception ex)
+        {
+            Log("Theme runtime self-test failed: " + ex);
+            try
+            {
+                Directory.CreateDirectory(outputDirectory);
+                await File.WriteAllTextAsync(Path.Combine(outputDirectory, "theme-runtime-error.txt"), ex.ToString());
+            }
+            catch { }
+            Shutdown(7);
         }
     }
 

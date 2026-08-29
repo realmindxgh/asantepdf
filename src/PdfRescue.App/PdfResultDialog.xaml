@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Operation complete" Width="680" MinHeight="430" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
-        Background="{StaticResource AppBackground}" Foreground="{StaticResource PrimaryTextBrush}">
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource PrimaryTextBrush}">
     <Grid Margin="26">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -20,7 +20,7 @@
                 </Border>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock x:Name="OperationTitleText" Text="PDF operation completed" FontSize="22" FontWeight="SemiBold" />
-                    <TextBlock x:Name="SummaryText" Text="Your result is ready." Foreground="{StaticResource MutedTextBrush}"
+                    <TextBlock x:Name="SummaryText" Text="Your result is ready." Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="13" Margin="0,4,0,0" TextWrapping="Wrap" MaxWidth="540" />
                 </StackPanel>
             </StackPanel>
@@ -32,7 +32,7 @@
                 <StackPanel>
                     <TextBlock Text="ORIGINAL" Foreground="#70869C" FontSize="11" FontWeight="SemiBold" />
                     <TextBlock x:Name="OriginalNameText" FontSize="15" FontWeight="SemiBold" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
-                    <TextBlock x:Name="OriginalPathText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0"
+                    <TextBlock x:Name="OriginalPathText" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0"
                                TextWrapping="Wrap" MaxHeight="54" />
                 </StackPanel>
             </Border>
@@ -41,15 +41,15 @@
                 <StackPanel>
                     <TextBlock Text="RESULT" Foreground="#72AFFF" FontSize="11" FontWeight="SemiBold" />
                     <TextBlock x:Name="ResultNameText" FontSize="15" FontWeight="SemiBold" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
-                    <TextBlock x:Name="ResultMetaText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0" />
-                    <TextBlock x:Name="ResultPathText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,3,0,0"
+                    <TextBlock x:Name="ResultMetaText" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0" />
+                    <TextBlock x:Name="ResultPathText" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,3,0,0"
                                TextWrapping="Wrap" MaxHeight="54" />
                 </StackPanel>
             </Border>
         </Grid>
 
         <TextBlock Grid.Row="2" Text="Choose what to do with the result. The source remains untouched unless you explicitly replace its tab."
-                   Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,18,0,0" />
+                   Foreground="{DynamicResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,18,0,0" />
 
         <WrapPanel Grid.Row="3" Margin="0,22,0,0" HorizontalAlignment="Right">
             <Button x:Name="ReplaceCurrentButton" Style="{StaticResource FlatButtonStyle}" Click="ReplaceCurrent_Click"

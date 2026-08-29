@@ -283,7 +283,10 @@ public partial class MainWindow : Window
             }
 
             if (!_busy && generation == _documentGeneration)
+            {
                 StatusText.Text = "Ready.";
+                App.Log($"Thumbnail rendering completed: {pageCount} pages.");
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)

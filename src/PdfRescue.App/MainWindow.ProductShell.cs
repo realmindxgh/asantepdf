@@ -49,6 +49,7 @@ public partial class MainWindow
         _recentFilesView.ResumeRequested += ResumeWorkspaceSessionAsync;
         HomeRecentSection.Children.Clear();
         HomeRecentSection.Children.Add(_recentFilesView);
+        AppearanceService.ApplyToElement(_recentFilesView);
 
         _sessionPersistTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
         {

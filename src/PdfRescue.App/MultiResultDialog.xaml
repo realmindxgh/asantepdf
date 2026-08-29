@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Operation Results" Width="720" Height="620" MinWidth="620" MinHeight="520"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
-        Background="{StaticResource AppBackground}" Foreground="{StaticResource PrimaryTextBrush}">
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource PrimaryTextBrush}">
     <Grid Margin="28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -16,7 +16,7 @@
 
         <StackPanel>
             <TextBlock x:Name="TitleText" FontSize="25" FontWeight="SemiBold" />
-            <TextBlock x:Name="SummaryText" Foreground="{StaticResource MutedTextBrush}" FontSize="13"
+            <TextBlock x:Name="SummaryText" Foreground="{DynamicResource MutedTextBrush}" FontSize="13"
                        TextWrapping="Wrap" Margin="0,7,0,0" />
         </StackPanel>
 
@@ -24,7 +24,7 @@
             <StackPanel>
                 <TextBlock Text="SOURCE" Foreground="#6F8399" FontSize="10" FontWeight="SemiBold" />
                 <TextBlock x:Name="SourceNameText" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0" />
-                <TextBlock x:Name="SourcePathText" Foreground="{StaticResource MutedTextBrush}" FontSize="11"
+                <TextBlock x:Name="SourcePathText" Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
                            TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
             </StackPanel>
         </Border>
@@ -60,7 +60,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{Binding Path}" Foreground="{StaticResource MutedTextBrush}" FontSize="10" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Path}" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <TextBlock Grid.Column="1" Text="{Binding SizeLabel}" Foreground="#7990A7" FontSize="10" VerticalAlignment="Center" Margin="12,0,0,0" />
                         </Grid>

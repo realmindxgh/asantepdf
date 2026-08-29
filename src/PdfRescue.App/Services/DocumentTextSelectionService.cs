@@ -50,7 +50,7 @@ public sealed class DocumentTextSelectionService
 
     private static PdfSelectableTextPage ReadPage(string path, int sourcePageNumber, CancellationToken token)
     {
-        using var runtimeAnchor = PdfRendererFactory.CreateProduction();
+        using var nativeGate = PdfiumNativeGate.Enter(token);
         token.ThrowIfCancellationRequested();
 
         var document = fpdfview.FPDF_LoadDocument(path, string.Empty);

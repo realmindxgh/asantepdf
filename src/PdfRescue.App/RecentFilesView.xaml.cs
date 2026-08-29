@@ -104,6 +104,9 @@ public partial class RecentFilesView : UserControl
 
     private void RecentFilesView_Loaded(object sender, RoutedEventArgs e)
     {
+        // This view is created after the MainWindow has already loaded. DynamicResource
+        // handles the semantic palette; this pass only normalizes legacy literal colours.
+        AppearanceService.ApplyToElement(this);
         if (_service is not null) _ = RefreshAsync();
     }
 

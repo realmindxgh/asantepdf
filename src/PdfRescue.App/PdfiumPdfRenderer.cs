@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using PDFiumCore;
+using PdfRescue.App.Services;
 
 namespace PdfRescue.App;
 
@@ -17,7 +18,6 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
     private const uint MaxRenderWidth = 8192;
     private const int MaxRenderHeight = 16384;
 
-    private readonly SemaphoreSlim _gate = new(1, 1);
     private FpdfDocumentT? _document;
     private bool _disposed;
 
@@ -25,7 +25,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
 
     public PdfiumPdfRenderer()
     {
-        PdfiumRuntime.EnsureInitialized();
+        PdfiumNativeGate.EnsureInitialized();
     }
 
     public async Task OpenAsync(string path, CancellationToken cancellationToken = default)
@@ -36,7 +36,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
             throw new FileNotFoundException("PDF file was not found.", fullPath);
 
         ThrowIfDisposed();
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await PdfiumNativeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         FpdfDocumentT? candidate = null;
         try
         {
@@ -70,7 +70,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
             if (candidate is not null)
                 fpdfview.FPDF_CloseDocument(candidate);
 
-            _gate.Release();
+            PdfiumNativeGate.Release();
         }
     }
 
@@ -83,7 +83,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
         if (width == 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Render width must be greater than zero.");
 
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await PdfiumNativeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -98,7 +98,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
         }
         finally
         {
-            _gate.Release();
+            PdfiumNativeGate.Release();
         }
     }
 
@@ -179,7 +179,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
     public void Dispose()
     {
         if (_disposed) return;
-        _gate.Wait();
+        PdfiumNativeGate.Wait();
         try
         {
             if (_disposed) return;
@@ -188,8 +188,7 @@ public sealed class PdfiumPdfRenderer : IPdfRenderer
         }
         finally
         {
-            _gate.Release();
-            _gate.Dispose();
+            PdfiumNativeGate.Release();
         }
     }
 

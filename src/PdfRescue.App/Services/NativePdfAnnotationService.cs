@@ -234,7 +234,7 @@ public sealed class NativePdfAnnotationService
         return Task.Run(() =>
         {
             token.ThrowIfCancellationRequested();
-            using var runtimeAnchor = PdfRendererFactory.CreateProduction();
+            using var nativeGate = PdfiumNativeGate.Enter(token);
             var document = fpdfview.FPDF_LoadDocument(input, string.Empty);
             if (document is null) throw new InvalidDataException("PDFium could not open this PDF for annotation editing.");
 

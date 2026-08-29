@@ -55,7 +55,7 @@ public sealed class DocumentAttachmentService
     private static IReadOnlyList<PdfAttachmentItem> Load(string path, CancellationToken token)
     {
         if (!File.Exists(path)) throw new FileNotFoundException("PDF file was not found.", path);
-        using var runtimeAnchor = PdfRendererFactory.CreateProduction();
+        using var nativeGate = PdfiumNativeGate.Enter(token);
         token.ThrowIfCancellationRequested();
 
         var document = fpdfview.FPDF_LoadDocument(path, string.Empty);
@@ -93,7 +93,7 @@ public sealed class DocumentAttachmentService
     private static byte[] ReadFile(string path, int index, CancellationToken token)
     {
         if (!File.Exists(path)) throw new FileNotFoundException("PDF file was not found.", path);
-        using var runtimeAnchor = PdfRendererFactory.CreateProduction();
+        using var nativeGate = PdfiumNativeGate.Enter(token);
         token.ThrowIfCancellationRequested();
 
         var document = fpdfview.FPDF_LoadDocument(path, string.Empty);

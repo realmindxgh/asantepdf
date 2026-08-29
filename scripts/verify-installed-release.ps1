@@ -25,9 +25,9 @@ New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
     theme = 'Light'
     defaultRenderWidth = 1100
     defaultPageView = 'SinglePage'
-    reopenLastSession = $false
-    trackRecentFiles = $false
-    showRecentThumbnails = $false
+    reopenLastSession = $true
+    trackRecentFiles = $true
+    showRecentThumbnails = $true
     defaultOcrLanguage = 'eng'
     defaultOutputFolder = ''
     outputNamePattern = '{name}-{operation}'
@@ -43,30 +43,43 @@ $startupLog = Join-Path $logDir 'startup.log'
 Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
-Write-Host 'Launching the installed copy in Light mode, opening a PDF, and checking that the normal UI remains alive...' -ForegroundColor Cyan
+$themeOutput = Join-Path $OutputDirectory 'theme-runtime'
+Remove-Item $themeOutput -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $themeOutput | Out-Null
+Write-Host 'Running installed-copy Light/Dark runtime contrast probe...' -ForegroundColor Cyan
+$themeProbe = Start-Process -FilePath $installedExe -ArgumentList @('--selftest-theme', $themeOutput) -Wait -PassThru
+if ($themeProbe.ExitCode -ne 0 -or -not (Test-Path (Join-Path $themeOutput 'theme-runtime-pass.flag'))) {
+    $themeError = Join-Path $themeOutput 'theme-runtime-error.txt'
+    if (Test-Path $themeError) { Get-Content $themeError | Write-Host }
+    throw "Installed AsantePDF failed the runtime theme probe with exit code $($themeProbe.ExitCode)."
+}
+
+Write-Host 'Launching the installed copy in Light mode with a multi-page PDF and waiting for foreground + thumbnail completion...' -ForegroundColor Cyan
 $app = Start-Process -FilePath $installedExe -ArgumentList @($sample) -PassThru
 $ready = $false
 $opened = $false
-for ($i = 0; $i -lt 80; $i++) {
+$thumbnails = $false
+for ($i = 0; $i -lt 120; $i++) {
     Start-Sleep -Milliseconds 500
     $app.Refresh()
     if (Test-Path $readyFlag) { $ready = $true }
     if (Test-Path $startupLog) {
         $log = Get-Content $startupLog -Raw
-        if ($log -match 'Opened PDF:') { $opened = $true }
+        if ($log -match 'Opened PDF: foreground view refresh completed') { $opened = $true }
+        if ($log -match 'Thumbnail rendering completed:') { $thumbnails = $true }
     }
-    if ($app.HasExited -or ($ready -and $opened)) { break }
+    if ($app.HasExited -or ($ready -and $opened -and $thumbnails)) { break }
 }
-if (-not $ready -or -not $opened -or $app.HasExited) {
+if (-not $ready -or -not $opened -or -not $thumbnails -or $app.HasExited) {
     if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
     try { if (-not $app.HasExited) { $app.Kill() } } catch { }
-    throw "Installed AsantePDF failed the normal Light-mode PDF-open UI regression. Ready=$ready Opened=$opened Exited=$($app.HasExited)."
+    throw "Installed AsantePDF failed the multi-page PDF-open regression. Ready=$ready Opened=$opened Thumbnails=$thumbnails Exited=$($app.HasExited)."
 }
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 12
 $app.Refresh()
 if ($app.HasExited) {
     if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
-    throw "Installed AsantePDF opened the PDF but then exited unexpectedly with code $($app.ExitCode)."
+    throw "Installed AsantePDF completed the open path but then exited unexpectedly with code $($app.ExitCode)."
 }
 try { $app.Kill() } catch { }
 
