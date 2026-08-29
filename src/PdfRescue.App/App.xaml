@@ -33,6 +33,18 @@
         <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Color.Success}" presentationOptions:Freeze="False" />
         <!-- Fixed foreground for text/glyphs placed on saturated tool-category chips. -->
         <SolidColorBrush x:Key="IconChipTextBrush" Color="#FFFFFF" />
+        <!-- Command colors are intentionally stable across themes. Each one clears the
+             3:1 non-body contrast floor against both white and the dark raised surface,
+             avoiding another stateful palette that can drift during live switching. -->
+        <SolidColorBrush x:Key="CommandBlueBrush" Color="#2D7DFF" />
+        <SolidColorBrush x:Key="CommandCyanBrush" Color="#007A99" />
+        <SolidColorBrush x:Key="CommandGoldBrush" Color="#B45309" />
+        <SolidColorBrush x:Key="CommandGreenBrush" Color="#16825D" />
+        <SolidColorBrush x:Key="CommandPurpleBrush" Color="#8B5CF6" />
+        <SolidColorBrush x:Key="CommandOrangeBrush" Color="#B45309" />
+        <SolidColorBrush x:Key="CommandTealBrush" Color="#087A68" />
+        <SolidColorBrush x:Key="CommandLimeBrush" Color="#497C19" />
+        <SolidColorBrush x:Key="CommandDangerBrush" Color="#D94B55" />
 
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI" />

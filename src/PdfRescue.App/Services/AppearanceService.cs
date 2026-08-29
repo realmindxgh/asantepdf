@@ -36,7 +36,9 @@ public static class AppearanceService
     [
         "AppBackground", "SidebarBackground", "PanelBackground", "PanelRaisedBrush", "PanelHoverBrush",
         "PanelPressedBrush", "BorderBrushSoft", "PrimaryTextBrush", "MutedTextBrush", "AccentBrush",
-        "DangerBrush", "SuccessBrush", "IconChipTextBrush"
+        "DangerBrush", "SuccessBrush", "IconChipTextBrush", "CommandBlueBrush", "CommandCyanBrush",
+        "CommandGoldBrush", "CommandGreenBrush", "CommandPurpleBrush", "CommandOrangeBrush",
+        "CommandTealBrush", "CommandLimeBrush", "CommandDangerBrush"
     ];
 
     // Transitional mapping for legacy literal colours still present in a few composed
@@ -94,6 +96,7 @@ public static class AppearanceService
         SetBrush("BorderBrushSoft", colors.Border);
         SetBrush("PrimaryTextBrush", colors.Text);
         SetBrush("MutedTextBrush", colors.Muted);
+        SetBrush("IconChipTextBrush", "#FFFFFF");
 
         foreach (Window window in Application.Current.Windows)
             ApplyToWindow(window);
@@ -177,34 +180,44 @@ public static class AppearanceService
             : brush;
     }
 
+    private static bool IsExpressionValue(DependencyObject target, DependencyProperty property) =>
+        DependencyPropertyHelper.GetValueSource(target, property).IsExpression;
+
     private static void ApplyLegacyTree(DependencyObject root)
     {
         switch (root)
         {
-            case Panel panel when panel.Background is SolidColorBrush panelBrush:
+            case Panel panel when panel.Background is SolidColorBrush panelBrush &&
+                                  !IsExpressionValue(panel, Panel.BackgroundProperty):
                 panel.Background = MapLegacyBrush(panelBrush);
                 break;
             case Border border:
-                if (border.Background is SolidColorBrush background)
+                if (border.Background is SolidColorBrush background &&
+                    !IsExpressionValue(border, Border.BackgroundProperty))
                     border.Background = MapLegacyBrush(background);
-                if (border.BorderBrush is SolidColorBrush borderBrush)
+                if (border.BorderBrush is SolidColorBrush borderBrush &&
+                    !IsExpressionValue(border, Border.BorderBrushProperty))
                     border.BorderBrush = MapLegacyBrush(borderBrush);
                 break;
             case Control control:
-                if (control.Background is SolidColorBrush controlBackground)
+                if (control.Background is SolidColorBrush controlBackground &&
+                    !IsExpressionValue(control, Control.BackgroundProperty))
                     control.Background = MapLegacyBrush(controlBackground);
-                if (control.Foreground is SolidColorBrush controlForeground)
+                if (control.Foreground is SolidColorBrush controlForeground &&
+                    !IsExpressionValue(control, Control.ForegroundProperty))
                     control.Foreground = MapLegacyBrush(controlForeground);
-                if (control.BorderBrush is SolidColorBrush controlBorder)
+                if (control.BorderBrush is SolidColorBrush controlBorder &&
+                    !IsExpressionValue(control, Control.BorderBrushProperty))
                     control.BorderBrush = MapLegacyBrush(controlBorder);
                 break;
-            case TextBlock text when text.Foreground is SolidColorBrush textBrush:
+            case TextBlock text when text.Foreground is SolidColorBrush textBrush &&
+                                     !IsExpressionValue(text, TextBlock.ForegroundProperty):
                 text.Foreground = MapLegacyBrush(textBrush);
                 break;
             case Shape shape:
-                if (shape.Fill is SolidColorBrush fill)
+                if (shape.Fill is SolidColorBrush fill && !IsExpressionValue(shape, Shape.FillProperty))
                     shape.Fill = MapLegacyBrush(fill);
-                if (shape.Stroke is SolidColorBrush stroke)
+                if (shape.Stroke is SolidColorBrush stroke && !IsExpressionValue(shape, Shape.StrokeProperty))
                     shape.Stroke = MapLegacyBrush(stroke);
                 break;
         }
