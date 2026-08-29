@@ -17,6 +17,22 @@ if (-not $appXaml.Contains('x:Key="IconChipTextBrush"')) {
 }
 Write-Lf $appXamlPath $appXaml
 
+$appearancePath = Join-Path $SourceRoot 'src\PdfRescue.App\Services\AppearanceService.cs'
+$appearance = Read-Lf $appearancePath
+$oldKeys = @'
+        "PanelPressedBrush", "BorderBrushSoft", "PrimaryTextBrush", "MutedTextBrush", "AccentBrush",
+        "DangerBrush", "SuccessBrush"
+'@
+$newKeys = @'
+        "PanelPressedBrush", "BorderBrushSoft", "PrimaryTextBrush", "MutedTextBrush", "AccentBrush",
+        "DangerBrush", "SuccessBrush", "IconChipTextBrush"
+'@
+$oldKeys = $oldKeys.Replace("`r`n", "`n")
+$newKeys = $newKeys.Replace("`r`n", "`n")
+if (-not $appearance.Contains($oldKeys)) { throw 'Could not locate ThemeBrushKeys in AppearanceService.' }
+$appearance = $appearance.Replace($oldKeys, $newKeys)
+Write-Lf $appearancePath $appearance
+
 $mainPath = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.xaml'
 $main = Read-Lf $mainPath
 $pattern = '(<Border Width="44" Height="44" Background="#[0-9A-Fa-f]{6}" CornerRadius="10" HorizontalAlignment="Left"><TextBlock )(?![^>]*Foreground=)'
@@ -79,4 +95,4 @@ if (-not $selfTest.Contains($old)) { throw 'Could not locate whole-shell Dark-th
 $selfTest = $selfTest.Replace($old, $new)
 Write-Lf $selfTestPath $selfTest
 
-Write-Host "Applied fixed high-contrast foreground to $matchesBefore tool chips and added Light/Dark round-trip validation." -ForegroundColor Green
+Write-Host "Applied fixed high-contrast foreground to $matchesBefore tool chips, protected it from legacy mapping, and added Light/Dark round-trip validation." -ForegroundColor Green
