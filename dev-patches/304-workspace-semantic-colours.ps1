@@ -26,18 +26,14 @@ Write-Lf $appPath $app
 
 $appearancePath = Join-Path $SourceRoot 'src\PdfRescue.App\Services\AppearanceService.cs'
 $appearance = Read-Lf $appearancePath
-$oldKeys = @'
-        "PanelPressedBrush", "BorderBrushSoft", "PrimaryTextBrush", "MutedTextBrush", "AccentBrush",
-        "DangerBrush", "SuccessBrush", "IconChipTextBrush"
-'@
-$newKeys = @'
-        "PanelPressedBrush", "BorderBrushSoft", "PrimaryTextBrush", "MutedTextBrush", "AccentBrush",
+$keyAnchor = '        "DangerBrush", "SuccessBrush", "IconChipTextBrush"'
+$keyReplacement = @'
         "DangerBrush", "SuccessBrush", "IconChipTextBrush", "CommandBlueBrush", "CommandCyanBrush",
         "CommandGoldBrush", "CommandGreenBrush", "CommandPurpleBrush", "CommandOrangeBrush",
         "CommandTealBrush", "CommandLimeBrush", "CommandDangerBrush"
-'@
-if (-not $appearance.Contains($oldKeys)) { throw 'ThemeBrushKeys anchor not found.' }
-$appearance = $appearance.Replace($oldKeys, $newKeys)
+'@.Replace("`r`n", "`n").TrimEnd()
+if (-not $appearance.Contains($keyAnchor)) { throw 'ThemeBrushKeys anchor not found.' }
+$appearance = $appearance.Replace($keyAnchor, $keyReplacement)
 $applyAnchor = '        SetBrush("MutedTextBrush", colors.Muted);'
 if (-not $appearance.Contains($applyAnchor)) { throw 'Appearance Apply anchor not found.' }
 if (-not $appearance.Contains('SetBrush("CommandCyanBrush"')) {
@@ -52,7 +48,7 @@ $commandApply = @'
         SetBrush("CommandLimeBrush", IsLight ? "#357A25" : "#6FD15C");
         SetBrush("CommandDangerBrush", IsLight ? "#B4232E" : "#FF6B72");
 '@
-    $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n" + $commandApply.TrimEnd())
+    $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n" + $commandApply.Replace("`r`n", "`n").TrimEnd())
 }
 Write-Lf $appearancePath $appearance
 
