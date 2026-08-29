@@ -184,8 +184,8 @@ public static class ThemeRuntimeSelfTest
             {
                 Border border => border.Background,
                 Panel panel => panel.Background,
-                Control control => control.Background,
                 Window window => window.Background,
+                Control control => control.Background,
                 _ => null
             };
             if (brush is SolidColorBrush solid && solid.Opacity >= 0.95 && solid.Color.A >= 240)
