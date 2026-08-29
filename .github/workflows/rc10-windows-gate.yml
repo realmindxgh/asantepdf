@@ -144,8 +144,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          git add -A -- src tests installer assets scripts .github VERSION THIRD-PARTY-NOTICES.md .gitignore
-          git rm -r dev-patches
+          # Workflow files are maintained directly through the repository connector. The
+          # Actions token intentionally promotes only validated product/source changes.
+          git add -A -- src tests installer assets scripts VERSION THIRD-PARTY-NOTICES.md .gitignore
+          git rm -rf dev-patches
 
           if (git diff --cached --quiet) {
             Write-Host 'Patch scripts produced no repository changes.' -ForegroundColor Cyan
