@@ -84,7 +84,7 @@ jobs:
           "path=$($appExe.FullName)" >> $env:GITHUB_OUTPUT
           Write-Host "Using $($appExe.FullName)" -ForegroundColor Cyan
 
-      - name: Verify Light and Dark whole-shell rendering
+      - name: Verify Light and Dark product surfaces
         shell: pwsh
         run: |
           $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
@@ -108,22 +108,30 @@ jobs:
           $output = Join-Path $env:GITHUB_WORKSPACE 'var\theme-runtime'
           Remove-Item $output -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $output | Out-Null
-          $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @('--selftest-theme', $output) -Wait -PassThru
+          $sample = Join-Path $output 'workspace-theme-sample.pdf'
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample -PageCount 12
+
+          $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @('--selftest-theme', $output, $sample) -Wait -PassThru
           if ($app.ExitCode -ne 0 -or -not (Test-Path (Join-Path $output 'theme-runtime-pass.flag'))) {
             $errorFile = Join-Path $output 'theme-runtime-error.txt'
             if (Test-Path $errorFile) { Get-Content $errorFile | Write-Host }
             throw "Theme runtime self-test failed with exit code $($app.ExitCode)."
           }
-          Get-Content (Join-Path $output 'contrast-light.txt') | Write-Host
-          Get-Content (Join-Path $output 'contrast-dark.txt') | Write-Host
 
-      - name: Stress normal UI PDF-open path in Light and Dark
+          foreach ($report in Get-ChildItem $output -Filter 'contrast-*.txt' | Sort-Object Name) {
+            Write-Host "===== $($report.Name) =====" -ForegroundColor Cyan
+            Get-Content $report.FullName | Write-Host
+          }
+
+      - name: Stress repeated normal UI PDF-open path in Light and Dark
         shell: pwsh
         run: |
           $sampleDir = Join-Path $env:GITHUB_WORKSPACE 'var'
           New-Item -ItemType Directory -Force -Path $sampleDir | Out-Null
-          $sample = Join-Path $sampleDir 'ui-open-stress.pdf'
-          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample -PageCount 12
+          $sample12 = Join-Path $sampleDir 'ui-open-stress-12.pdf'
+          $sample30 = Join-Path $sampleDir 'ui-open-stress-30.pdf'
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample12 -PageCount 12
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample30 -PageCount 30
 
           $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
           $logDir = Join-Path $settingsRoot 'Logs'
@@ -147,11 +155,12 @@ jobs:
             } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
           }
 
-          function Run-UiOpenProbe([string]$theme) {
+          function Run-UiOpenProbe([string]$theme, [string]$pdf, [int]$expectedPages, [int]$lingerSeconds, [string]$label) {
             Write-TestSettings $theme
             Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
             New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-            $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @($sample) -PassThru
+            Write-Host "Starting $label: $theme, $expectedPages pages" -ForegroundColor Cyan
+            $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @($pdf) -PassThru
             $ready = $false
             $opened = $false
             $thumbnails = $false
@@ -160,34 +169,38 @@ jobs:
               $app.Refresh()
               if ($app.HasExited) {
                 if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
-                throw "$theme UI exited while opening the stress PDF. Exit code: $($app.ExitCode)"
+                throw "$label exited while opening. Theme=$theme Pages=$expectedPages Exit=$($app.ExitCode)"
               }
               if (Test-Path $startupLog) {
                 $log = Get-Content $startupLog -Raw
                 if ($log -match 'Main window loaded and ready flag written') { $ready = $true }
                 if ($log -match 'Opened PDF: foreground view refresh completed') { $opened = $true }
-                if ($log -match 'Thumbnail rendering completed: 12 pages') { $thumbnails = $true }
+                if ($log -match "Thumbnail rendering completed: $expectedPages pages") { $thumbnails = $true }
               }
               if ($ready -and $opened -and $thumbnails) { break }
             }
             if (-not $ready -or -not $opened -or -not $thumbnails) {
               if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
               try { if (-not $app.HasExited) { $app.Kill() } } catch { }
-              throw "$theme UI did not complete the real open path. Ready=$ready Opened=$opened Thumbnails=$thumbnails"
+              throw "$label did not complete the real open path. Theme=$theme Ready=$ready Opened=$opened Thumbnails=$thumbnails"
             }
 
-            Start-Sleep -Seconds 12
+            Start-Sleep -Seconds $lingerSeconds
             $app.Refresh()
             if ($app.HasExited) {
               if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
-              throw "$theme UI completed the open path but then crashed. Exit code: $($app.ExitCode)"
+              throw "$label completed the open path but then crashed. Theme=$theme Exit=$($app.ExitCode)"
             }
             try { $app.Kill() } catch { }
-            Write-Host "$theme multi-page PDF-open regression passed." -ForegroundColor Green
+            Write-Host "$label passed." -ForegroundColor Green
           }
 
-          Run-UiOpenProbe 'Light'
-          Run-UiOpenProbe 'Dark'
+          foreach ($theme in @('Light','Dark')) {
+            for ($round = 1; $round -le 3; $round++) {
+              Run-UiOpenProbe $theme $sample12 12 4 "$theme 12-page repetition $round"
+            }
+            Run-UiOpenProbe $theme $sample30 30 8 "$theme 30-page stress"
+          }
 
       - name: Upload runtime theme evidence
         if: always()
