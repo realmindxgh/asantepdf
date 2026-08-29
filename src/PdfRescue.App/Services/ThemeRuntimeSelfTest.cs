@@ -211,6 +211,7 @@ public static class ThemeRuntimeSelfTest
             AssertThemeText(window, "Quick Tools", isLight: false);
             WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-dark-roundtrip.txt"), "Dark round-trip");
             Capture(window, Path.Combine(outputDirectory, "home-dark-roundtrip.png"));
+            await VerifyResponsiveMatrixAsync(window, outputDirectory, "home");
 
             if (!string.IsNullOrWhiteSpace(samplePdf) && File.Exists(samplePdf))
             {
@@ -232,6 +233,7 @@ public static class ThemeRuntimeSelfTest
                 await RenderCycleAsync();
                 WriteContrastReport(window, Path.Combine(outputDirectory, "contrast-workspace-light-roundtrip.txt"), "Workspace Light round-trip");
                 Capture(window, Path.Combine(outputDirectory, "workspace-light-roundtrip.png"));
+                await VerifyResponsiveMatrixAsync(window, outputDirectory, "workspace");
             }
         }
         finally
@@ -240,6 +242,77 @@ public static class ThemeRuntimeSelfTest
         }
     }
 
+    private static async Task VerifyResponsiveMatrixAsync(MainWindow window, string outputDirectory, string surface)
+    {
+        // These logical viewports approximate a 1600x900 usable desktop area at the
+        // Windows scaling values in the acceptance contract. The 175%/200% cases clamp
+        // to the product minimum where appropriate, which is the real WPF behaviour.
+        var cases = new (string Label, double Width, double Height)[]
+        {
+            ("100", 1600, 900),
+            ("125", 1280, 720),
+            ("150", 1067, 600),
+            ("175", 914, 514),
+            ("200", 880, 500)
+        };
+
+        var originalWidth = window.Width;
+        var originalHeight = window.Height;
+        try
+        {
+            foreach (var theme in new[] { AppThemeMode.Light, AppThemeMode.Dark })
+            {
+                AppearanceService.Apply(theme);
+                AppearanceService.ApplyToWindow(window);
+                foreach (var item in cases)
+                {
+                    window.Width = Math.Max(window.MinWidth, item.Width);
+                    window.Height = Math.Max(window.MinHeight, item.Height);
+                    await RenderCycleAsync();
+                    AssertCriticalShellBounds(window, surface, item.Label);
+                    var themeName = theme == AppThemeMode.Light ? "light" : "dark";
+                    WriteContrastReport(window,
+                        Path.Combine(outputDirectory, $"contrast-{surface}-{themeName}-dpi-{item.Label}.txt"),
+                        $"{surface} {themeName} effective {item.Label}%");
+                    Capture(window, Path.Combine(outputDirectory, $"{surface}-{themeName}-dpi-{item.Label}.png"));
+                }
+            }
+        }
+        finally
+        {
+            window.Width = originalWidth;
+            window.Height = originalHeight;
+            await RenderCycleAsync();
+        }
+    }
+
+    private static void AssertCriticalShellBounds(MainWindow window, string surface, string scale)
+    {
+        string[] names = surface == "workspace"
+            ? ["HomeNavButton", "TaskCenterNavButton", "ThemeToggleButton", "SettingsButton", "DocumentTabsList", "RibbonScrollViewer", "PageViewModeCombo", "DocumentSearchContainer"]
+            : ["HomeNavButton", "RecentNavButton", "StarredNavButton", "ToolsNavButton", "TaskCenterNavButton", "ThemeToggleButton", "SettingsButton"];
+
+        foreach (var name in names)
+        {
+            if (window.FindName(name) is not FrameworkElement element || element.Visibility != Visibility.Visible || element.ActualWidth <= 0 || element.ActualHeight <= 0)
+                continue;
+            Rect bounds;
+            try
+            {
+                var origin = element.TransformToAncestor(window).Transform(new Point(0, 0));
+                bounds = new Rect(origin, new Size(element.ActualWidth, element.ActualHeight));
+            }
+            catch (InvalidOperationException)
+            {
+                continue;
+            }
+
+            const double tolerance = 3;
+            if (bounds.Left < -tolerance || bounds.Top < -tolerance ||
+                bounds.Right > window.ActualWidth + tolerance || bounds.Bottom > window.ActualHeight + tolerance)
+                throw new InvalidOperationException($"{surface} effective {scale}% clips critical element {name}: {bounds} inside {window.ActualWidth:F0}x{window.ActualHeight:F0}.");
+        }
+    }
     private static async Task RenderCycleAsync()
     {
         await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.DataBind);
