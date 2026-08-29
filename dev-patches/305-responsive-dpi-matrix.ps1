@@ -8,15 +8,17 @@ $path = Join-Path $SourceRoot 'src\PdfRescue.App\Services\ThemeRuntimeSelfTest.c
 $text = Read-Lf $path
 
 $homeAnchor = '            Capture(window, Path.Combine(outputDirectory, "home-dark-roundtrip.png"));'
+$homeLine = '            await VerifyResponsiveMatrixAsync(window, outputDirectory, "home");'
 if (-not $text.Contains($homeAnchor)) { throw 'Home round-trip capture anchor not found.' }
-if (-not $text.Contains('VerifyResponsiveMatrixAsync(window, outputDirectory, "home")')) {
-    $text = $text.Replace($homeAnchor, $homeAnchor + "`n            await VerifyResponsiveMatrixAsync(window, outputDirectory, \"home\");")
+if (-not $text.Contains($homeLine.Trim())) {
+    $text = $text.Replace($homeAnchor, $homeAnchor + "`n" + $homeLine)
 }
 
 $workspaceAnchor = '                Capture(window, Path.Combine(outputDirectory, "workspace-light-roundtrip.png"));'
+$workspaceLine = '                await VerifyResponsiveMatrixAsync(window, outputDirectory, "workspace");'
 if (-not $text.Contains($workspaceAnchor)) { throw 'Workspace round-trip capture anchor not found.' }
-if (-not $text.Contains('VerifyResponsiveMatrixAsync(window, outputDirectory, "workspace")')) {
-    $text = $text.Replace($workspaceAnchor, $workspaceAnchor + "`n                await VerifyResponsiveMatrixAsync(window, outputDirectory, \"workspace\");")
+if (-not $text.Contains($workspaceLine.Trim())) {
+    $text = $text.Replace($workspaceAnchor, $workspaceAnchor + "`n" + $workspaceLine)
 }
 
 $methodAnchor = '    private static async Task RenderCycleAsync()'
