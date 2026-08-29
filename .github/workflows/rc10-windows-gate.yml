@@ -18,7 +18,7 @@ jobs:
   windows-build:
     if: github.head_ref == 'development/master-upgrade-v2' || github.ref == 'refs/heads/development/master-upgrade-v2'
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Check out master-upgrade branch
@@ -44,6 +44,12 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
+      - name: Verify theme and PDFium source contracts
+        shell: pwsh
+        run: |
+          & .\scripts\verify-ui-theme-contract.ps1
+          & .\scripts\verify-pdfium-serialization.ps1
+
       - name: Set up exact .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -66,23 +72,30 @@ jobs:
           dotnet run --project ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Verify normal Light-mode UI can open a PDF and stay alive
+      - name: Locate Release executable
+        id: appexe
         shell: pwsh
         run: |
-          $sampleDir = Join-Path $env:GITHUB_WORKSPACE 'var'
-          New-Item -ItemType Directory -Force -Path $sampleDir | Out-Null
-          $sample = Join-Path $sampleDir 'ui-open-sample.pdf'
-          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample
+          $appExe = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
+            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
+            Sort-Object FullName |
+            Select-Object -First 1
+          if (-not $appExe) { throw 'Could not find the Release AsantePDF executable.' }
+          "path=$($appExe.FullName)" >> $env:GITHUB_OUTPUT
+          Write-Host "Using $($appExe.FullName)" -ForegroundColor Cyan
 
+      - name: Verify Light and Dark whole-shell rendering
+        shell: pwsh
+        run: |
           $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
           New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
           @{
             theme = 'Light'
             defaultRenderWidth = 1100
             defaultPageView = 'SinglePage'
-            reopenLastSession = $false
-            trackRecentFiles = $false
-            showRecentThumbnails = $false
+            reopenLastSession = $true
+            trackRecentFiles = $true
+            showRecentThumbnails = $true
             defaultOcrLanguage = 'eng'
             defaultOutputFolder = ''
             outputNamePattern = '{name}-{operation}'
@@ -92,46 +105,98 @@ jobs:
             firstLaunchCompleted = $true
           } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
 
+          $output = Join-Path $env:GITHUB_WORKSPACE 'var\theme-runtime'
+          Remove-Item $output -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $output | Out-Null
+          $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @('--selftest-theme', $output) -Wait -PassThru
+          if ($app.ExitCode -ne 0 -or -not (Test-Path (Join-Path $output 'theme-runtime-pass.flag'))) {
+            $errorFile = Join-Path $output 'theme-runtime-error.txt'
+            if (Test-Path $errorFile) { Get-Content $errorFile | Write-Host }
+            throw "Theme runtime self-test failed with exit code $($app.ExitCode)."
+          }
+          Get-Content (Join-Path $output 'contrast-light.txt') | Write-Host
+          Get-Content (Join-Path $output 'contrast-dark.txt') | Write-Host
+
+      - name: Stress normal UI PDF-open path in Light and Dark
+        shell: pwsh
+        run: |
+          $sampleDir = Join-Path $env:GITHUB_WORKSPACE 'var'
+          New-Item -ItemType Directory -Force -Path $sampleDir | Out-Null
+          $sample = Join-Path $sampleDir 'ui-open-stress.pdf'
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample -PageCount 12
+
+          $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
           $logDir = Join-Path $settingsRoot 'Logs'
-          Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $logDir | Out-Null
           $startupLog = Join-Path $logDir 'startup.log'
 
-          $appExe = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
-            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
-            Sort-Object FullName |
-            Select-Object -First 1
-          if (-not $appExe) { throw 'Could not find the Release AsantePDF executable for UI-open regression testing.' }
+          function Write-TestSettings([string]$theme) {
+            @{
+              theme = $theme
+              defaultRenderWidth = 1100
+              defaultPageView = 'SinglePage'
+              reopenLastSession = $true
+              trackRecentFiles = $true
+              showRecentThumbnails = $true
+              defaultOcrLanguage = 'eng'
+              defaultOutputFolder = ''
+              outputNamePattern = '{name}-{operation}'
+              existingOutput = 'CreateUniqueCopy'
+              recoveryEnabled = $false
+              checkForUpdates = $false
+              firstLaunchCompleted = $true
+            } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
+          }
 
-          Write-Host "Launching normal UI from $($appExe.FullName) with $sample" -ForegroundColor Cyan
-          $app = Start-Process -FilePath $appExe.FullName -ArgumentList @($sample) -PassThru
-          $opened = $false
-          for ($i = 0; $i -lt 80; $i++) {
-            Start-Sleep -Milliseconds 250
+          function Run-UiOpenProbe([string]$theme) {
+            Write-TestSettings $theme
+            Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+            $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @($sample) -PassThru
+            $ready = $false
+            $opened = $false
+            $thumbnails = $false
+            for ($i = 0; $i -lt 180; $i++) {
+              Start-Sleep -Milliseconds 500
+              $app.Refresh()
+              if ($app.HasExited) {
+                if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+                throw "$theme UI exited while opening the stress PDF. Exit code: $($app.ExitCode)"
+              }
+              if (Test-Path $startupLog) {
+                $log = Get-Content $startupLog -Raw
+                if ($log -match 'Main window loaded and ready flag written') { $ready = $true }
+                if ($log -match 'Opened PDF: foreground view refresh completed') { $opened = $true }
+                if ($log -match 'Thumbnail rendering completed: 12 pages') { $thumbnails = $true }
+              }
+              if ($ready -and $opened -and $thumbnails) { break }
+            }
+            if (-not $ready -or -not $opened -or -not $thumbnails) {
+              if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+              try { if (-not $app.HasExited) { $app.Kill() } } catch { }
+              throw "$theme UI did not complete the real open path. Ready=$ready Opened=$opened Thumbnails=$thumbnails"
+            }
+
+            Start-Sleep -Seconds 12
             $app.Refresh()
             if ($app.HasExited) {
               if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
-              throw "AsantePDF exited while opening a PDF in normal Light-mode UI. Exit code: $($app.ExitCode)"
+              throw "$theme UI completed the open path but then crashed. Exit code: $($app.ExitCode)"
             }
-            if (Test-Path $startupLog) {
-              $log = Get-Content $startupLog -Raw
-              if ($log -match 'Opened PDF:') { $opened = $true; break }
-            }
-          }
-          if (-not $opened) {
-            if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
-            try { if (-not $app.HasExited) { $app.Kill() } } catch { }
-            throw 'Normal UI did not report a successfully opened PDF within 20 seconds.'
+            try { $app.Kill() } catch { }
+            Write-Host "$theme multi-page PDF-open regression passed." -ForegroundColor Green
           }
 
-          Start-Sleep -Seconds 3
-          $app.Refresh()
-          if ($app.HasExited) {
-            if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
-            throw "AsantePDF opened the PDF but then exited unexpectedly. Exit code: $($app.ExitCode)"
-          }
-          try { $app.Kill() } catch { }
-          Write-Host 'Normal Light-mode UI PDF-open regression passed.' -ForegroundColor Green
+          Run-UiOpenProbe 'Light'
+          Run-UiOpenProbe 'Dark'
+
+      - name: Upload runtime theme evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-theme-runtime-evidence
+          path: var/theme-runtime/**
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Commit validated generated changes
         shell: pwsh
@@ -143,9 +208,6 @@ jobs:
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-          # Workflow files are maintained directly through the repository connector. The
-          # Actions token intentionally promotes only validated product/source changes.
           git add -A -- src tests installer assets scripts VERSION THIRD-PARTY-NOTICES.md .gitignore
           git rm -rf dev-patches
 
