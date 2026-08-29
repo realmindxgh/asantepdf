@@ -43,6 +43,95 @@ if (-not $appearance.Contains($applyAnchor)) { throw 'Theme Apply anchor not fou
 if (-not $appearance.Contains($chipLine)) {
     $appearance = $appearance.Replace($applyAnchor, $applyAnchor + "`n" + $chipLine)
 }
+
+$legacyOld = @'
+    private static void ApplyLegacyTree(DependencyObject root)
+    {
+        switch (root)
+        {
+            case Panel panel when panel.Background is SolidColorBrush panelBrush:
+                panel.Background = MapLegacyBrush(panelBrush);
+                break;
+            case Border border:
+                if (border.Background is SolidColorBrush background)
+                    border.Background = MapLegacyBrush(background);
+                if (border.BorderBrush is SolidColorBrush borderBrush)
+                    border.BorderBrush = MapLegacyBrush(borderBrush);
+                break;
+            case Control control:
+                if (control.Background is SolidColorBrush controlBackground)
+                    control.Background = MapLegacyBrush(controlBackground);
+                if (control.Foreground is SolidColorBrush controlForeground)
+                    control.Foreground = MapLegacyBrush(controlForeground);
+                if (control.BorderBrush is SolidColorBrush controlBorder)
+                    control.BorderBrush = MapLegacyBrush(controlBorder);
+                break;
+            case TextBlock text when text.Foreground is SolidColorBrush textBrush:
+                text.Foreground = MapLegacyBrush(textBrush);
+                break;
+            case Shape shape:
+                if (shape.Fill is SolidColorBrush fill)
+                    shape.Fill = MapLegacyBrush(fill);
+                if (shape.Stroke is SolidColorBrush stroke)
+                    shape.Stroke = MapLegacyBrush(stroke);
+                break;
+        }
+
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++) ApplyLegacyTree(VisualTreeHelper.GetChild(root, i));
+    }
+'@
+$legacyNew = @'
+    private static bool IsExpressionValue(DependencyObject target, DependencyProperty property) =>
+        DependencyPropertyHelper.GetValueSource(target, property).IsExpression;
+
+    private static void ApplyLegacyTree(DependencyObject root)
+    {
+        switch (root)
+        {
+            case Panel panel when panel.Background is SolidColorBrush panelBrush &&
+                                  !IsExpressionValue(panel, Panel.BackgroundProperty):
+                panel.Background = MapLegacyBrush(panelBrush);
+                break;
+            case Border border:
+                if (border.Background is SolidColorBrush background &&
+                    !IsExpressionValue(border, Border.BackgroundProperty))
+                    border.Background = MapLegacyBrush(background);
+                if (border.BorderBrush is SolidColorBrush borderBrush &&
+                    !IsExpressionValue(border, Border.BorderBrushProperty))
+                    border.BorderBrush = MapLegacyBrush(borderBrush);
+                break;
+            case Control control:
+                if (control.Background is SolidColorBrush controlBackground &&
+                    !IsExpressionValue(control, Control.BackgroundProperty))
+                    control.Background = MapLegacyBrush(controlBackground);
+                if (control.Foreground is SolidColorBrush controlForeground &&
+                    !IsExpressionValue(control, Control.ForegroundProperty))
+                    control.Foreground = MapLegacyBrush(controlForeground);
+                if (control.BorderBrush is SolidColorBrush controlBorder &&
+                    !IsExpressionValue(control, Control.BorderBrushProperty))
+                    control.BorderBrush = MapLegacyBrush(controlBorder);
+                break;
+            case TextBlock text when text.Foreground is SolidColorBrush textBrush &&
+                                     !IsExpressionValue(text, TextBlock.ForegroundProperty):
+                text.Foreground = MapLegacyBrush(textBrush);
+                break;
+            case Shape shape:
+                if (shape.Fill is SolidColorBrush fill && !IsExpressionValue(shape, Shape.FillProperty))
+                    shape.Fill = MapLegacyBrush(fill);
+                if (shape.Stroke is SolidColorBrush stroke && !IsExpressionValue(shape, Shape.StrokeProperty))
+                    shape.Stroke = MapLegacyBrush(stroke);
+                break;
+        }
+
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++) ApplyLegacyTree(VisualTreeHelper.GetChild(root, i));
+    }
+'@
+$legacyOld = $legacyOld.Replace("`r`n", "`n")
+$legacyNew = $legacyNew.Replace("`r`n", "`n")
+if (-not $appearance.Contains($legacyOld)) { throw 'Legacy mapper block not found.' }
+$appearance = $appearance.Replace($legacyOld, $legacyNew)
 Write-Lf $appearancePath $appearance
 
 $mainPath = Join-Path $SourceRoot 'src\PdfRescue.App\MainWindow.xaml'
@@ -93,4 +182,4 @@ foreach ($pair in $foregroundMap.GetEnumerator()) {
 $main = $main.Replace('BorderBrush="#4D9BFF" BorderThickness="2"', 'BorderBrush="{DynamicResource CommandBlueBrush}" BorderThickness="2"')
 Write-Lf $mainPath $main
 
-Write-Host 'Converted workspace colors and pinned Home tool badge glyphs to white.' -ForegroundColor Green
+Write-Host 'Converted workspace colors, pinned Home badges white, and protected DynamicResource expressions from legacy remapping.' -ForegroundColor Green
