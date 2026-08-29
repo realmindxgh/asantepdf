@@ -54,7 +54,8 @@ if ((Get-Item $vcRedist).Length -lt 5MB) { throw 'Downloaded VC++ redistributabl
 $vcHash = (Get-FileHash $vcRedist -Algorithm SHA256).Hash.ToLowerInvariant()
 Set-Content -Path (Join-Path $prereqs 'VC-REDIST-SHA256.txt') -Value "$vcHash  vc_redist.x64.exe" -Encoding ASCII
 
-& (Join-Path $PSScriptRoot 'New-SamplePdf.ps1') -OutputPath $samplePdf
+# The final candidate must exercise genuine multi-page behaviour before installation.
+& (Join-Path $PSScriptRoot 'New-SamplePdf.ps1') -OutputPath $samplePdf -PageCount 12
 & (Join-Path $appOut 'engines\qpdf\qpdf.exe') --check $samplePdf
 if ($LASTEXITCODE -notin @(0,3)) { throw 'The generated PDF fixture failed qpdf validation.' }
 
