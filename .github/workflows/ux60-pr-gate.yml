@@ -14,7 +14,7 @@ permissions:
 jobs:
   build-and-smoke:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Check out candidate source
@@ -54,8 +54,117 @@ jobs:
             'src/PdfRescue.App/MainWindow.Ux60.PageMenus.cs',
             'src/PdfRescue.App/Services/TaskCenterService.cs',
             'src/PdfRescue.App/TaskCenterView.xaml',
+            'docs/ASANTEPDF-UX-IMPROVEMENT-GUIDE.md',
             'docs/UX60_EXECUTION_MATRIX.md'
           )
           foreach ($path in $required) {
             if (-not (Test-Path $path)) { throw "Missing UX60 source surface: $path" }
           }
+
+      - name: Generate representative PDF corpus
+        shell: pwsh
+        run: |
+          $corpus = Join-Path $env:GITHUB_WORKSPACE 'var\ux60-runtime-corpus'
+          & .\scripts\New-PdfRegressionCorpus.ps1 -OutputDirectory $corpus
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content (Join-Path $corpus 'CORPUS-MANIFEST.txt') | Write-Host
+
+      - name: Locate built application
+        id: app
+        shell: pwsh
+        run: |
+          $app = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
+            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
+            Sort-Object FullName | Select-Object -First 1
+          if (-not $app) { throw 'AsantePDF.exe not found after Release build.' }
+          Write-Host "Runtime candidate: $($app.FullName)"
+          "path=$($app.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Launch representative PDFs in Light and Dark
+        shell: pwsh
+        run: |
+          $corpus = Join-Path $env:GITHUB_WORKSPACE 'var\ux60-runtime-corpus'
+          $appExe = '${{ steps.app.outputs.path }}'
+          $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
+          $logDir = Join-Path $settingsRoot 'Logs'
+          $startupLog = Join-Path $logDir 'startup.log'
+          New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
+
+          function Write-TestSettings([string]$theme) {
+            @{
+              theme = $theme
+              defaultRenderWidth = 1100
+              defaultPageView = 'SinglePage'
+              reopenLastSession = $false
+              trackRecentFiles = $false
+              showRecentThumbnails = $false
+              defaultOcrLanguage = 'eng'
+              defaultOutputFolder = ''
+              outputNamePattern = '{name}-{operation}'
+              existingOutput = 'CreateUniqueCopy'
+              recoveryEnabled = $false
+              checkForUpdates = $false
+              firstLaunchCompleted = $true
+              pagesPanelWidth = 245
+              inspectorPanelWidth = 310
+              pagesPanelCollapsed = $false
+              inspectorPanelCollapsed = $false
+              localFirstCardDismissed = $true
+            } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
+          }
+
+          function Probe([string]$theme, [string]$name, [int]$pages) {
+            Write-TestSettings $theme
+            Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+            $pdf = Join-Path $corpus $name
+            Write-Host "UX60 runtime probe: $theme / $name / $pages pages" -ForegroundColor Cyan
+            $process = Start-Process -FilePath $appExe -ArgumentList @($pdf) -PassThru
+            $ready = $false
+            $opened = $false
+            $thumbs = $false
+            for ($i = 0; $i -lt 200; $i++) {
+              Start-Sleep -Milliseconds 500
+              $process.Refresh()
+              if ($process.HasExited) {
+                if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+                throw "$name exited during $theme runtime probe. Exit=$($process.ExitCode)"
+              }
+              if (Test-Path $startupLog) {
+                $log = Get-Content $startupLog -Raw
+                if ($log -match 'Main window loaded and ready flag written') { $ready = $true }
+                if ($log -match 'Opened PDF: foreground view refresh completed') { $opened = $true }
+                if ($log -match "Thumbnail rendering completed: $pages pages") { $thumbs = $true }
+              }
+              if ($ready -and $opened -and $thumbs) { break }
+            }
+            if (-not ($ready -and $opened -and $thumbs)) {
+              if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+              try { if (-not $process.HasExited) { $process.Kill() } } catch { }
+              throw "$name did not complete $theme runtime probe. Ready=$ready Opened=$opened Thumbnails=$thumbs"
+            }
+            Start-Sleep -Seconds 2
+            $process.Refresh()
+            if ($process.HasExited) { throw "$name crashed after successful $theme open. Exit=$($process.ExitCode)" }
+            try { $process.Kill() } catch { }
+          }
+
+          $cases = @(
+            @{ Name='research-like-18.pdf'; Pages=18 },
+            @{ Name='scanned-image-only-8.pdf'; Pages=8 },
+            @{ Name='feature-rich-3.pdf'; Pages=3 },
+            @{ Name='rotated-cropped-6.pdf'; Pages=6 },
+            @{ Name='large-text-50.pdf'; Pages=50 }
+          )
+          foreach ($theme in @('Light','Dark')) {
+            foreach ($case in $cases) { Probe $theme $case.Name $case.Pages }
+          }
+
+      - name: Upload UX60 runtime corpus
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-UX60-runtime-corpus
+          path: var/ux60-runtime-corpus/**
+          if-no-files-found: error
+          retention-days: 14
