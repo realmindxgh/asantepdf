@@ -33,6 +33,7 @@ $installer = (Resolve-Path $InstallerPath).Path
 $appExe = Join-Path $root 'dist\app\AsantePDF.exe'
 $preinstallFlag = Join-Path $root 'dist\selftest-preinstall\final-candidate-pass.flag'
 $installedFlagCandidates = @(
+    (Join-Path $root 'dist\installed-final-candidate-pass.flag'),
     (Join-Path $root 'dist\selftest-installed\final-selftest\final-candidate-pass.flag'),
     (Join-Path $root 'dist\selftest-installed\final-candidate-pass.flag')
 )
@@ -44,8 +45,9 @@ if (-not $installedFlag) {
 Write-Host "Resolved installer path: $installer"
 Write-Host "Published executable: $appExe"
 Write-Host "Preinstall flag: $preinstallFlag"
-Write-Host "Installed flag candidate 1: $($installedFlagCandidates[0]) (exists=$([bool](Test-Path $installedFlagCandidates[0])))"
-Write-Host "Installed flag candidate 2: $($installedFlagCandidates[1]) (exists=$([bool](Test-Path $installedFlagCandidates[1])))"
+for ($i = 0; $i -lt $installedFlagCandidates.Count; $i++) {
+    Write-Host "Installed flag candidate $($i + 1): $($installedFlagCandidates[$i]) (exists=$([bool](Test-Path $installedFlagCandidates[$i])))"
+}
 Write-Host "Selected installed flag: $installedFlag"
 
 foreach ($required in @($installer, $appExe, $preinstallFlag, $installedFlag)) {
@@ -113,7 +115,7 @@ Validated gate:
 
 Evidence flags:
 - selftest-preinstall/final-candidate-pass.flag = pass
-- selftest-installed/final-selftest/final-candidate-pass.flag = pass
+- installed-final-candidate-pass.flag = pass
 "@
 
 $receiptPath = Join-Path $OutputDirectory "AsantePDF-$releaseLabel-Release-Receipt.txt"
