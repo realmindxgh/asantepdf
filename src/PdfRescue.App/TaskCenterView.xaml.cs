@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -92,6 +94,37 @@ public partial class TaskCenterView : UserControl
 
         var handler = ResultOptionsRequested;
         if (handler is not null) await handler(item);
+    }
+
+    private void ShowFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: TaskCenterItem item } ||
+            !item.CanShowOutputFolder || string.IsNullOrWhiteSpace(item.OutputPath))
+            return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{item.OutputPath}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            App.Log("Task Center Show Folder failed: " + ex.Message);
+        }
+    }
+
+    private void ErrorDetails_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: TaskCenterItem item } || !item.CanShowErrorDetails) return;
+        var details = $"Operation: {item.Title}\nState: {item.StateLabel}\nStage: {item.Stage}\nSource: {item.SourcePath ?? item.SourceLabel}\nOutput: {item.OutputPath ?? "No output published"}\n\n{item.ErrorMessage}";
+        var choice = MessageBox.Show(
+            Window.GetWindow(this),
+            details + "\n\nChoose Yes to copy these details to the clipboard.",
+            "AsantePDF task error details",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Error);
+        if (choice != MessageBoxResult.Yes) return;
+        try { Clipboard.SetText(details); }
+        catch (Exception ex) { App.Log("Task Center copy error details failed: " + ex.Message); }
     }
 
     private async void RetryTask_Click(object sender, RoutedEventArgs e)
