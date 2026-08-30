@@ -106,7 +106,10 @@ Run-InstalledUiProbe 'Dark' $sample 12 8 'release sample'
 
 $corpus = Join-Path $root 'dist\installed-regression-corpus'
 & (Join-Path $PSScriptRoot 'New-PdfRegressionCorpus.ps1') -OutputDirectory $corpus
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$corpusManifest = Join-Path $corpus 'CORPUS-MANIFEST.txt'
+if (-not (Test-Path $corpusManifest)) {
+    throw "Regression corpus generation did not produce its manifest: $corpusManifest"
+}
 $cases = @(
     @{ Name='research-like-18.pdf'; Pages=18 },
     @{ Name='scanned-image-only-8.pdf'; Pages=8 },
