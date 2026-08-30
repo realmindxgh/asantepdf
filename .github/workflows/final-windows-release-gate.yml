@@ -60,9 +60,19 @@ jobs:
       - name: Verify exact installed Program Files copy
         shell: pwsh
         run: |
+          $durableInstalledPass = '.\dist\installed-final-candidate-pass.flag'
+          Remove-Item $durableInstalledPass -Force -ErrorAction SilentlyContinue
           & .\scripts\verify-installed-release.ps1 `
             -InstallerPath '.\dist\installer\AsantePDF Setup.exe' `
             -SamplePdf '.\dist\release-sample.pdf'
+          $installedPass = '.\dist\selftest-installed\final-selftest\final-candidate-pass.flag'
+          if (-not (Test-Path $installedPass)) {
+            throw "Installed-copy verifier returned success without its pass flag: $installedPass"
+          }
+          Copy-Item $installedPass $durableInstalledPass -Force
+          if (-not (Test-Path $durableInstalledPass)) {
+            throw "Failed to preserve installed-copy pass evidence: $durableInstalledPass"
+          }
 
       - name: Verify Windows PDF registration and shortcuts
         shell: pwsh
