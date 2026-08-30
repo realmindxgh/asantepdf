@@ -40,6 +40,14 @@ public sealed record AppPreferences
     public bool RecoveryEnabled { get; init; } = true;
     public bool CheckForUpdates { get; init; } = true;
     public bool FirstLaunchCompleted { get; init; }
+
+    // Workspace preferences are deliberately kept here rather than in transient view state.
+    // Missing values in settings from older builds naturally fall back to these defaults.
+    public double PagesSidebarWidth { get; init; } = 245;
+    public double InspectorWidth { get; init; } = 310;
+    public bool PagesSidebarCollapsed { get; init; }
+    public bool InspectorCollapsed { get; init; }
+    public bool LocalFirstCardDismissed { get; init; }
 }
 
 public sealed class AppSettingsService
@@ -77,7 +85,9 @@ public sealed class AppSettingsService
             DefaultRenderWidth = Math.Clamp(preferences.DefaultRenderWidth, 320u, 4000u),
             DefaultOcrLanguage = string.IsNullOrWhiteSpace(preferences.DefaultOcrLanguage) ? "eng" : preferences.DefaultOcrLanguage.Trim(),
             DefaultOutputFolder = preferences.DefaultOutputFolder?.Trim() ?? string.Empty,
-            OutputNamePattern = string.IsNullOrWhiteSpace(preferences.OutputNamePattern) ? "{name}-{operation}" : preferences.OutputNamePattern.Trim()
+            OutputNamePattern = string.IsNullOrWhiteSpace(preferences.OutputNamePattern) ? "{name}-{operation}" : preferences.OutputNamePattern.Trim(),
+            PagesSidebarWidth = Math.Clamp(preferences.PagesSidebarWidth, 180d, 460d),
+            InspectorWidth = Math.Clamp(preferences.InspectorWidth, 260d, 460d)
         };
 
         lock (_sync)
