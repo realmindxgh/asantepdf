@@ -2,5 +2,5 @@ Run the full AsantePDF 1.0.0-rc49 installed-copy release gate on the lifecycle-c
 
 This candidate must pass the strengthened installed Program Files acceptance lane: full Light/Dark Home, Recent, Settings, Task Center, First Launch, Diagnostics and document-workspace visual/contrast checks; effective 100/125/150/175/200% viewport checks; permanent white-on-color Home tool badge validation; 12-page release-sample opening in both themes; representative research, scanned-image, feature-rich annotation/form/bookmark, rotated/cropped and 50-page corpus opening in both themes; complete thumbnail generation and post-open survival; a two-process first-launch/restart test proving onboarding does not recur, theme/settings survive restart, Recent is populated, Grid/List/Compact controls work, and Resume restores two tabs with page position; OCR, PDFium, qpdf, LibreOffice, conversion, markup, forms/batch and security self-tests; installer registration; Start Menu integration; receipt/checksum generation; uninstall cleanup; retained installed visual/DPI evidence; and final artifact packaging.
 
-Final stabilized source before trigger: 1aae4e05123e9d01a787c367d612c39033d4401b
-Trigger revision: 2026-08-30 receipt/checksum diagnostics rerun.
+Final stabilized source before trigger: abc1e9529a0f16ebc5db3269f5538cb4fbefa6f4
+Trigger revision: 2026-08-30 durable installed acceptance evidence rerun.
