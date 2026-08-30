@@ -50,11 +50,22 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
     public bool CanCancel => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
     public bool CanRetry => !_retryRequested && _retryAction is not null && State is PdfJobState.Failed or PdfJobState.Cancelled;
     public bool ShowProgress => State is PdfJobState.Queued or PdfJobState.Running or PdfJobState.Paused;
+
+    // A zero value is not treated as a made-up percentage. Until an operation reports
+    // measurable progress, the UI presents a real indeterminate state plus stage text.
+    public bool IsIndeterminate => ShowProgress && Progress <= 0d;
+    public string ProgressLabel => !ShowProgress
+        ? StateLabel
+        : IsIndeterminate ? "Working…" : $"{ProgressPercent}%";
+
     public string? OutputPath => _outputPath;
     public string OutputName => string.IsNullOrWhiteSpace(_outputPath) ? string.Empty : Path.GetFileName(_outputPath);
     public string? SourcePath => _sourcePath;
     public string SourceLabel => _sourceLabel;
     public bool CanOpenOutput => State == PdfJobState.Completed && !string.IsNullOrWhiteSpace(_outputPath) && File.Exists(_outputPath);
+    public bool CanShowOutputFolder => State == PdfJobState.Completed && !string.IsNullOrWhiteSpace(_outputPath) &&
+                                       Directory.Exists(Path.GetDirectoryName(_outputPath));
+    public bool CanShowErrorDetails => State == PdfJobState.Failed && !string.IsNullOrWhiteSpace(ErrorMessage);
     public bool CanRunAgain => State == PdfJobState.Completed && _runAgainAction is not null;
     public DateTimeOffset CreatedAt => _job.CreatedAt;
     public DateTimeOffset? StartedAt => _job.StartedAt;
@@ -106,6 +117,7 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         OnPropertyChanged(nameof(OutputPath));
         OnPropertyChanged(nameof(OutputName));
         OnPropertyChanged(nameof(CanOpenOutput));
+        OnPropertyChanged(nameof(CanShowOutputFolder));
     }
 
     internal void Refresh()
@@ -116,11 +128,15 @@ public sealed class TaskCenterItem : INotifyPropertyChanged
         OnPropertyChanged(nameof(ErrorMessage));
         OnPropertyChanged(nameof(Progress));
         OnPropertyChanged(nameof(ProgressPercent));
+        OnPropertyChanged(nameof(ProgressLabel));
+        OnPropertyChanged(nameof(IsIndeterminate));
         OnPropertyChanged(nameof(IsFinished));
         OnPropertyChanged(nameof(CanCancel));
         OnPropertyChanged(nameof(CanRetry));
         OnPropertyChanged(nameof(ShowProgress));
         OnPropertyChanged(nameof(CanOpenOutput));
+        OnPropertyChanged(nameof(CanShowOutputFolder));
+        OnPropertyChanged(nameof(CanShowErrorDetails));
         OnPropertyChanged(nameof(CanRunAgain));
         OnPropertyChanged(nameof(StartedAt));
         OnPropertyChanged(nameof(FinishedAt));
