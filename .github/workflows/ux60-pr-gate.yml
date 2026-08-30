@@ -1,0 +1,61 @@
+name: AsantePDF UX60 Windows Gate
+
+on:
+  push:
+    branches:
+      - 'development/ux-60-execution'
+  pull_request:
+    branches:
+      - 'development/master-upgrade-v2'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out candidate source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.202'
+
+      - name: Restore solution
+        shell: pwsh
+        run: |
+          if ((dotnet --version) -ne '10.0.202') { throw 'Unexpected .NET SDK.' }
+          dotnet restore ./AsantePDF.sln
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build x64 Release
+        shell: pwsh
+        run: |
+          dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run smoke tests
+        shell: pwsh
+        run: |
+          dotnet test ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release -p:Platform=x64 --no-build --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert UX60 source surfaces are present
+        shell: pwsh
+        run: |
+          $required = @(
+            'src/PdfRescue.App/MainWindow.Ux60.cs',
+            'src/PdfRescue.App/MainWindow.Ux60.PageMenus.cs',
+            'src/PdfRescue.App/Services/TaskCenterService.cs',
+            'src/PdfRescue.App/TaskCenterView.xaml',
+            'docs/UX60_EXECUTION_MATRIX.md'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) { throw "Missing UX60 source surface: $path" }
+          }
