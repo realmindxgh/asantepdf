@@ -8,8 +8,12 @@ $ErrorActionPreference = 'Stop'
 $root = Resolve-Path "$PSScriptRoot\.."
 $installer = [System.IO.Path]::GetFullPath($InstallerPath)
 $sample = [System.IO.Path]::GetFullPath($SamplePdf)
+$durableInstalledPass = Join-Path $root 'dist\installed-final-candidate-pass.flag'
 if (-not (Test-Path $installer)) { throw "Installer not found: $installer" }
 if (-not (Test-Path $sample)) { throw "Sample PDF not found: $sample" }
+
+# Never allow a stale durable receipt flag to survive a new installed-copy verification run.
+Remove-Item $durableInstalledPass -Force -ErrorAction SilentlyContinue
 
 Write-Host 'Silently installing the exact generated AsantePDF installer...' -ForegroundColor Cyan
 $install = Start-Process -FilePath $installer `
@@ -153,9 +157,18 @@ if ($selfTest.ExitCode -ne 0) {
     if (Test-Path $errorFile) { Get-Content $errorFile | Write-Host }
     throw "Installed-copy final self-test failed with exit code $($selfTest.ExitCode)."
 }
-if (-not (Test-Path (Join-Path $finalOutput 'final-candidate-pass.flag'))) {
+$installedPass = Join-Path $finalOutput 'final-candidate-pass.flag'
+if (-not (Test-Path $installedPass)) {
     throw 'Installed-copy self-test did not write the pass flag.'
 }
+
+# Persist the validated installed-copy acceptance evidence outside the transient self-test tree
+# before returning to the workflow/receipt stages.
+Copy-Item $installedPass $durableInstalledPass -Force
+if (-not (Test-Path $durableInstalledPass)) {
+    throw "Failed to persist installed-copy pass evidence: $durableInstalledPass"
+}
+Write-Host "Durable installed-copy pass evidence written: $durableInstalledPass" -ForegroundColor Green
 
 Copy-Item (Join-Path $corpus 'CORPUS-MANIFEST.txt') (Join-Path $OutputDirectory 'CORPUS-MANIFEST.txt') -Force
 Write-Host 'Installed-copy theme, DPI, representative PDF and engine verification passed.' -ForegroundColor Green
