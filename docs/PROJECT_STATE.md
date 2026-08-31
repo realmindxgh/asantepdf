@@ -1,195 +1,158 @@
 # AsantePDF Project State
 
-Updated after hands-on RC49 Windows acceptance invalidated the previous candidate and triggered the exhaustive stabilization plan in `docs/RC49_STABILIZATION_AND_ACCEPTANCE_FIX_PLAN.md`.
+Updated after the UX60 implementation was merged into the stabilized development line and the expanded final installed-copy Windows release gate passed.
 
 ## Current product state
 
 - Branch: `development/master-upgrade-v2`
-- Draft PR: `#3` — **AsantePDF master upgrade implementation**
+- Promotion PR: `#3` — **AsantePDF 1.0 master upgrade and UX60 stabilization**
+- PR posture: **draft, deliberately held from `main` pending hands-on user acceptance**
 - Candidate version: `1.0.0-rc49`
 - Exact SDK: `.NET 10.0.202`
 - Master requirements implemented in source audit: **49 / 49**
-- Master requirements formally accepted: **0 / 49**
-- Current release posture: **candidate failed hands-on acceptance; stabilization in progress**
+- UX improvement guide implemented in source: **60 / 60**
+- Automated validation: **PASSED**
+- Installed Program Files validation: **PASSED**
+- Visual/manual user acceptance: **PENDING**
+- Stable `1.0.0`: **NOT YET DECLARED**
 
-The old statement “implementation is complete and only routine acceptance remains” is no longer sufficient. Hands-on testing exposed architectural theme inconsistency and a real PDF-open reliability failure. The immediate controlling document is now `docs/RC49_STABILIZATION_AND_ACCEPTANCE_FIX_PLAN.md`.
+The project has moved beyond the earlier failed RC49 candidate that triggered stabilization. The previous hands-on failures remain authoritative historical acceptance evidence, but the current exact candidate has now passed the expanded automated and installed-copy gates designed to reproduce those failure classes.
 
-Do not call AsantePDF 1.0 finished merely because CI is green. Do not promote stable `1.0.0` until the stabilization plan, installed-build gate and hands-on acceptance all agree.
+Do not merge PR #3 to `main`, tag stable `1.0.0`, or mark the 49 master requirements formally accepted until the user retests the exact validated installer on their Windows machine and confirms the relevant release blockers are resolved.
 
-## Failed acceptance evidence that reopened stabilization
+## Exact validated candidate
 
-The user tested the installed RC49 candidate on Windows and demonstrated multiple release blockers, including:
+Final-gate trigger/head:
 
-- Light mode with washed-out/near-invisible text and controls;
-- Dark mode showing a dark title bar around a predominantly light body with theme-inappropriate text, proving mixed theme state;
-- `Resume session`, Grid/List/Compact and related Recent controls becoming effectively invisible in one or more theme states;
-- a real PDF-open attempt closing AsantePDF on the user’s machine;
-- earlier visual defects such as clipped Welcome content, weak hover states, contrast problems, ribbon alignment/icon issues, maximize/taskbar behaviour and Task Center architecture problems.
+`c94e5201c2b66903498c1be56564ab2004872610`
 
-Those screenshots are authoritative failed acceptance evidence. Source code that looks correct does not override the installed behaviour the user observed.
+UX60 merge commit into the development line:
 
-## Mandatory stabilization plan
+`996bbc4d635552bddf942df61eec07b248ac840c`
 
-Read and execute:
+Final Windows Release Gate:
 
-`docs/RC49_STABILIZATION_AND_ACCEPTANCE_FIX_PLAN.md`
+- workflow run: `33333449541`
+- workflow: `AsantePDF Final Windows Release Gate`
+- conclusion: **success**
+- artifact: `AsantePDF-1.0-final-candidate`
+- artifact id: `9738428445`
+- artifact digest: `sha256:9effb43d628b2f3510b28c522c1464ef0119a66883b43139ce66fe630dca9545`
 
-The controlling priority is:
+## Evidence passed on the current candidate
 
-**theme correctness → PDF opening stability → error containment → visual/layout audit → installed-build verification → remaining functionality**
+### UX60 branch validation
 
-The plan contains:
+The dedicated UX60 Windows gate passed on the implementation branch before merge. It verified:
 
-- the original fix plan preserved verbatim with no wording omitted;
-- an expanded semantic-theme architecture specification;
-- complete Recent Files visibility/legibility rules;
-- atomic Light/Dark/Follow Windows switching requirements;
-- a staged PDF-open pipeline;
-- process-wide PDFium concurrency rules;
-- secondary-subsystem failure containment;
-- realistic PDF regression corpus requirements;
-- repeated open/close/multi-tab stress scenarios;
-- whole-shell screenshot and contrast evidence requirements;
-- 100/125/150/175/200% DPI acceptance matrix;
-- installed Program Files release-gate requirements;
-- explicit manual acceptance criteria;
-- repository/CI cleanup rules;
-- a concrete next-installer checklist and stabilization definition of done.
+- x64 Release compilation;
+- core smoke tests;
+- UX60 source surfaces;
+- representative PDF corpus generation;
+- real WPF application startup;
+- PDF opening and completed thumbnail rendering;
+- process survival after opening;
+- five representative PDF shapes in both Light and Dark.
 
-## Current engineering stabilization direction
+The corpus included:
 
-The active stabilization work replaces theme-history mutation with one semantic live palette. Ordinary UI surfaces must derive from semantic Light/Dark resources rather than remembering their previous colours.
+- 18-page research-like text/vector PDF;
+- 8-page image-only scanned-style PDF;
+- 3-page feature-rich PDF with bookmarks, annotation and form field;
+- 6-page rotated/cropped PDF;
+- 50-page larger text PDF.
 
-The current direction also introduces/strengthens:
+### Post-merge development Windows gate
 
-- `DynamicResource` use for semantic theme consumers;
-- explicit Recent controls as theme canaries;
-- runtime Light/Dark whole-shell verification;
-- machine-readable contrast evidence and rendered screenshot artifacts;
-- a process-global PDFium execution gate for direct native calls unless explicitly proven safe otherwise;
-- staged foreground PDF opening before expensive secondary work;
-- realistic multi-page PDF-open stress with Recent/thumbnails/session behaviour enabled;
-- longer application survival checks after foreground and thumbnail completion;
-- installed-copy repetition of those tests.
+After UX60 was merged into `development/master-upgrade-v2`, the established development gate also passed. It verified:
 
-Recent Windows validation has already been useful because the expanded runtime gate itself caught defects that the old gate would not. This is the intended posture: tests should fail loudly before another weak installer reaches the user.
+- staged-patch handling and clean source contracts;
+- theme and PDFium source contracts;
+- exact SDK;
+- x64 Release compilation;
+- core smoke tests;
+- Light and Dark product surfaces;
+- repeated normal UI PDF-open stress in both themes;
+- retained runtime theme evidence.
 
-## Theme acceptance contract
+### Final installed-copy release gate
 
-Theme correctness means whole-shell consistency, not a themed title bar.
+The heavyweight final release gate passed end to end on the exact candidate. It verified:
 
-Required states include:
+- clean promoted source;
+- exact .NET SDK;
+- self-contained Windows x64 publish;
+- bundled required local engines;
+- release self-tests;
+- production Inno Setup installer generation;
+- silent installation of the exact generated installer;
+- launch and validation of the exact `Program Files\AsantePDF\AsantePDF.exe` copy;
+- whole-shell Light/Dark runtime checks;
+- effective 100/125/150/175/200% visual/DPI checks;
+- release-sample opening and thumbnail completion in both themes;
+- the representative regression corpus in both themes;
+- post-open process survival;
+- two-process first-launch/restart lifecycle verification;
+- onboarding non-recurrence;
+- theme/settings persistence;
+- Recent population;
+- Grid/List/Compact controls;
+- Resume restoring a multi-tab session and page position;
+- OCR, PDFium, qpdf, LibreOffice and document-operation self-tests;
+- Windows PDF/Open With registration;
+- Start Menu shortcut integration;
+- release receipt and checksum generation;
+- uninstall cleanup;
+- final candidate artifact packaging and upload.
 
-- startup Light;
-- startup Dark;
-- Follow Windows resolution;
-- Light → Dark;
-- Dark → Light;
-- repeated Light → Dark → Light → Dark without restart;
-- Recent created after startup;
-- document workspace;
-- Task Center;
-- Settings;
-- popups/context menus/dialogs;
-- persisted theme after restart.
+## UX60 implementation state
 
-Controls that are technically visible but visually indistinguishable from their background are failed for acceptance purposes.
+The 60-item UX guide is implemented in source and tracked in:
 
-Recent Files must explicitly verify:
+`docs/UX60_EXECUTION_MATRIX.md`
 
-- Resume session;
-- search;
-- Last opened sort control and popup;
-- Grid;
-- List;
-- Compact;
-- selected mode state;
-- filenames;
-- metadata;
-- thumbnails;
-- pin/star state;
-- empty state;
-- context menu;
-- card-lift hover behaviour.
+Key additions include:
 
-## PDF-open reliability contract
+- global operation/progress feedback;
+- per-button busy states;
+- background-task toasts and Task Center state;
+- honest indeterminate progress;
+- document-opening skeleton feedback;
+- progressive/priority thumbnail rendering;
+- save and dirty-state acknowledgement;
+- Ctrl+K command palette;
+- adaptive ribbon behaviour;
+- richer context menus and page drag/drop cues;
+- persistent panel sizes and collapse state;
+- Focus Mode;
+- improved zoom/Fit state;
+- richer document status information;
+- PDF Doctor progress/severity feedback;
+- multi-PDF opening into tabs;
+- task continuation/retry/cancel/output flows;
+- accessibility and tooltip improvements;
+- annotation Escape handling;
+- undo/redo history clarity;
+- dismissible local-first messaging;
+- Explorer integration and active-document window titles.
 
-The document-open path must be treated independently from theme work.
+Source implementation and installed-build validation do not by themselves convert every UX or master-contract row to formal `ACCEPTED`. The remaining stage is hands-on user acceptance.
 
-Target sequence:
+## Historical failed acceptance evidence
 
-`validate file → open PDFium document → render foreground page → show usable document → load expensive secondary services safely`
+The earlier installed RC49 candidate exposed material failures on the user’s real Windows machine, including:
 
-Foreground usability must not wait for every secondary subsystem.
+- Light-mode washed-out or near-invisible controls;
+- mixed/incorrect Dark-mode rendering;
+- Recent controls such as Resume/Grid/List/Compact becoming effectively invisible;
+- a real PDF-open attempt closing AsantePDF;
+- earlier visual defects including clipped onboarding, weak hover states, contrast problems, ribbon/icon issues, maximize/taskbar behaviour and Task Center architecture problems.
 
-Secondary failures such as thumbnails, outlines, annotation inventory, attachments or search/text extraction must degrade those features rather than kill AsantePDF.
-
-Direct PDFium-native callers must obey the approved process-global execution gate unless a documented exception has proven concurrent safety.
-
-The gate must use realistic multi-page PDFs and normal-user features such as Recent tracking and thumbnails. A one-page synthetic PDF with those features disabled is not sufficient release evidence.
-
-## Product architecture present in source
-
-The prior 49-item implementation work remains valuable and should not be discarded while stabilizing the shell.
-
-### Home / Launcher
-
-Home mode includes Recent, Starred, conditional Resume, Open PDF, standalone tools, cached PDFium thumbnails, Grid/List/Compact layouts, sorting/search/pinning, moved-file handling, context actions and drag/drop.
-
-### Document Workspace
-
-Multi-document tabs preserve page, zoom, scroll, working layout and Undo/Redo state. The source includes:
-
-- Single Page, lazy Continuous and Two Page viewing;
-- typed custom zoom, Fit Width, Fit Page and 1:1;
-- native PDF text selection and copy;
-- document search with snippets/highlights;
-- Pages, Bookmarks, Search, Comments/Annotations and Attachments navigation;
-- contextual Inspector;
-- page management and drag reorder;
-- native text markup, notes, shapes, freehand ink and annotation edit/delete;
-- Save, Save As and Save a Copy contracts with multi-dirty-tab close handling;
-- printing with page scope/orientation/fit controls;
-- two-document split comparison with independent or linked scroll/zoom, swap and page alignment.
-
-### Task System
-
-Foreground and queued operations feed one Task Center model with Running/Queued/Completed/Failed/Cancelled states, progress, elapsed time, cancellation, retry and output actions.
-
-### Settings / lifecycle
-
-Settings exposes Light, Dark, Follow Windows, default zoom, default page view, session/recent/privacy controls, OCR default, output folder/naming, overwrite policy, recovery and update preferences.
-
-One-time onboarding, abnormal-shutdown recovery, user-facing error details/log actions, About/Diagnostics, bundled-engine information and explicit user-controlled update download/install are implemented in source, but their UI-facing acceptance remains subject to stabilization.
-
-### Identity
-
-The product uses the restrained Ghana-inspired red/gold/green/black document/A identity in title-bar/vector assets and the Windows ICO used by the application and installer. Light/Dark compatibility still needs installed/manual acceptance.
-
-## Previous release evidence is superseded for final acceptance
-
-Earlier heavyweight Windows release gates proved that the packaging pipeline can:
-
-- verify clean source;
-- use the exact SDK;
-- compile Release x64;
-- stage qpdf, Tesseract and LibreOffice;
-- publish self-contained Windows x64;
-- build a production Inno Setup installer;
-- silently install the exact installer;
-- launch/test the Program Files copy;
-- verify Windows registration and Start Menu integration;
-- write release receipts/checksums;
-- silently uninstall and verify cleanup;
-- upload a release artifact.
-
-That evidence remains useful for release engineering, but it does **not** prove the current candidate is acceptable because the user subsequently exposed real installed-product failures.
-
-The next release evidence must use the expanded stabilization gate from the fix plan.
+These failures drove `docs/RC49_STABILIZATION_AND_ACCEPTANCE_FIX_PLAN.md` and must remain in the acceptance history. The current candidate was specifically tested against expanded gates designed to cover those classes of failure.
 
 ## Required evidence progression
 
-For affected requirements distinguish these stages:
+For acceptance-sensitive requirements continue to distinguish:
 
 1. source implemented;
 2. automated validation passed;
@@ -197,46 +160,19 @@ For affected requirements distinguish these stages:
 4. visual/manual acceptance passed;
 5. accepted.
 
-The repository may continue to use `IMPLEMENTED, NOT ACCEPTED` as the matrix state while notes record the intermediate validation evidence. Never skip directly from “compiled” to `ACCEPTED`.
+Current candidate status is at stage **3**. Do not skip stage 4.
 
-## Immediate work order
+## Immediate next action
 
-1. finish semantic theme architecture stabilization;
-2. make the whole-shell Light/Dark runtime probe compile and pass;
-3. verify Recent controls explicitly in both themes;
-4. complete PDFium concurrency/staged-open hardening;
-5. add/verify failure containment for secondary PDF subsystems;
-6. run realistic multi-page/repeated-open stress in Light and Dark;
-7. retain runtime screenshots/contrast reports/logs;
-8. promote only Windows-green source;
-9. remove consumed `dev-patches` carriers;
-10. run a clean no-patch Windows gate;
-11. deliberately trigger the heavyweight installed-copy gate;
-12. require the Program Files copy to pass the expanded theme and PDF-open scenarios;
-13. give the user the GitHub Actions artifact link rather than attempting a very large ChatGPT attachment;
-14. have the user retest the exact installed build;
-15. update the defect ledger and matrix from hands-on evidence;
-16. repeat until no blocker remains;
-17. only then consider stable `1.0.0`.
+1. Give the user the GitHub Actions artifact from final gate run `33333449541`.
+2. The user installs and tests that exact candidate on their Windows machine.
+3. Retest the previously failed areas first: Light mode, Dark mode, live switching, Recent controls, opening ordinary/multi-page PDFs, thumbnails, repeated open/close, multiple tabs, restart/session Resume, scaling and general layout.
+4. Record any hands-on defects without weakening CI to accommodate them.
+5. If defects appear, reproduce, fix on development, rerun the relevant Windows gates and issue a new exact candidate.
+6. If hands-on acceptance passes, update the defect ledger and implementation matrix, move applicable master requirements to `ACCEPTED`, mark PR #3 ready, and only then promote to `main` and consider stable `1.0.0`.
 
-## Product sources of truth
+## Release rule
 
-Read in this order during the current stabilization period:
+A green installer gate means the candidate is technically validated and safe to hand to the user for acceptance. It does not by itself authorize a stable declaration.
 
-1. `docs/RC49_STABILIZATION_AND_ACCEPTANCE_FIX_PLAN.md`
-2. `MASTER_49_CHECKLIST.md`
-3. `ASANTEPDF_MASTER_UPGRADE_SPEC.md`
-4. `IMPLEMENTATION_MATRIX.md`
-5. `docs/PROJECT_STATE.md`
-6. `docs/RC49_UX_ACCEPTANCE_DEFECTS.md`
-7. `docs/MASTER_49_COMPLETION_PLAN.md`
-8. `docs/ASANTEPDF-VISUAL-DIRECTION.md`
-9. `docs/design/target-home.svg`
-10. `docs/design/target-document-workspace.svg`
-11. `AGENTS.md`
-
-## Non-negotiable acceptance rule
-
-A compiling application is not a finished application. A green CI build is not proof that an installed Windows desktop UI looks correct. A control that technically exists but cannot be read is not accepted. A synthetic PDF fixture that opens once is not proof that real PDFs are reliable.
-
-UI work stays unaccepted until it is actually seen and used on Windows, and release-critical work stays unaccepted until the exact installed Program Files build survives the expanded stabilization gate on the same source being considered for release.
+The release becomes stable only when the exact installed build, the automated evidence and the user’s hands-on Windows experience agree.
