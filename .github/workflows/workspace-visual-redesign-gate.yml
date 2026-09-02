@@ -1,0 +1,112 @@
+name: AsantePDF Workspace Visual Redesign Gate
+
+on:
+  push:
+    branches:
+      - 'development/workspace-visual-redesign'
+  pull_request:
+    branches:
+      - 'development/master-upgrade-v2'
+
+permissions:
+  contents: read
+
+jobs:
+  visual-workspace:
+    runs-on: windows-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out redesign source
+        uses: actions/checkout@v4
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.202'
+
+      - name: Restore and build x64 Release
+        shell: pwsh
+        run: |
+          if ((dotnet --version) -ne '10.0.202') { throw 'Unexpected .NET SDK.' }
+          dotnet restore ./AsantePDF.sln
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run smoke tests
+        shell: pwsh
+        run: |
+          dotnet test ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release -p:Platform=x64 --no-build --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert redesign source contracts
+        shell: pwsh
+        run: |
+          $redesign = Get-Content './src/PdfRescue.App/MainWindow.WorkspaceVisualRedesign.cs' -Raw
+          foreach ($required in @(
+            'HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden',
+            'new GridLength(84)',
+            'new Thickness(4, 0, 0, 0)',
+            'InspectorColumn.Width = new GridLength(275)',
+            'PagesColumn.Width = new GridLength(220)',
+            'RefreshWorkspacePager',
+            'OpenWorkspaceOverflowMenu')) {
+            if ($redesign -notmatch [regex]::Escape($required)) { throw "Missing workspace redesign contract: $required" }
+          }
+
+      - name: Generate visual sample PDF
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path './var/workspace-visual' | Out-Null
+          & .\scripts\New-SamplePdf.ps1 -OutputPath './var/workspace-visual/workspace-sample.pdf' -PageCount 12
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Locate built application
+        id: app
+        shell: pwsh
+        run: |
+          $app = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
+            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
+            Sort-Object FullName | Select-Object -First 1
+          if (-not $app) { throw 'AsantePDF.exe not found.' }
+          "path=$($app.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Capture Light Dark workspace and DPI matrix
+        shell: pwsh
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE 'var\workspace-visual\evidence'
+          New-Item -ItemType Directory -Force -Path $evidence | Out-Null
+          $sample = Join-Path $env:GITHUB_WORKSPACE 'var\workspace-visual\workspace-sample.pdf'
+          $app = Start-Process -FilePath '${{ steps.app.outputs.path }}' -ArgumentList @('--selftest-theme', $evidence, $sample) -Wait -PassThru
+          if ($app.ExitCode -ne 0) {
+            Get-ChildItem $evidence -File -ErrorAction SilentlyContinue | ForEach-Object {
+              if ($_.Extension -eq '.txt') {
+                Write-Host "--- $($_.Name) ---"
+                Get-Content $_.FullName | Write-Host
+              }
+            }
+            throw "Workspace visual self-test failed with exit code $($app.ExitCode)."
+          }
+          foreach ($name in @('workspace-light.png','workspace-dark.png','workspace-light-roundtrip.png')) {
+            if (-not (Test-Path (Join-Path $evidence $name))) { throw "Missing visual evidence: $name" }
+          }
+          $log = Join-Path $env:LOCALAPPDATA 'AsantePDF\Logs\startup.log'
+          if (Test-Path $log) {
+            $text = Get-Content $log -Raw
+            if ($text -notmatch 'Workspace visual redesign initialized') { throw 'Redesign runtime marker missing.' }
+            if ($text -notmatch 'horizontal-scroll=Hidden') { throw 'No proof that ribbon horizontal scrolling was disabled.' }
+            if ($text -notmatch 'UX60 primary navigation state: Active Document') { throw 'Active Document navigation state not observed.' }
+            Copy-Item $log (Join-Path $evidence 'startup.log') -Force
+          } else {
+            throw 'Startup log missing.'
+          }
+
+      - name: Upload visual redesign evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-workspace-visual-redesign-evidence
+          path: var/workspace-visual/evidence/**
+          if-no-files-found: error
+          retention-days: 14
