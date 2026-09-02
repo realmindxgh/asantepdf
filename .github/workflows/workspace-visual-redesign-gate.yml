@@ -30,21 +30,11 @@ jobs:
         run: |
           $path = './src/PdfRescue.App/Services/ThemeRuntimeSelfTest.cs'
           $text = Get-Content $path -Raw
-          $old = @'
-                await window.OpenPdfFromCommandLineAsync(samplePdf);
-                await RenderCycleAsync();
-'@
-          $new = @'
-                await window.OpenPdfFromCommandLineAsync(samplePdf);
-                // The UX opening overlay intentionally survives the model-open task until
-                // the first rendered page is visible. Visual acceptance must capture the
-                // settled workspace, not that transient loading state.
-                await Task.Delay(1600);
-                await RenderCycleAsync();
-'@
-          if (-not $text.Contains($old)) { throw 'Could not locate workspace capture point in ThemeRuntimeSelfTest.' }
-          $text = $text.Replace($old, $new)
-          Set-Content $path $text -Encoding UTF8
+          $pattern = 'await window\.OpenPdfFromCommandLineAsync\(samplePdf\);\r?\n\s*await RenderCycleAsync\(\);'
+          $replacement = "await window.OpenPdfFromCommandLineAsync(samplePdf);`r`n                // Visual acceptance captures the settled workspace, not the transient opening overlay.`r`n                await Task.Delay(1600);`r`n                await RenderCycleAsync();"
+          $patched = [regex]::Replace($text, $pattern, $replacement, 1)
+          if ($patched -eq $text) { throw 'Could not locate workspace capture point in ThemeRuntimeSelfTest.' }
+          Set-Content $path $patched -Encoding UTF8
 
       - name: Restore and build x64 Release
         shell: pwsh
