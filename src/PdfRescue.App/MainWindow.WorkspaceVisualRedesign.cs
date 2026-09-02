@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Automation;
@@ -49,6 +50,7 @@ public partial class MainWindow
 
         Pages.CollectionChanged += (_, _) => RefreshWorkspacePager();
         PagesList.SelectionChanged += (_, _) => RefreshWorkspacePager();
+        _taskCenterService.Changed += (_, _) => CoalesceOpeningNotifications();
         SizeChanged += (_, _) =>
         {
             ApplyWorkspaceRibbonLayout();
@@ -81,6 +83,12 @@ public partial class MainWindow
         SearchCountText.Width = 46;
         DocumentSearchContainer.Padding = new Thickness(2);
 
+        if (_uxToastHost is not null)
+        {
+            _uxToastHost.Width = 320;
+            _uxToastHost.Margin = new Thickness(0, 54, 14, 0);
+        }
+
         AutomationProperties.SetHelpText(RibbonScrollViewer,
             "Primary document commands. Additional commands are available from More. The ribbon never scrolls horizontally.");
     }
@@ -97,7 +105,7 @@ public partial class MainWindow
         };
         active.Setters.Add(new Setter(Control.BackgroundProperty, new DynamicResourceExtension("PanelPressedBrush")));
         active.Setters.Add(new Setter(Control.BorderBrushProperty, new DynamicResourceExtension("AccentBrush")));
-        active.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(4, 0, 0, 0)));
+        active.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(1)));
         active.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.Bold));
         style.Triggers.Add(active);
 
@@ -108,11 +116,76 @@ public partial class MainWindow
                  })
         {
             button.Style = style;
+            InstallNavigationAccentRail(button);
         }
 
         ActiveDocumentNavButton.ToolTip = "Current PDF workspace";
         AutomationProperties.SetHelpText(ActiveDocumentNavButton,
             "Returns to the PDF currently open in the document workspace.");
+    }
+
+    private void InstallNavigationAccentRail(Button button)
+    {
+        if (button.Content is not UIElement original) return;
+
+        button.Content = null;
+        button.Padding = new Thickness(0);
+
+        var rail = new Border
+        {
+            Width = 4,
+            CornerRadius = new CornerRadius(0, 3, 3, 0),
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Visibility = Visibility.Hidden
+        };
+        rail.SetResourceReference(Border.BackgroundProperty, "AccentBrush");
+
+        var contentHost = new Border
+        {
+            Padding = new Thickness(10, 9, 10, 9),
+            Child = original
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(4) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        Grid.SetColumn(rail, 0);
+        Grid.SetColumn(contentHost, 1);
+        grid.Children.Add(rail);
+        grid.Children.Add(contentHost);
+        button.Content = grid;
+
+        void ApplyState()
+        {
+            var selected = string.Equals(button.Tag?.ToString(), "Active", StringComparison.OrdinalIgnoreCase);
+            rail.Visibility = selected ? Visibility.Visible : Visibility.Hidden;
+            button.FontWeight = selected ? FontWeights.Bold : FontWeights.Normal;
+        }
+
+        var descriptor = DependencyPropertyDescriptor.FromProperty(Button.TagProperty, typeof(Button));
+        descriptor?.AddValueChanged(button, (_, _) => ApplyState());
+        ApplyState();
+    }
+
+    private void CoalesceOpeningNotifications()
+    {
+        if (_uxToastHost is null) return;
+        var opening = _taskCenterService.Items
+            .Where(item => item.Title.Contains("Opening PDF", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.CreatedAt)
+            .FirstOrDefault();
+        if (opening is null || opening.State == PdfJobState.Failed) return;
+
+        var redundant = _uxToastHost.Children
+            .OfType<Border>()
+            .Where(card => FindUxDescendants<TextBlock>(card)
+                .Any(text => text.Text.StartsWith("Opening PDF", StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+        foreach (var card in redundant)
+            _uxToastHost.Children.Remove(card);
+
+        if (redundant.Length > 0)
+            App.Log($"Workspace opening feedback coalesced: removed {redundant.Length} redundant toast(s); overlay/activity state remains authoritative.");
     }
 
     private void RebalanceWorkspaceColumns()
