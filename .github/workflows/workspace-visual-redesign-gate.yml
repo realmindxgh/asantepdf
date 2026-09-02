@@ -31,7 +31,7 @@ jobs:
           $path = './src/PdfRescue.App/Services/ThemeRuntimeSelfTest.cs'
           $text = Get-Content $path -Raw
           $pattern = 'await window\.OpenPdfFromCommandLineAsync\(samplePdf\);\r?\n\s*await RenderCycleAsync\(\);'
-          $replacement = "await window.OpenPdfFromCommandLineAsync(samplePdf);`r`n                // Visual acceptance captures the settled workspace, not the transient opening overlay.`r`n                await Task.Delay(1600);`r`n                await RenderCycleAsync();"
+          $replacement = "await window.OpenPdfFromCommandLineAsync(samplePdf);`r`n                // Visual acceptance captures the clean settled workspace after transient notifications expire.`r`n                await Task.Delay(6000);`r`n                await RenderCycleAsync();"
           $patched = [regex]::Replace($text, $pattern, $replacement, 1)
           if ($patched -eq $text) { throw 'Could not locate workspace capture point in ThemeRuntimeSelfTest.' }
           Set-Content $path $patched -Encoding UTF8
@@ -58,11 +58,12 @@ jobs:
           foreach ($required in @(
             'HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden',
             'new GridLength(84)',
-            'new Thickness(4, 0, 0, 0)',
+            'Width = 4',
             'InspectorColumn.Width = new GridLength(275)',
             'PagesColumn.Width = new GridLength(220)',
             'RefreshWorkspacePager',
-            'OpenWorkspaceOverflowMenu')) {
+            'OpenWorkspaceOverflowMenu',
+            'CoalesceOpeningNotifications')) {
             if ($redesign -notmatch [regex]::Escape($required)) { throw "Missing workspace redesign contract: $required" }
           }
 
