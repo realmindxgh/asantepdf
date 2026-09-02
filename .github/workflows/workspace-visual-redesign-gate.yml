@@ -25,6 +25,27 @@ jobs:
         with:
           dotnet-version: '10.0.202'
 
+      - name: Make visual capture wait for settled workspace
+        shell: pwsh
+        run: |
+          $path = './src/PdfRescue.App/Services/ThemeRuntimeSelfTest.cs'
+          $text = Get-Content $path -Raw
+          $old = @'
+                await window.OpenPdfFromCommandLineAsync(samplePdf);
+                await RenderCycleAsync();
+'@
+          $new = @'
+                await window.OpenPdfFromCommandLineAsync(samplePdf);
+                // The UX opening overlay intentionally survives the model-open task until
+                // the first rendered page is visible. Visual acceptance must capture the
+                // settled workspace, not that transient loading state.
+                await Task.Delay(1600);
+                await RenderCycleAsync();
+'@
+          if (-not $text.Contains($old)) { throw 'Could not locate workspace capture point in ThemeRuntimeSelfTest.' }
+          $text = $text.Replace($old, $new)
+          Set-Content $path $text -Encoding UTF8
+
       - name: Restore and build x64 Release
         shell: pwsh
         run: |
