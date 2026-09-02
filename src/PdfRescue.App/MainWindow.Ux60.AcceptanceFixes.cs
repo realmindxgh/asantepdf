@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace PdfRescue.App;
@@ -46,6 +48,12 @@ public partial class MainWindow
                 DispatcherPriority.Loaded,
                 new Action(ReconcileUxPrimaryNavigationState));
 
+        if (_uxMoreRibbonButton is not null)
+        {
+            _uxMoreRibbonButton.ToolTip = "More ribbon commands";
+            _uxMoreRibbonButton.Click += UxAcceptanceMoreRibbonButton_Click;
+        }
+
         ReconcileUxPrimaryNavigationState();
         App.Log("UX60 acceptance corrections initialized.");
     }
@@ -83,5 +91,75 @@ public partial class MainWindow
 
         _uxAcceptancePrimaryNavigationState = state;
         App.Log($"UX60 primary navigation state: {state}");
+    }
+
+    private void UxAcceptanceMoreRibbonButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_uxMoreRibbonButton is null || RibbonScrollViewer.Content is not StackPanel ribbon) return;
+
+        // The original UX60 implementation routed More to Ctrl+K. Keep Ctrl+K as a
+        // global command palette, but make More a real overflow for commands hidden
+        // by the adaptive ribbon.
+        if (_uxCommandPaletteLayer is not null)
+            _uxCommandPaletteLayer.Visibility = Visibility.Collapsed;
+
+        var menu = new ContextMenu
+        {
+            PlacementTarget = _uxMoreRibbonButton,
+            Placement = PlacementMode.Bottom
+        };
+        menu.SetResourceReference(Control.BackgroundProperty, "PanelRaisedBrush");
+        menu.SetResourceReference(Control.ForegroundProperty, "PrimaryTextBrush");
+
+        var moreIndex = ribbon.Children.IndexOf(_uxMoreRibbonButton);
+        var commandCount = 0;
+        for (var i = 0; i < moreIndex; i++)
+        {
+            if (ribbon.Children[i] is not FrameworkElement group || group.Visibility != Visibility.Collapsed)
+                continue;
+
+            var buttons = FindUxDescendants<Button>(group)
+                .Where(button => !ReferenceEquals(button, _uxMoreRibbonButton))
+                .ToArray();
+            if (buttons.Length == 0) continue;
+
+            var groupName = FindUxDescendants<TextBlock>(group)
+                .Where(text => FindUxAncestor<Button>(text) is null)
+                .Select(text => text.Text?.Trim())
+                .LastOrDefault(text => !string.IsNullOrWhiteSpace(text)) ?? "Commands";
+
+            if (menu.Items.Count > 0) menu.Items.Add(new Separator());
+            menu.Items.Add(new MenuItem
+            {
+                Header = groupName,
+                IsEnabled = false,
+                FontWeight = FontWeights.SemiBold
+            });
+
+            foreach (var button in buttons)
+            {
+                var label = GetUxButtonLabel(button);
+                if (string.IsNullOrWhiteSpace(label)) continue;
+
+                var item = new MenuItem
+                {
+                    Header = label,
+                    IsEnabled = button.IsEnabled,
+                    ToolTip = button.ToolTip,
+                    InputGestureText = GetUxShortcut(label)
+                };
+                item.Click += (_, _) =>
+                    button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, button));
+                menu.Items.Add(item);
+                commandCount++;
+            }
+        }
+
+        if (commandCount == 0)
+            menu.Items.Add(new MenuItem { Header = "No hidden ribbon commands", IsEnabled = false });
+
+        _uxMoreRibbonButton.ContextMenu = menu;
+        menu.IsOpen = true;
+        App.Log($"UX60 ribbon overflow opened: {commandCount:N0} hidden commands");
     }
 }
