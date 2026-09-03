@@ -1,16 +1,22 @@
-Run the full AsantePDF 1.0.0-rc49 installed-copy release gate on the UX60 acceptance-corrected source.
+Run the full AsantePDF 1.0.0-rc49 installed-copy release gate for Candidate C on the workspace-visual-redesign source.
 
 This candidate must pass the strengthened installed Program Files acceptance lane: full Light/Dark Home, Recent, Settings, Task Center, First Launch, Diagnostics and document-workspace visual/contrast checks; effective 100/125/150/175/200% viewport checks; permanent white-on-color Home tool badge validation; 12-page release-sample opening in both themes; representative research, scanned-image, feature-rich annotation/form/bookmark, rotated/cropped and 50-page corpus opening in both themes; complete thumbnail generation and post-open survival; a two-process first-launch/restart test proving onboarding does not recur, theme/settings survive restart, Recent is populated, Grid/List/Compact controls work, and Resume restores two tabs with page position; OCR, PDFium, qpdf, LibreOffice, conversion, markup, forms/batch and security self-tests; installer registration; Start Menu integration; receipt/checksum generation; uninstall cleanup; retained installed visual/DPI evidence; and final artifact packaging.
 
-Acceptance-correction evidence before trigger:
-- PR #5 merged into development after exact-head validation.
-- Primary navigation now resolves Home versus Active Document from the visible primary surface instead of leaving Home selected while a PDF workspace is active.
-- The Recent unpinned-star Light-mode contrast defect detected by the new visual gate (1.37:1) was corrected to the semantic cross-theme command-gold brush.
-- Adaptive ribbon More now exposes the commands from groups actually hidden at narrow widths; Ctrl+K remains the global command palette.
-- Stronger UX60 Acceptance Fixes Gate run 33594881822 passed build, smoke, normal-user Recent/thumbnails/recovery/session paths, representative 3/6/8/18/50-page PDF opening in Light and Dark, navigation-state assertion, workspace persistence, whole-shell visual/contrast audit and effective 100/125/150/175/200% viewport evidence.
-- Established UX60 Windows Gate run 33594881838 passed on the same correction head.
-- Post-merge Development Windows Gate run 33595231484 passed source contracts, x64 Release build, smoke tests, full Light/Dark product-surface verification and repeated normal UI PDF-open stress.
+Candidate C redesign evidence before trigger:
+- PR #6 merged into development after exact-head visual and runtime validation.
+- The document ribbon horizontal scrollbar is removed and secondary commands move behind a real More menu.
+- Ribbon chrome is reduced from the prior 126px layout to an approximately 84px document-command band, giving the PDF canvas substantially more vertical space.
+- Active Document now uses a strong blue accent rail for selected-state visibility.
+- Default page-thumbnail and Inspector widths are reduced so the document canvas becomes the dominant workspace surface.
+- The Inspector/PDF Doctor surface is visually lighter and less card-heavy.
+- The page navigation count defect showing `/ 0` after PDF open is corrected; the 12-page acceptance sample visibly reports `/ 12`.
+- Redundant opening start/completion toast cards are suppressed once the result is directly visible.
+- Workspace Visual Redesign Gate run 33689654700 passed x64 Release build, smoke tests, redesign source contracts, settled Light/Dark workspace capture and the 100/125/150/175/200% viewport matrix.
+- Clean visual evidence artifact 9869540395 was inspected before merge.
+- Established UX60 Windows Gate run 33689654651 passed on the same redesign head.
+- UX60 Acceptance Fixes Gate run 33689654708 passed on the same redesign head.
+- Post-merge Development Windows Gate run 33721181665 passed source contracts, x64 Release build, smoke tests, full Light/Dark product-surface verification and repeated normal UI PDF-open stress on the merged development source.
 
-Validated product-source merge: 160ace7d4e44a591e05196410a2c82e4733bfdd9
-Acceptance evidence artifact: 9833074317
-Trigger revision: 2026-09-02 UX60 acceptance-corrected installed-copy validation.
+Validated product-source merge: 7f3d5cf8c178084701243277261a48bf0a37274c
+Visual evidence artifact: 9869540395
+Trigger revision: 2026-09-03 Candidate C workspace visual redesign installed-copy validation.
