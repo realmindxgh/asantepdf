@@ -38,7 +38,7 @@ jobs:
           if ($patched -eq $text) { throw 'Could not locate workspace capture point in ThemeRuntimeSelfTest.' }
 
           $matrixPattern = 'await VerifyResponsiveMatrixAsync\(window, outputDirectory, "workspace"\);'
-          $matrixReplacement = "await VerifyResponsiveMatrixAsync(window, outputDirectory, \"workspace\");`r`n                // The older UX60 SizeChanged handler used to restore the scrollbar on wide windows. Assert again after the complete resize matrix.`r`n                window.AssertCandidateCRealMachineAcceptanceState();"
+          $matrixReplacement = 'await VerifyResponsiveMatrixAsync(window, outputDirectory, "workspace");' + "`r`n                // The older UX60 SizeChanged handler used to restore the scrollbar on wide windows. Assert again after the complete resize matrix.`r`n                window.AssertCandidateCRealMachineAcceptanceState();"
           $patchedAgain = [regex]::Replace($patched, $matrixPattern, $matrixReplacement, 1)
           if ($patchedAgain -eq $patched) { throw 'Could not locate post-resize workspace assertion point.' }
           Set-Content $path $patchedAgain -Encoding UTF8
