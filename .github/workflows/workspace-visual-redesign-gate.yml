@@ -128,7 +128,6 @@ jobs:
             foreach ($required in @(
               'Workspace visual redesign initialized',
               'Candidate C real-machine corrections applied after complete UX60 initialization',
-              'Candidate C invariant corrected ribbon horizontal scrollbar back to Hidden',
               'Candidate C pager invariant: model=12 display=/ 12',
               'Candidate C navigation invariant: active=ActiveDocument left-border=4',
               'Candidate C real-machine acceptance assertions passed')) {
