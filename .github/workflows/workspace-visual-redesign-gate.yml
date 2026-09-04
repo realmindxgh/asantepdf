@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'development/workspace-visual-redesign'
+      - 'development/candidate-c-real-machine-fixes'
   pull_request:
     branches:
       - 'development/master-upgrade-v2'
@@ -25,16 +26,22 @@ jobs:
         with:
           dotnet-version: '10.0.202'
 
-      - name: Make visual capture wait for settled workspace
+      - name: Make visual capture reproduce real-machine settling and resize
         shell: pwsh
         run: |
           $path = './src/PdfRescue.App/Services/ThemeRuntimeSelfTest.cs'
           $text = Get-Content $path -Raw
-          $pattern = 'await window\.OpenPdfFromCommandLineAsync\(samplePdf\);\r?\n\s*await RenderCycleAsync\(\);'
-          $replacement = "await window.OpenPdfFromCommandLineAsync(samplePdf);`r`n                // Visual acceptance captures the clean settled workspace after transient notifications expire.`r`n                await Task.Delay(6000);`r`n                await RenderCycleAsync();"
-          $patched = [regex]::Replace($text, $pattern, $replacement, 1)
+
+          $openPattern = 'await window\.OpenPdfFromCommandLineAsync\(samplePdf\);\r?\n\s*await RenderCycleAsync\(\);'
+          $openReplacement = "await window.OpenPdfFromCommandLineAsync(samplePdf);`r`n                // Let every Loaded/idle callback drain, then require the exact runtime state that failed on the real machine.`r`n                await Task.Delay(6000);`r`n                await RenderCycleAsync();`r`n                window.AssertCandidateCRealMachineAcceptanceState();"
+          $patched = [regex]::Replace($text, $openPattern, $openReplacement, 1)
           if ($patched -eq $text) { throw 'Could not locate workspace capture point in ThemeRuntimeSelfTest.' }
-          Set-Content $path $patched -Encoding UTF8
+
+          $matrixPattern = 'await VerifyResponsiveMatrixAsync\(window, outputDirectory, "workspace"\);'
+          $matrixReplacement = "await VerifyResponsiveMatrixAsync(window, outputDirectory, \"workspace\");`r`n                // The older UX60 SizeChanged handler used to restore the scrollbar on wide windows. Assert again after the complete resize matrix.`r`n                window.AssertCandidateCRealMachineAcceptanceState();"
+          $patchedAgain = [regex]::Replace($patched, $matrixPattern, $matrixReplacement, 1)
+          if ($patchedAgain -eq $patched) { throw 'Could not locate post-resize workspace assertion point.' }
+          Set-Content $path $patchedAgain -Encoding UTF8
 
       - name: Restore and build x64 Release
         shell: pwsh
@@ -51,7 +58,7 @@ jobs:
           dotnet test ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release -p:Platform=x64 --no-build --no-restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Assert redesign source contracts
+      - name: Assert redesign and real-machine source contracts
         shell: pwsh
         run: |
           $redesign = Get-Content './src/PdfRescue.App/MainWindow.WorkspaceVisualRedesign.cs' -Raw
@@ -65,6 +72,18 @@ jobs:
             'OpenWorkspaceOverflowMenu',
             'CoalesceOpeningNotifications')) {
             if ($redesign -notmatch [regex]::Escape($required)) { throw "Missing workspace redesign contract: $required" }
+          }
+
+          $realMachine = Get-Content './src/PdfRescue.App/MainWindow.CandidateCRealMachineFixes.cs' -Raw
+          foreach ($required in @(
+            'QueueCandidateCRealMachineFixInitialization',
+            '_ux60Initialized',
+            'ScrollViewer.HorizontalScrollBarVisibilityProperty',
+            'new Thickness(4, 1, 1, 1)',
+            'QueueCandidateCPagerRefresh',
+            'Privacy note hidden',
+            'AssertCandidateCRealMachineAcceptanceState')) {
+            if ($realMachine -notmatch [regex]::Escape($required)) { throw "Missing real-machine correction contract: $required" }
           }
 
       - name: Generate visual sample PDF
@@ -84,7 +103,7 @@ jobs:
           if (-not $app) { throw 'AsantePDF.exe not found.' }
           "path=$($app.FullName)" >> $env:GITHUB_OUTPUT
 
-      - name: Capture Light Dark workspace and DPI matrix
+      - name: Capture and assert Light Dark workspace plus DPI matrix
         shell: pwsh
         run: |
           $evidence = Join-Path $env:GITHUB_WORKSPACE 'var\workspace-visual\evidence'
@@ -106,9 +125,15 @@ jobs:
           $log = Join-Path $env:LOCALAPPDATA 'AsantePDF\Logs\startup.log'
           if (Test-Path $log) {
             $text = Get-Content $log -Raw
-            if ($text -notmatch 'Workspace visual redesign initialized') { throw 'Redesign runtime marker missing.' }
-            if ($text -notmatch 'horizontal-scroll=Hidden') { throw 'No proof that ribbon horizontal scrolling was disabled.' }
-            if ($text -notmatch 'UX60 primary navigation state: Active Document') { throw 'Active Document navigation state not observed.' }
+            foreach ($required in @(
+              'Workspace visual redesign initialized',
+              'Candidate C real-machine corrections applied after complete UX60 initialization',
+              'Candidate C invariant corrected ribbon horizontal scrollbar back to Hidden',
+              'Candidate C pager invariant: model=12 display=/ 12',
+              'Candidate C navigation invariant: active=ActiveDocument left-border=4',
+              'Candidate C real-machine acceptance assertions passed')) {
+              if ($text -notmatch [regex]::Escape($required)) { throw "Missing real-machine runtime proof: $required" }
+            }
             Copy-Item $log (Join-Path $evidence 'startup.log') -Force
           } else {
             throw 'Startup log missing.'
