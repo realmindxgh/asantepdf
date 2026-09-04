@@ -47,10 +47,10 @@ public partial class MainWindow
     {
         if (_candidateCRealMachineFixesInitialized) return;
 
-        // The Candidate C failure on the real Windows machine came from a race:
-        // the workspace redesign could run before UX60 had created its More control,
-        // return from ribbon configuration, and still mark itself initialized.
-        // Do not arm the acceptance layer until all of its runtime dependencies exist.
+        // Candidate C exposed an ordering race on the real Windows machine. The
+        // workspace redesign could run before UX60 created its More control, return
+        // from ribbon configuration, and still mark itself initialized. Do not arm
+        // this acceptance layer until every runtime dependency really exists.
         if (!_productShellInitialized || !_ux60Initialized || _uxMoreRibbonButton is null)
         {
             QueueCandidateCRealMachineFixInitialization();
@@ -59,12 +59,12 @@ public partial class MainWindow
 
         _candidateCRealMachineFixesInitialized = true;
 
-        // Re-apply the complete visual redesign now that every dependency exists.
+        // Re-apply the complete visual redesign after the shared UX layer is ready.
         CompactWorkspaceChrome();
         RebalanceWorkspaceColumns();
         SimplifyInspectorSurface();
 
-        // Configure is made idempotent here by removing our preview handler first.
+        // Configure is idempotent for the preview handler here.
         _uxMoreRibbonButton.PreviewMouseLeftButtonDown -= WorkspaceMoreRibbonButton_PreviewMouseLeftButtonDown;
         ConfigureWorkspaceRibbon();
         ApplyWorkspaceRibbonLayout();
@@ -97,8 +97,8 @@ public partial class MainWindow
             }
         });
 
-        // Older UX60 SizeChanged code can still run first. Defer our final layout
-        // until the complete SizeChanged event has finished so the redesign wins.
+        // The older UX60 SizeChanged handler may run first. Defer our final layout
+        // until the complete SizeChanged event has drained so the redesign always wins.
         SizeChanged += (_, _) =>
             _ = Dispatcher.BeginInvoke(
                 DispatcherPriority.ContextIdle,
@@ -134,7 +134,8 @@ public partial class MainWindow
             if (selected)
             {
                 // A four-pixel accent edge is intentionally stronger than the old
-                // one-pixel treatment and does not depend on a runtime content wrapper.
+                // one-pixel treatment and does not depend on a timing-sensitive
+                // runtime content wrapper.
                 button.BorderThickness = new Thickness(4, 1, 1, 1);
                 button.SetResourceReference(Control.BorderBrushProperty, "AccentBrush");
                 button.SetResourceReference(Control.BackgroundProperty, "PanelPressedBrush");
@@ -168,10 +169,11 @@ public partial class MainWindow
                 RefreshWorkspacePager();
                 if (_currentPdf is not null && Pages.Count > 0)
                 {
-                    // The top pager must agree with the same model used by Inspector.
+                    // The top pager must agree with the same page model used by Inspector.
                     PageCountText.Text = $"/ {Pages.Count:N0}";
                     if (!PageNumberBox.IsKeyboardFocusWithin && PagesList.SelectedItem is PdfPageItem selected)
                         PageNumberBox.Text = selected.Position.ToString("N0");
+                    App.Log($"Candidate C pager invariant: model={Pages.Count:N0} display={PageCountText.Text}");
                 }
             }));
     }
@@ -203,6 +205,58 @@ public partial class MainWindow
         ApplyCandidateCNavigationVisuals();
 
         if (_currentPdf is not null && Pages.Count > 0)
+        {
             PageCountText.Text = $"/ {Pages.Count:N0}";
+            App.Log($"Candidate C pager invariant: model={Pages.Count:N0} display={PageCountText.Text}");
+        }
+
+        var active = CandidateCPrimaryNavigationButtons()
+            .FirstOrDefault(button => string.Equals(button.Tag?.ToString(), "Active", StringComparison.OrdinalIgnoreCase));
+        var activeLabel = ReferenceEquals(active, ActiveDocumentNavButton) ? "ActiveDocument"
+            : ReferenceEquals(active, HomeNavButton) ? "Home"
+            : ReferenceEquals(active, RecentNavButton) ? "Recent"
+            : ReferenceEquals(active, StarredNavButton) ? "Starred"
+            : ReferenceEquals(active, ToolsNavButton) ? "Tools"
+            : ReferenceEquals(active, DoctorNavButton) ? "Doctor"
+            : ReferenceEquals(active, TaskCenterNavButton) ? "TaskCenter"
+            : "None";
+        App.Log($"Candidate C navigation invariant: active={activeLabel} left-border={active?.BorderThickness.Left ?? 0:F0}");
+    }
+
+    internal void AssertCandidateCRealMachineAcceptanceState()
+    {
+        if (!_candidateCRealMachineFixesInitialized)
+            throw new InvalidOperationException("Candidate C real-machine correction layer did not initialize.");
+
+        if (RibbonScrollViewer.HorizontalScrollBarVisibility != ScrollBarVisibility.Hidden)
+            throw new InvalidOperationException($"Ribbon horizontal scrollbar regressed to {RibbonScrollViewer.HorizontalScrollBarVisibility}.");
+
+        if (_uxMoreRibbonButton is null || _uxMoreRibbonButton.Visibility != Visibility.Visible)
+            throw new InvalidOperationException("The real ribbon overflow control is not visible.");
+
+        if (_currentPdf is not null && Pages.Count > 0)
+        {
+            var expected = $"/ {Pages.Count:N0}";
+            if (!string.Equals(PageCountText.Text, expected, StringComparison.Ordinal))
+                throw new InvalidOperationException($"Pager mismatch: expected '{expected}', got '{PageCountText.Text}'.");
+
+            if (!string.Equals(ActiveDocumentNavButton.Tag?.ToString(), "Active", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Active Document is not the selected primary destination while the PDF workspace is visible.");
+
+            if (ActiveDocumentNavButton.BorderThickness.Left < 4)
+                throw new InvalidOperationException($"Active Document accent edge is too weak: {ActiveDocumentNavButton.BorderThickness.Left:F1}px.");
+        }
+
+        if (_uxToastHost is not null)
+        {
+            var privacyToastVisible = _uxToastHost.Children
+                .OfType<Border>()
+                .Any(card => FindUxDescendants<TextBlock>(card)
+                    .Any(text => string.Equals(text.Text?.Trim(), "Privacy note hidden", StringComparison.OrdinalIgnoreCase)));
+            if (privacyToastVisible)
+                throw new InvalidOperationException("Nonessential privacy-dismiss toast is still covering the document workspace.");
+        }
+
+        App.Log("Candidate C real-machine acceptance assertions passed.");
     }
 }
