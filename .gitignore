@@ -1,0 +1,19 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Release output
+/dist/
+/artifacts/
+
+# IDE/user files
+.vs/
+*.user
+*.suo
+
+# Logs and transient files
+*.log
+*.tmp
+
+# Local engine/runtime staging
+/src/PdfRescue.App/engines/

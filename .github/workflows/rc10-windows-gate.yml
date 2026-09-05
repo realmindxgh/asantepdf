@@ -3,19 +3,22 @@ name: AsantePDF Development Windows Gate
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - 'development/master-upgrade-v2'
 
 permissions:
   contents: write
 
 concurrency:
-  group: asantepdf-development-${{ github.event.pull_request.number }}
+  group: asantepdf-development-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   windows-build:
-    if: github.head_ref == 'development/master-upgrade-v2'
+    if: github.head_ref == 'development/master-upgrade-v2' || github.ref == 'refs/heads/development/master-upgrade-v2'
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Check out master-upgrade branch
@@ -41,6 +44,12 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
+      - name: Verify theme and PDFium source contracts
+        shell: pwsh
+        run: |
+          & .\scripts\verify-ui-theme-contract.ps1
+          & .\scripts\verify-pdfium-serialization.ps1
+
       - name: Set up exact .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -63,6 +72,145 @@ jobs:
           dotnet run --project ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Locate Release executable
+        id: appexe
+        shell: pwsh
+        run: |
+          $appExe = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
+            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
+            Sort-Object FullName |
+            Select-Object -First 1
+          if (-not $appExe) { throw 'Could not find the Release AsantePDF executable.' }
+          "path=$($appExe.FullName)" >> $env:GITHUB_OUTPUT
+          Write-Host "Using $($appExe.FullName)" -ForegroundColor Cyan
+
+      - name: Verify Light and Dark product surfaces
+        shell: pwsh
+        run: |
+          $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
+          New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
+          @{
+            theme = 'Light'
+            defaultRenderWidth = 1100
+            defaultPageView = 'SinglePage'
+            reopenLastSession = $true
+            trackRecentFiles = $true
+            showRecentThumbnails = $true
+            defaultOcrLanguage = 'eng'
+            defaultOutputFolder = ''
+            outputNamePattern = '{name}-{operation}'
+            existingOutput = 'CreateUniqueCopy'
+            recoveryEnabled = $false
+            checkForUpdates = $false
+            firstLaunchCompleted = $true
+          } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
+
+          $output = Join-Path $env:GITHUB_WORKSPACE 'var\theme-runtime'
+          Remove-Item $output -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $output | Out-Null
+          $sample = Join-Path $output 'workspace-theme-sample.pdf'
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample -PageCount 12
+
+          $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @('--selftest-theme', $output, $sample) -Wait -PassThru
+          if ($app.ExitCode -ne 0 -or -not (Test-Path (Join-Path $output 'theme-runtime-pass.flag'))) {
+            $errorFile = Join-Path $output 'theme-runtime-error.txt'
+            if (Test-Path $errorFile) { Get-Content $errorFile | Write-Host }
+            throw "Theme runtime self-test failed with exit code $($app.ExitCode)."
+          }
+
+          foreach ($report in Get-ChildItem $output -Filter 'contrast-*.txt' | Sort-Object Name) {
+            Write-Host "===== $($report.Name) =====" -ForegroundColor Cyan
+            Get-Content $report.FullName | Write-Host
+          }
+
+      - name: Stress repeated normal UI PDF-open path in Light and Dark
+        shell: pwsh
+        run: |
+          $sampleDir = Join-Path $env:GITHUB_WORKSPACE 'var'
+          New-Item -ItemType Directory -Force -Path $sampleDir | Out-Null
+          $sample12 = Join-Path $sampleDir 'ui-open-stress-12.pdf'
+          $sample30 = Join-Path $sampleDir 'ui-open-stress-30.pdf'
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample12 -PageCount 12
+          & .\scripts\New-SamplePdf.ps1 -OutputPath $sample30 -PageCount 30
+
+          $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
+          $logDir = Join-Path $settingsRoot 'Logs'
+          $startupLog = Join-Path $logDir 'startup.log'
+
+          function Write-TestSettings([string]$theme) {
+            @{
+              theme = $theme
+              defaultRenderWidth = 1100
+              defaultPageView = 'SinglePage'
+              reopenLastSession = $true
+              trackRecentFiles = $true
+              showRecentThumbnails = $true
+              defaultOcrLanguage = 'eng'
+              defaultOutputFolder = ''
+              outputNamePattern = '{name}-{operation}'
+              existingOutput = 'CreateUniqueCopy'
+              recoveryEnabled = $false
+              checkForUpdates = $false
+              firstLaunchCompleted = $true
+            } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
+          }
+
+          function Run-UiOpenProbe([string]$theme, [string]$pdf, [int]$expectedPages, [int]$lingerSeconds, [string]$label) {
+            Write-TestSettings $theme
+            Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+            Write-Host "Starting ${label}: $theme, $expectedPages pages" -ForegroundColor Cyan
+            $app = Start-Process -FilePath '${{ steps.appexe.outputs.path }}' -ArgumentList @($pdf) -PassThru
+            $ready = $false
+            $opened = $false
+            $thumbnails = $false
+            for ($i = 0; $i -lt 180; $i++) {
+              Start-Sleep -Milliseconds 500
+              $app.Refresh()
+              if ($app.HasExited) {
+                if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+                throw "$label exited while opening. Theme=$theme Pages=$expectedPages Exit=$($app.ExitCode)"
+              }
+              if (Test-Path $startupLog) {
+                $log = Get-Content $startupLog -Raw
+                if ($log -match 'Main window loaded and ready flag written') { $ready = $true }
+                if ($log -match 'Opened PDF: foreground view refresh completed') { $opened = $true }
+                if ($log -match "Thumbnail rendering completed: $expectedPages pages") { $thumbnails = $true }
+              }
+              if ($ready -and $opened -and $thumbnails) { break }
+            }
+            if (-not $ready -or -not $opened -or -not $thumbnails) {
+              if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+              try { if (-not $app.HasExited) { $app.Kill() } } catch { }
+              throw "$label did not complete the real open path. Theme=$theme Ready=$ready Opened=$opened Thumbnails=$thumbnails"
+            }
+
+            Start-Sleep -Seconds $lingerSeconds
+            $app.Refresh()
+            if ($app.HasExited) {
+              if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+              throw "$label completed the open path but then crashed. Theme=$theme Exit=$($app.ExitCode)"
+            }
+            try { $app.Kill() } catch { }
+            Write-Host "$label passed." -ForegroundColor Green
+          }
+
+          foreach ($theme in @('Light','Dark')) {
+            for ($round = 1; $round -le 3; $round++) {
+              Run-UiOpenProbe $theme $sample12 12 4 "$theme 12-page repetition $round"
+            }
+            Run-UiOpenProbe $theme $sample30 30 8 "$theme 30-page stress"
+          }
+
+      - name: Upload runtime theme evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-theme-runtime-evidence
+          path: var/theme-runtime/**
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Commit validated generated changes
         shell: pwsh
         run: |
@@ -73,9 +221,8 @@ jobs:
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-          git add -A -- src tests installer assets scripts .github VERSION THIRD-PARTY-NOTICES.md .gitignore
-          git rm -r dev-patches
+          git add -A -- src tests installer assets scripts VERSION THIRD-PARTY-NOTICES.md .gitignore
+          git rm -rf dev-patches
 
           if (git diff --cached --quiet) {
             Write-Host 'Patch scripts produced no repository changes.' -ForegroundColor Cyan

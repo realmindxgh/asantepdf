@@ -1,0 +1,1 @@
+Git object API source-promotion test. Safe to delete after normalized tree promotion.

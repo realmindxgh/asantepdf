@@ -1,64 +1,79 @@
-# AsantePDF Implementation Matrix
+# AsantePDF 49-Item Implementation Matrix
 
-This matrix is the acceptance tracker for `ASANTEPDF_MASTER_UPGRADE_SPEC.md`.
+This is the acceptance tracker for `MASTER_49_CHECKLIST.md` and `ASANTEPDF_MASTER_UPGRADE_SPEC.md`.
 
-**Baseline rule:** RC10 is not automatically credited as satisfying a master item merely because related backend code exists. Each item must be audited against the full requirement before its status is upgraded.
+**Current candidate:** `1.0.0-rc49`
 
-Initial status `REVIEW REQUIRED` means the current codebase has not yet been item-by-item accepted against that complete requirement.
+**Status rule:** code presence is not product acceptance. `IMPLEMENTED, NOT ACCEPTED` means the requirement has a source-backed implementation and has survived the applicable automated engineering checks, but hands-on Windows visual/runtime acceptance is still outstanding where the requirement has a UI or interaction surface. `ACCEPTED` is reserved for explicit acceptance evidence.
 
-Allowed working states after review:
+Allowed states:
 
 - `NOT STARTED`
+- `REVIEW REQUIRED`
 - `IN PROGRESS`
 - `IMPLEMENTED, NOT ACCEPTED`
 - `ACCEPTED`
 
-An item may be marked `ACCEPTED` only after its complete requirement has been implemented and concretely verified. UI items require visual verification against the target references. Release-critical changes must survive the Windows release gate.
+## Current count
 
-| # | Master requirement | Status | Evidence / notes |
+- `IMPLEMENTED, NOT ACCEPTED`: **49**
+- `ACCEPTED`: **0**
+- `IN PROGRESS`: **0**
+- `REVIEW REQUIRED`: **0**
+- `NOT STARTED`: **0**
+
+| # | Master requirement | Status | Current evidence / acceptance note |
 |---:|---|---|---|
-| 1 | Rename and fully rebrand PDF Rescue as AsantePDF | REVIEW REQUIRED | |
-| 2 | Redesign the Windows installer | REVIEW REQUIRED | |
-| 3 | Replace the current empty screen with a proper Home experience | REVIEW REQUIRED | |
-| 4 | Add proper session persistence | REVIEW REQUIRED | |
-| 5 | Implement a real multi-document tab system | REVIEW REQUIRED | |
-| 6 | Add split-view PDF comparison | REVIEW REQUIRED | |
-| 7 | Redesign the entire command toolbar/ribbon | REVIEW REQUIRED | |
-| 8 | Add a coherent colour system and complete dark mode | REVIEW REQUIRED | |
-| 9 | Upgrade PDF page navigation | REVIEW REQUIRED | |
-| 10 | Upgrade zoom and document viewing | REVIEW REQUIRED | |
-| 11 | Make PDF text genuinely interactive | REVIEW REQUIRED | |
-| 12 | Add first-class document search | REVIEW REQUIRED | |
-| 13 | Upgrade the left navigation sidebar | REVIEW REQUIRED | |
-| 14 | Implement proper multi-page selection and page management | REVIEW REQUIRED | |
-| 15 | Make tools usable even when no PDF is already open | REVIEW REQUIRED | |
-| 16 | Create proper configuration dialogs for every significant operation | REVIEW REQUIRED | |
-| 17 | Create an application-wide task/progress framework | REVIEW REQUIRED | |
-| 18 | Add a Task Center | REVIEW REQUIRED | |
-| 19 | Create proper completion workflows | REVIEW REQUIRED | |
-| 20 | Default to non-destructive processing | REVIEW REQUIRED | |
-| 21 | Redesign PDF Doctor | REVIEW REQUIRED | |
-| 22 | Redesign the Inspector | REVIEW REQUIRED | |
-| 23 | Build a proper annotation system | REVIEW REQUIRED | |
-| 24 | Implement proper Save behaviour | REVIEW REQUIRED | |
-| 25 | Strengthen Undo/Redo | REVIEW REQUIRED | |
-| 26 | Add proper drag-and-drop support | REVIEW REQUIRED | |
-| 27 | Add robust context menus | REVIEW REQUIRED | |
-| 28 | Create a coherent keyboard shortcut system | REVIEW REQUIRED | |
-| 29 | Add proper printing | REVIEW REQUIRED | |
-| 30 | Improve conversion workflows | REVIEW REQUIRED | |
-| 31 | Strengthen OCR as a proper feature | REVIEW REQUIRED | |
-| 32 | Add batch processing | REVIEW REQUIRED | |
-| 33 | Build proper PDF security workflows | REVIEW REQUIRED | |
-| 34 | Recent-files privacy controls | REVIEW REQUIRED | |
-| 35 | Create a real Settings experience | REVIEW REQUIRED | |
-| 36 | Professional error and recovery UX | REVIEW REQUIRED | |
-| 37 | Improve performance perception | REVIEW REQUIRED | |
-| 38 | Accessibility and high-DPI support | REVIEW REQUIRED | |
-| 39 | Create a tasteful first-launch experience | REVIEW REQUIRED | |
-| 40 | Build a proper About and diagnostics section | REVIEW REQUIRED | |
-| 41 | Plan a proper application update mechanism | REVIEW REQUIRED | |
-| 42 | Establish one coherent application architecture | REVIEW REQUIRED | |
-| 43 | Maintain the release-quality engineering standard | IMPLEMENTED, NOT ACCEPTED | RC10 Windows gate passed end to end; must be rerun after the master upgrade batch. |
-| 44 | Make the entire interface context-aware | REVIEW REQUIRED | |
-| 45 | Recent files must support multiple layouts with real PDF thumbnails | REVIEW REQUIRED | |
+| 1 | Rename and fully rebrand PDF Rescue as AsantePDF | IMPLEMENTED, NOT ACCEPTED | User-facing product, executable, title bar, installer, Start Menu/Open With identity, diagnostics and release naming are AsantePDF. Remaining `PdfRescue.*` names are internal code namespaces/projects, not product branding. Final installed visual/metadata audit remains. |
+| 2 | Redesign the Windows installer | IMPLEMENTED, NOT ACCEPTED | Inno installer automatically registers PDF Open With, keeps desktop shortcut optional, avoids forced restart, checks an existing VC++ v14 x64 runtime before installing the bundled prerequisite, installs bundled local engines, and removes registration on uninstall. Full installed-copy gate run `33107418982` passed before the final zoom/update refinements; the final-source gate must be rerun. |
+| 3 | Proper Home experience | IMPLEMENTED, NOT ACCEPTED | Real Home/Launcher provides Recent, Starred, Resume when meaningful, Open PDF and standalone tools; drag/drop works; Recent uses real PDFium thumbnails and useful metadata. Hands-on layout/readability acceptance remains. |
+| 4 | Session persistence | IMPLEMENTED, NOT ACCEPTED | Tabs, active tab, page, zoom, scroll/view position, Recent/pins and previous-session state persist. Separate crash-recovery snapshots preserve unsaved working page layout without modifying originals. Recovery UX needs hands-on acceptance. |
+| 5 | Real multi-document tabs | IMPLEMENTED, NOT ACCEPTED | Multiple independent tabs, active/dirty state, close, drag reorder, middle-click close, horizontal overflow, Ctrl+Tab/Ctrl+Shift+Tab, Ctrl+W, Ctrl+Shift+T, per-tab page/zoom/scroll/layout/Undo state and operation-result tabs are implemented. |
+| 6 | Split-view PDF comparison | IMPLEMENTED, NOT ACCEPTED | Two open tabs can be compared side by side with independent page/zoom/scroll, optional linked scrolling, synchronized zoom, swap, page alignment and clean exit. Operation results can open original/result comparison directly. |
+| 7 | Command toolbar/ribbon redesign | IMPLEMENTED, NOT ACCEPTED | Grouped command surfaces replace the old button wall; major everyday actions remain exposed and less-common actions are grouped. WPF/Segoe MDL2 iconography and themed interaction states are used. Final icon/spacing/disabled-state visual audit remains. |
+| 8 | Coherent colour system and complete dark mode | IMPLEMENTED, NOT ACCEPTED | Shared theme resources plus `AppearanceService` implement Dark, Light and Follow Windows across application windows and dynamically created dialogs. Contrast and every edge surface still require hands-on review in both themes. |
+| 9 | PDF page navigation | IMPLEMENTED, NOT ACCEPTED | Visible Previous/Next, editable current-page box, live page count, Left/Right, Page Up/Down, Home/End and continuous-view current-page synchronization are implemented. Large-document interaction remains for manual acceptance. |
+| 10 | Zoom and document viewing | IMPLEMENTED, NOT ACCEPTED | Zoom in/out, Fit Width, Fit Page, 1:1/100%, typed custom zoom percentage, Single Page, lazy Continuous and Two Page views are implemented; preferred view and zoom state persist. Custom zoom was Windows-validated and promoted at `95ac65a3f98aeb6608a06e2024bf2dd0418c2f1a`. |
+| 11 | Interactive PDF text | IMPLEMENTED, NOT ACCEPTED | PDFium-backed page-local geometry supports click/drag selection, character-aligned highlights, Ctrl+C/context Copy and OCR-searchable PDFs. Hands-on selection/scroll coexistence remains. |
+| 12 | Document search | IMPLEMENTED, NOT ACCEPTED | Cached native PDFium text index, Ctrl+F, previous/next, current/total count, snippets, on-page highlights, OCR-searchable participation and non-destructive clear are implemented. |
+| 13 | Left navigation sidebar | IMPLEMENTED, NOT ACCEPTED | Pages, native Bookmarks/Outline, Search Results, Comments/Annotations and Attachments; bounded resize, collapse with no gutter and restore control. |
+| 14 | Multi-page selection and management | IMPLEMENTED, NOT ACCEPTED | Ctrl/Shift selection, Select All, rotate/delete/extract/duplicate/move, drag reorder, multi-page crop, clear selected-range feedback and page-layout Undo/Redo are implemented. |
+| 15 | Tools usable without an open PDF | IMPLEMENTED, NOT ACCEPTED | Home/standalone picker routes cover OCR, Compress, Doctor, Merge, Split, Convert, Images-to-PDF, Repair/Optimize, Protect/Unlock and export workflows. Only genuinely canvas-dependent tools require an active document. |
+| 16 | Configuration dialogs for significant operations | IMPLEMENTED, NOT ACCEPTED | Purpose-built themed configuration exists for compression, split, merge, OCR, conversions, page-image export, Protect/Unlock, Office-to-PDF and other significant workflows, with relevant options and collision validation. |
+| 17 | Application-wide task/progress framework | IMPLEMENTED, NOT ACCEPTED | Foreground and queued work expose task/stage/progress/elapsed/cancel; expensive work stays off the UI path; snapshots and transactional publication protect sources and incomplete outputs. |
+| 18 | Task Center | IMPLEMENTED, NOT ACCEPTED | Running/Queued/Completed/Failed/Cancelled states, filters, progress, elapsed time, Cancel, Retry, output actions, multiple queued jobs and live navigation badge are implemented. |
+| 19 | Completion workflows | IMPLEMENTED, NOT ACCEPTED | Foreground and Task Center results identify source/result and expose appropriate Open, new/current context, Open Folder, Save As/Rename, Run Another, Close and original/result Compare actions. Split-view dependency is now resolved. |
+| 20 | Non-destructive processing | IMPLEMENTED, NOT ACCEPTED | Transformations default to new outputs; source=output is rejected; working-layout/background snapshots isolate queued input; writers stage transactionally; batch names are collision-safe; result workflows preserve originals unless the user explicitly chooses otherwise. |
+| 21 | PDF Doctor redesign | IMPLEMENTED, NOT ACCEPTED | Honest initial state, Healthy/Attention Needed/Damaged status, measured qpdf findings, grouped Structure/Security/Optimization/Performance information and evidence-backed Repair/Compress actions are implemented. No unsupported diagnosis is invented. |
+| 22 | Contextual Inspector | IMPLEMENTED, NOT ACCEPTED | Inspector now changes among document, page, multi-page, text-selection and selected-annotation context with relevant data/actions, and remains collapsible/resizable. Image/object context is not shown because AsantePDF currently has no general object-selection model; the contract explicitly limits that mode to where supported. |
+| 23 | Annotation system | IMPLEMENTED, NOT ACCEPTED | Native Highlight, Underline, Strikeout, notes/comments, shapes, freehand ink, colour/opacity styling, annotation selection, edit and delete are implemented. Text-selection annotation flows use actual selected PDF geometry. |
+| 24 | Save behaviour | IMPLEMENTED, NOT ACCEPTED | Save, Save As, Save a Copy, Ctrl+S, Ctrl+Shift+S, dirty tab indicators and Save/Don't Save/Cancel closing semantics are implemented. Multi-document exit processes dirty tabs intelligently rather than silently discarding them. |
+| 25 | Undo/Redo | IMPLEMENTED, NOT ACCEPTED | Per-document Undo/Redo covers in-memory working-layout edits including reorder, rotation, deletion, duplication and crop, with Ctrl+Z/Ctrl+Y and correct enabled state. Native annotation/markup commands intentionally publish non-destructive result PDFs rather than mutating the current document in memory, so cross-document output creation is not placed on the page-layout Undo stack. This design boundary requires hands-on acceptance. |
+| 26 | Drag-and-drop | IMPLEMENTED, NOT ACCEPTED | PDFs/images dropped on the application are opened/merged or converted as appropriate; Merge accepts dropped PDFs; Images-to-PDF accepts image drops; pages and tabs reorder by drag. Dragging a tab directly into split view remains intentionally unnecessary because tab context/Compare and the dedicated split controls already provide that optional path. |
+| 27 | Context menus | IMPLEMENTED, NOT ACCEPTED | Context-specific menus exist for selected text, page thumbnails, tabs, Recent entries and document canvas; annotation edit/delete actions are surfaced through selected-annotation context. Relevance filtering is implemented. Final icon/theme consistency is a visual acceptance item. |
+| 28 | Keyboard shortcut system | IMPLEMENTED, NOT ACCEPTED | Ctrl+O/S/Shift+S/F/P/W/Tab/Shift+Tab/Z/Y/C, page navigation, Home/End and zoom shortcuts are wired; shortcut hints/tooltips exist on relevant primary actions. Conflict/focus behaviour needs hands-on keyboard acceptance. |
+| 29 | Printing | IMPLEMENTED, NOT ACCEPTED | Ctrl+P, Windows printer/copies selection, all/current/selected/custom pages, orientation and fit-to-printable-area are implemented. Unsaved page layout is materialized safely before printing. A separate custom print-preview screen is not added because the spec marks preview as “where practical”; real printer output still needs hands-on acceptance. |
+| 30 | Conversion workflows | IMPLEMENTED, NOT ACCEPTED | Office→PDF, PDF→Word/Excel/PowerPoint, Images→PDF and PDF→images have standalone/configured workflows, progress, completion handling and appropriate PDF-tab/non-PDF folder actions. Fidelity requires manual representative-file acceptance. |
+| 31 | OCR | IMPLEMENTED, NOT ACCEPTED | Standalone/open-document launch, local language discovery/selection, page range, searchable-PDF/text outputs, page progress, cancellation, completion, Task Center integration and remembered default language are implemented. OCR result quality needs manual corpus testing. |
+| 32 | Batch processing | IMPLEMENTED, NOT ACCEPTED | Multiple PDFs can be configured once for Compress/Repair/Optimize, queued into the Task Center with per-file state/progress, failure retry and output actions. Batch output naming is collision-safe. |
+| 33 | PDF security workflows | IMPLEMENTED, NOT ACCEPTED | Protect supports open password, 256-bit encryption and technically supported print/modify/extract permissions; Unlock/decrypt uses the supplied password; outputs are clearly described and non-destructive. Security state is surfaced through Doctor/Inspector. |
+| 34 | Recent-files privacy controls | IMPLEMENTED, NOT ACCEPTED | Individual Recent removal, clear history, disable tracking, disable/gate thumbnail generation, clear thumbnail cache and session-reopen preference are implemented. |
+| 35 | Settings experience | IMPLEMENTED, NOT ACCEPTED | Settings exposes Light/Dark/Follow Windows, human-facing default zoom percentage, default page view, session/recent/privacy, OCR default, output folder/naming, overwrite behaviour, recovery and update preferences without unrelated clutter. |
+| 36 | Professional error and recovery UX | IMPLEMENTED, NOT ACCEPTED | User-facing error dialog explains failed operations/source safety, exposes technical details/copy/logs; Task Center records failures/retry where applicable; startup recovery explains what can be restored and keeps originals safe. |
+| 37 | Performance perception | IMPLEMENTED, NOT ACCEPTED | Incremental thumbnails, cached/lazy search/text/outline, lazy continuous rendering with bounded cache, isolated background renderers, cancellation and non-blocking task execution are implemented. Large-document responsiveness remains for manual stress acceptance. |
+| 38 | Accessibility and high-DPI | IMPLEMENTED, NOT ACCEPTED | PerMonitorV2 manifest, scalable WPF layout, responsive side panels, keyboard navigation and automation/screen-reader names on significant controls are implemented. 125/150/175/200% visual verification and real screen-reader/focus inspection remain acceptance work. |
+| 39 | First-launch experience | IMPLEMENTED, NOT ACCEPTED | One-time compact onboarding introduces local-first/free behaviour, Home/drag-and-drop/quick tools and recovery, is dismissible and does not recur once completed. |
+| 40 | About and diagnostics | IMPLEMENTED, NOT ACCEPTED | Diagnostics exposes app/build/file version, architecture/runtime/OS, installation/log locations, bundled engine information, third-party notices, update state and Copy Diagnostics. |
+| 41 | Update mechanism | IMPLEMENTED, NOT ACCEPTED | Explicit GitHub Releases check, current/available version, installer discovery/download progress, visible UAC installer launch and preservation of settings/session outside the install folder are implemented. Stable/prerelease ordering was hardened and Windows-validated at source `50f953237f7276c010e9e7c457ad9970551a9770`; no silent replacement occurs. |
+| 42 | Coherent architecture | IMPLEMENTED, NOT ACCEPTED | Home/Launcher, multi-document Document Workspace and shared Task System are connected through common settings, result routing, state and services. Large behaviours are split into focused partials/services rather than continuing as isolated dead buttons. |
+| 43 | Release-quality engineering standard | IMPLEMENTED, NOT ACCEPTED | Development batches are Windows-compiled/smoke-tested before promotion. RC49 full installed-copy gate `33107418982` proved self-contained publish, pinned engines, preinstall self-test, production installer, silent install, Program Files launch/self-test, Windows registration, receipt/checksums, uninstall cleanup and artifact upload. Because zoom/update code landed afterward, that same full gate must be rerun on final source before acceptance. |
+| 44 | Context-aware interface | IMPLEMENTED, NOT ACCEPTED | Document-only controls follow active-document/busy/selection state; Home and Document modes differ; standalone tools remain available; tab switching recalculates state; Inspector changes with context. Hands-on disabled/active-state audit remains. |
+| 45 | Recent files layouts and thumbnails | IMPLEMENTED, NOT ACCEPTED | Cached asynchronous first-page PDFium thumbnails, Grid/List/Compact views, persisted view choice, sort/search/pin, moved-file handling, context actions and stored resume position are implemented. |
+| 46 | Visible theme switching | IMPLEMENTED, NOT ACCEPTED | Top-right immediate sun/moon Light/Dark toggle is implemented; Settings additionally exposes Light, Dark and Follow Windows; preference persists. |
+| 47 | AsantePDF completely free | IMPLEMENTED, NOT ACCEPTED | No premium/payment/subscription feature gate exists; source audit finds no Premium/Upgrade/Subscription/payment UI. First launch and Settings explicitly describe the product as completely free. |
+| 48 | Contextual session recovery | IMPLEMENTED, NOT ACCEPTED | Resume is hidden when no valid session exists and describes what will be restored when available. Crash recovery uses separate local recovery state and explicitly does not alter originals. |
+| 49 | Ghana-inspired AsantePDF identity | IMPLEMENTED, NOT ACCEPTED | Red/gold/green/black document/A identity is present in title-bar vector UI and reproducible SVG/ICO assets; the ICO feeds app, installer, taskbar/shortcut metadata. Main UI stays restrained rather than using flag colours everywhere. Installed visual acceptance remains. |
+
+## Final acceptance boundary
+
+The source-backed implementation phase is complete for all 49 master requirements. This matrix deliberately contains **zero `ACCEPTED` rows** because acceptance still requires the remaining hands-on Windows pass for visual quality, interaction, accessibility/scaling, representative PDF/OCR/conversion/printing behaviour and final installed identity. The final source must also pass the heavyweight installed-copy release gate again after the latest custom-zoom and updater refinements.

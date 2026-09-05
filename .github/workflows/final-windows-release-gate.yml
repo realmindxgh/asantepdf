@@ -1,0 +1,130 @@
+name: AsantePDF Final Windows Release Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'FINAL_GATE_TRIGGER.txt'
+  push:
+    branches:
+      - 'development/master-upgrade-v2'
+    paths:
+      - 'FINAL_GATE_TRIGGER.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  final-windows-release:
+    if: github.head_ref == 'development/master-upgrade-v2' || github.ref == 'refs/heads/development/master-upgrade-v2'
+    runs-on: windows-latest
+    timeout-minutes: 55
+
+    steps:
+      - name: Check out final candidate source
+        uses: actions/checkout@v4
+        with:
+          ref: development/master-upgrade-v2
+          fetch-depth: 0
+
+      - name: Assert clean promoted source
+        shell: pwsh
+        run: |
+          if (Test-Path 'dev-patches') {
+            $patches = Get-ChildItem 'dev-patches' -Filter '*.ps1' -File -ErrorAction SilentlyContinue
+            if ($patches) { throw "Final release gate refuses staged dev-patches. Promote and clean them first." }
+          }
+          $status = git status --porcelain
+          if ($status) { throw "Working tree is not clean before release gate.`n$status" }
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.202'
+
+      - name: Install Inno Setup compiler
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress --limit-output
+          if ($LASTEXITCODE -notin @(0,1641,3010)) { exit $LASTEXITCODE }
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw 'ISCC.exe was not installed.' }
+
+      - name: Publish, bundle engines, self-test and build installer
+        shell: pwsh
+        run: |
+          $sdk = dotnet --version
+          if ($sdk -ne '10.0.202') { throw "Expected .NET SDK 10.0.202, got $sdk" }
+          & .\scripts\publish-release.ps1
+
+      - name: Verify exact installed Program Files copy
+        shell: pwsh
+        run: |
+          & .\scripts\verify-installed-release.ps1 `
+            -InstallerPath '.\dist\installer\AsantePDF Setup.exe' `
+            -SamplePdf '.\dist\release-sample.pdf'
+          $durableInstalledPass = '.\dist\installed-final-candidate-pass.flag'
+          if (-not (Test-Path $durableInstalledPass)) {
+            throw "Installed-copy verifier returned success without durable pass evidence: $durableInstalledPass"
+          }
+
+      - name: Verify Windows PDF registration and shortcuts
+        shell: pwsh
+        run: |
+          $appKey = 'HKLM:\Software\Classes\Applications\AsantePDF.exe'
+          $supported = Join-Path $appKey 'SupportedTypes'
+          $command = Join-Path $appKey 'shell\open\command'
+          if (-not (Test-Path $appKey)) { throw 'AsantePDF Open With registration is missing.' }
+          if (-not (Test-Path $supported)) { throw 'AsantePDF SupportedTypes registration is missing.' }
+          $supportedKey = Get-Item -Path $supported -ErrorAction Stop
+          if (-not ($supportedKey.GetValueNames() -contains '.pdf')) { throw '.pdf is not registered under AsantePDF SupportedTypes.' }
+          $open = (Get-Item -Path $command -ErrorAction Stop).GetValue('')
+          if ([string]::IsNullOrWhiteSpace($open) -or $open -notmatch 'AsantePDF\.exe') { throw "Open command is incorrect: $open" }
+          $startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\AsantePDF.lnk'
+          if (-not (Test-Path $startMenu)) { throw 'AsantePDF Start Menu shortcut is missing.' }
+
+      - name: Write release receipt and checksums
+        shell: pwsh
+        run: |
+          & .\scripts\write-release-receipt.ps1 -InstallerPath '.\dist\installer\AsantePDF Setup.exe'
+
+      - name: Verify uninstall removes application registration
+        shell: pwsh
+        run: |
+          $uninstaller = Join-Path $env:ProgramFiles 'AsantePDF\unins000.exe'
+          if (-not (Test-Path $uninstaller)) { throw "Uninstaller was not found: $uninstaller" }
+          $process = Start-Process -FilePath $uninstaller -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+          if ($process.ExitCode -notin @(0,3010)) { throw "Uninstaller failed with exit code $($process.ExitCode)." }
+          Start-Sleep -Seconds 2
+          if (Test-Path 'HKLM:\Software\Classes\Applications\AsantePDF.exe') {
+            throw 'AsantePDF Open With registration remained after uninstall.'
+          }
+          if (Test-Path (Join-Path $env:ProgramFiles 'AsantePDF\AsantePDF.exe')) {
+            throw 'AsantePDF executable remained after uninstall.'
+          }
+
+      - name: Package installer and evidence
+        shell: pwsh
+        run: |
+          $package = '.\dist\release-package'
+          Remove-Item $package -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $package -Force | Out-Null
+          Copy-Item '.\dist\installer\AsantePDF Setup.exe' $package -Force
+          Copy-Item '.\dist\release-evidence\*' $package -Force
+          Copy-Item '.\dist\app\engines\ENGINE-VERSIONS.txt' $package -Force
+          if (Test-Path '.\dist\selftest-installed') {
+            Copy-Item '.\dist\selftest-installed' (Join-Path $package 'installed-evidence') -Recurse -Force
+          }
+          if (Test-Path '.\dist\installed-regression-corpus\CORPUS-MANIFEST.txt') {
+            Copy-Item '.\dist\installed-regression-corpus\CORPUS-MANIFEST.txt' (Join-Path $package 'INSTALLED-CORPUS-MANIFEST.txt') -Force
+          }
+          $hash = (Get-FileHash '.\dist\installer\AsantePDF Setup.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -Path (Join-Path $package 'INSTALLER-SHA256.txt') -Value "$hash  AsantePDF Setup.exe" -Encoding ASCII
+
+      - name: Upload final candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-1.0-final-candidate
+          path: dist/release-package/**
+          if-no-files-found: error
+          retention-days: 30

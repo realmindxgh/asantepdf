@@ -1,0 +1,207 @@
+name: AsantePDF UX60 Acceptance Fixes Gate
+
+on:
+  push:
+    branches:
+      - 'development/ux60-acceptance-fixes'
+  pull_request:
+    branches:
+      - 'development/master-upgrade-v2'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-realistic-runtime:
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out correction source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.202'
+
+      - name: Restore and build x64 Release
+        shell: pwsh
+        run: |
+          if ((dotnet --version) -ne '10.0.202') { throw 'Unexpected .NET SDK.' }
+          dotnet restore ./AsantePDF.sln
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build ./AsantePDF.sln -c Release -p:Platform=x64 --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run smoke tests
+        shell: pwsh
+        run: |
+          dotnet test ./tests/PdfRescue.SmokeTests/PdfRescue.SmokeTests.csproj -c Release -p:Platform=x64 --no-build --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert acceptance-fix source contracts
+        shell: pwsh
+        run: |
+          $fix = Get-Content './src/PdfRescue.App/MainWindow.Ux60.AcceptanceFixes.cs' -Raw
+          foreach ($required in @(
+            'EmptyPanel.IsVisibleChanged',
+            'ActiveDocumentNavButton',
+            'HomeNavButton',
+            'UX60 primary navigation state:')) {
+            if ($fix -notmatch [regex]::Escape($required)) { throw "Missing navigation acceptance contract: $required" }
+          }
+
+      - name: Generate representative PDF corpus
+        shell: pwsh
+        run: |
+          $corpus = Join-Path $env:GITHUB_WORKSPACE 'var\ux60-acceptance-corpus'
+          & .\scripts\New-PdfRegressionCorpus.ps1 -OutputDirectory $corpus
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content (Join-Path $corpus 'CORPUS-MANIFEST.txt') | Write-Host
+
+      - name: Locate built application
+        id: app
+        shell: pwsh
+        run: |
+          $app = Get-ChildItem '.\src\PdfRescue.App\bin' -Recurse -Filter 'AsantePDF.exe' -File |
+            Where-Object { $_.FullName -notmatch '\\ref\\|\\publish\\' } |
+            Sort-Object FullName | Select-Object -First 1
+          if (-not $app) { throw 'AsantePDF.exe not found after Release build.' }
+          "path=$($app.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Probe normal-user PDF opening in Light and Dark
+        shell: pwsh
+        run: |
+          $corpus = Join-Path $env:GITHUB_WORKSPACE 'var\ux60-acceptance-corpus'
+          $appExe = '${{ steps.app.outputs.path }}'
+          $settingsRoot = Join-Path $env:LOCALAPPDATA 'AsantePDF'
+          $logDir = Join-Path $settingsRoot 'Logs'
+          $startupLog = Join-Path $logDir 'startup.log'
+          $workspaceState = Join-Path $settingsRoot 'workspace-state.json'
+          New-Item -ItemType Directory -Force -Path $settingsRoot | Out-Null
+
+          function Write-TestSettings([string]$theme) {
+            @{
+              theme = $theme
+              defaultRenderWidth = 1100
+              defaultPageView = 'SinglePage'
+              reopenLastSession = $true
+              trackRecentFiles = $true
+              showRecentThumbnails = $true
+              defaultOcrLanguage = 'eng'
+              defaultOutputFolder = ''
+              outputNamePattern = '{name}-{operation}'
+              existingOutput = 'CreateUniqueCopy'
+              recoveryEnabled = $true
+              checkForUpdates = $false
+              firstLaunchCompleted = $true
+              pagesSidebarWidth = 245
+              inspectorWidth = 310
+              pagesSidebarCollapsed = $false
+              inspectorCollapsed = $false
+              localFirstCardDismissed = $false
+            } | ConvertTo-Json | Set-Content (Join-Path $settingsRoot 'settings.json') -Encoding UTF8
+          }
+
+          function Stop-Gracefully([System.Diagnostics.Process]$process) {
+            if ($process.HasExited) { return }
+            try { [void]$process.CloseMainWindow() } catch { }
+            if (-not $process.WaitForExit(5000)) {
+              try { $process.Kill() } catch { }
+              [void]$process.WaitForExit(3000)
+            }
+          }
+
+          function Probe([string]$theme, [string]$name, [int]$pages) {
+            Write-TestSettings $theme
+            Remove-Item $logDir -Recurse -Force -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+            $pdf = Join-Path $corpus $name
+            Write-Host "UX60 acceptance probe: $theme / $name / $pages pages" -ForegroundColor Cyan
+            $process = Start-Process -FilePath $appExe -ArgumentList @($pdf) -PassThru
+            $ready = $false
+            $opened = $false
+            $thumbs = $false
+            $activeDocument = $false
+            try {
+              for ($i = 0; $i -lt 220; $i++) {
+                Start-Sleep -Milliseconds 500
+                $process.Refresh()
+                if ($process.HasExited) {
+                  if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+                  throw "$name exited during $theme runtime probe. Exit=$($process.ExitCode)"
+                }
+                if (Test-Path $startupLog) {
+                  $log = Get-Content $startupLog -Raw
+                  if ($log -match 'Main window loaded and ready flag written') { $ready = $true }
+                  if ($log -match 'Opened PDF: foreground view refresh completed') { $opened = $true }
+                  if ($log -match "Thumbnail rendering completed: $pages pages") { $thumbs = $true }
+                  if ($log -match 'UX60 primary navigation state: Active Document') { $activeDocument = $true }
+                }
+                if ($ready -and $opened -and $thumbs -and $activeDocument) { break }
+              }
+
+              if (-not ($ready -and $opened -and $thumbs -and $activeDocument)) {
+                if (Test-Path $startupLog) { Get-Content $startupLog | Write-Host }
+                throw "$name did not complete normal-user $theme probe. Ready=$ready Opened=$opened Thumbnails=$thumbs ActiveDocument=$activeDocument"
+              }
+
+              Start-Sleep -Seconds 2
+              $process.Refresh()
+              if ($process.HasExited) { throw "$name crashed after successful $theme open. Exit=$($process.ExitCode)" }
+
+              if (-not (Test-Path $workspaceState)) {
+                throw "Normal-user Recent/session state was not created: $workspaceState"
+              }
+              $state = Get-Content $workspaceState -Raw
+              if ($state -notmatch [regex]::Escape([IO.Path]::GetFileName($pdf))) {
+                throw "Recent/session state does not contain $name."
+              }
+            }
+            finally {
+              Stop-Gracefully $process
+            }
+          }
+
+          $cases = @(
+            @{ Name='research-like-18.pdf'; Pages=18 },
+            @{ Name='scanned-image-only-8.pdf'; Pages=8 },
+            @{ Name='feature-rich-3.pdf'; Pages=3 },
+            @{ Name='rotated-cropped-6.pdf'; Pages=6 },
+            @{ Name='large-text-50.pdf'; Pages=50 }
+          )
+          foreach ($theme in @('Light','Dark')) {
+            foreach ($case in $cases) { Probe $theme $case.Name $case.Pages }
+          }
+
+      - name: Run whole-shell Light Dark screenshot audit
+        shell: pwsh
+        run: |
+          $appExe = '${{ steps.app.outputs.path }}'
+          $sample = Join-Path $env:GITHUB_WORKSPACE 'var\ux60-acceptance-corpus\research-like-18.pdf'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE 'var\ux60-acceptance-evidence'
+          New-Item -ItemType Directory -Force -Path $evidence | Out-Null
+          $process = Start-Process -FilePath $appExe -ArgumentList @('--selftest-theme', $evidence, $sample) -PassThru -Wait
+          if ($process.ExitCode -ne 0) {
+            Get-ChildItem $evidence -File -ErrorAction SilentlyContinue | ForEach-Object {
+              Write-Host "--- $($_.Name) ---"
+              if ($_.Extension -eq '.txt') { Get-Content $_.FullName | Write-Host }
+            }
+            throw "Theme runtime self-test failed with exit code $($process.ExitCode)."
+          }
+          if (-not (Test-Path (Join-Path $evidence 'workspace-light.png'))) { throw 'Workspace Light screenshot missing.' }
+          if (-not (Test-Path (Join-Path $evidence 'workspace-dark.png'))) { throw 'Workspace Dark screenshot missing.' }
+
+      - name: Upload UX60 acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AsantePDF-UX60-acceptance-fix-evidence
+          path: |
+            var/ux60-acceptance-corpus/**
+            var/ux60-acceptance-evidence/**
+          if-no-files-found: warn
+          retention-days: 14

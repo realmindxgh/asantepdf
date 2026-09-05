@@ -1,0 +1,85 @@
+<Window x:Class="PdfRescue.App.MultiResultDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Operation Results" Width="720" Height="620" MinWidth="620" MinHeight="520"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource PrimaryTextBrush}">
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock x:Name="TitleText" FontSize="25" FontWeight="SemiBold" />
+            <TextBlock x:Name="SummaryText" Foreground="{DynamicResource MutedTextBrush}" FontSize="13"
+                       TextWrapping="Wrap" Margin="0,7,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource PanelCardStyle}" Margin="0,20,0,0" Padding="15">
+            <StackPanel>
+                <TextBlock Text="SOURCE" Foreground="#6F8399" FontSize="10" FontWeight="SemiBold" />
+                <TextBlock x:Name="SourceNameText" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0" />
+                <TextBlock x:Name="SourcePathText" Foreground="{DynamicResource MutedTextBrush}" FontSize="11"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource PanelCardStyle}" Margin="0,10,0,0" Padding="15">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="RESULT SET" Foreground="#6F8399" FontSize="10" FontWeight="SemiBold" />
+                    <TextBlock x:Name="ResultFolderText" FontSize="13" FontWeight="SemiBold" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Border Grid.Column="1" Background="#163251" CornerRadius="10" Padding="10,5" VerticalAlignment="Center" Margin="14,0,0,0">
+                    <TextBlock x:Name="ResultCountText" Foreground="#7DB7FF" FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="3" Text="Select a result" FontSize="12" FontWeight="SemiBold" Margin="0,18,0,8" />
+
+        <ListBox x:Name="ResultsList" Grid.Row="4" SelectionMode="Single" SelectionChanged="ResultsList_SelectionChanged"
+                 Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,0,0,7" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="#122131" BorderBrush="#29425B" BorderThickness="1" CornerRadius="6" Padding="11">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Path}" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding SizeLabel}" Foreground="#7990A7" FontSize="10" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid Grid.Row="5" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="OpenSelectedButton" Style="{StaticResource PrimaryButtonStyle}" Content="Open Selected" Click="OpenSelected_Click" Padding="14,8" />
+                <Button x:Name="SaveSelectedButton" Style="{StaticResource FlatButtonStyle}" Content="Save Selected As…" Click="SaveSelected_Click" Padding="13,8" />
+                <Button Style="{StaticResource FlatButtonStyle}" Content="Open Folder" Click="OpenFolder_Click" Padding="13,8" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="RunAgainButton" Style="{StaticResource FlatButtonStyle}" Content="Run Another" Click="RunAgain_Click" Padding="13,8" />
+                <Button Style="{StaticResource FlatButtonStyle}" Content="Close" Click="Close_Click" Padding="13,8" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

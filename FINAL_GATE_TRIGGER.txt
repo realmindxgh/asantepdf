@@ -1,0 +1,25 @@
+Run the full AsantePDF 1.0.0-rc49 installed-copy release gate for Candidate D after the Candidate C real-machine visual failure was reproduced and corrected.
+
+This candidate must pass the strengthened installed Program Files acceptance lane: full Light/Dark Home, Recent, Settings, Task Center, First Launch, Diagnostics and document-workspace visual/contrast checks; effective 100/125/150/175/200% viewport checks; permanent white-on-color Home tool badge validation; 12-page release-sample opening in both themes; representative research, scanned-image, feature-rich annotation/form/bookmark, rotated/cropped and 50-page corpus opening in both themes; complete thumbnail generation and post-open survival; a two-process first-launch/restart test proving onboarding does not recur, theme/settings survive restart, Recent is populated, Grid/List/Compact controls work, and Resume restores two tabs with page position; OCR, PDFium, qpdf, LibreOffice, conversion, markup, forms/batch and security self-tests; installer registration; Start Menu integration; receipt/checksum generation; uninstall cleanup; retained installed visual/DPI evidence; and final artifact packaging.
+
+Candidate D real-machine correction evidence before trigger:
+- Candidate C failed hands-on acceptance on the user's real Windows machine. The installed screenshot showed the ribbon horizontal scrollbar present, the top pager still reporting `/ 0` while Inspector reported 2 pages, Active Document lacking the intended strong accent edge, and a low-value privacy-dismiss toast covering the workspace.
+- The failure was traced to timing-sensitive interaction between the workspace redesign and the older UX60 layer. The redesign could run before UX60 created its real More control and still mark itself initialized, while older SizeChanged behavior could later restore legacy ribbon state.
+- PR #7 adds a deterministic real-machine correction layer that waits for Product Shell, UX60 and the real More control before reapplying the redesign.
+- Ribbon horizontal scrolling is held Hidden after resize callbacks drain and the responsive ribbon layout is reapplied.
+- Active Document gets a deterministic 4px accent edge when selected.
+- The top pager is synchronized directly to the Pages model and selected page.
+- The nonessential `Privacy note hidden` toast is removed from the document workspace.
+- Runtime acceptance assertions now fail if the ribbon scrollbar is not Hidden, More is not visible, the pager disagrees with the page model, Active Document is not selected with a 4px accent edge, or the privacy-dismiss toast remains visible.
+- The strengthened visual gate injects those assertions after PDF open and again after the full 100/125/150/175/200% resize matrix.
+- Workspace Visual Redesign Gate run 33873555290 passed these real-machine assertions and retained settled Light/Dark/DPI screenshots.
+- Visual evidence artifact 9936934550 was inspected before merge and visibly showed no ribbon scrollbar, `/ 12` for the 12-page sample, and a strong Active Document accent edge.
+- UX60 Windows Gate run 33873555254 passed on the same exact correction head.
+- UX60 Acceptance Fixes Gate run 33873555240 passed on the same exact correction head.
+- PR #7 merged into development as 634df343a850f138876773ea9fe60c33d9fb613f.
+- Post-merge Development Windows Gate run 33873840594 passed source contracts, x64 Release build, smoke tests, full Light/Dark product-surface verification and repeated normal UI PDF-open stress.
+
+Validated product-source merge: 634df343a850f138876773ea9fe60c33d9fb613f
+Pre-merge exact correction head: 65467bb32274e3eb75ed243465adaf10d65154c4
+Visual evidence artifact: 9936934550
+Trigger revision: 2026-09-04 Candidate D real-machine corrected installed-copy validation.
